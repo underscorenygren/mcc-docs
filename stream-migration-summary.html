@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stream Migration Summary</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="series-nav">
+  <span class="series-label">Message Mechanics:</span>
+  <a href="message-mechanics.html">Concepts</a>
+  <a href="chat-widget-research.html">Chat Widget</a>
+  <a href="stream-library-research.html">Stream Research</a>
+  <a href="stream-library-guide.html">Code Guide</a>
+  <a class="current">Migration Summary</a>
+</div>
+
+<h1>Stream Migration Summary</h1>
+<p class="subtitle">Design decisions, general patterns, and what changed.</p>
+<p class="meta">2026-11-03 &mdash; PRs <a href="https://github.com/underscorenygren/claude-by-voice/pull/254">#254</a> and <a href="https://github.com/underscorenygren/claude-by-voice/pull/256">#256</a>, plus post-merge cleanup.</p>
+
+<!-- ───────────────── Overview ───────────────── -->
+
+<h2>1. What happened</h2>
+
+<p>We replaced the ad-hoc event plumbing and raw WebSocket management with a layered messaging library. The library became the structural convention for how the app is organized &mdash; not just a utility, but the pattern that new code should follow.</p>
+
+<p>Two PRs landed the core change. Post-merge work simplified the UI (stripped to two tabs), fixed mobile voice bugs, and cleaned the repo.</p>
+
+<!-- ───────────────── Design patterns ───────────────── -->
+
+<h2>2. Design patterns</h2>
+
+<p>These are the general principles that drove the migration. They apply beyond the stream library itself &mdash; they are the conventions we want enforced going forward.</p>
+
+<h3>2a. Encapsulate, don't inline</h3>
+
+<p>Raw protocol details (WebSocket construction, JSON parsing, reconnect timers) should not appear in application code. Wrap them behind an abstraction that hides the mechanism and exposes intent.</p>
+
+<p><strong>Before:</strong> every connection class had its own <code>new WebSocket(url)</code>, its own <code>onopen</code>/<code>onclose</code>/<code>onmessage</code> wiring, its own reconnect timer. Three files, three slightly different implementations of the same thing.</p>
+
+<p><strong>After:</strong> a transport abstraction owns the connection lifecycle. Application code says "open", "send", "on message" without knowing it's a WebSocket underneath. The reconnect logic is composed on top, not duplicated inside.</p>
+
+<p>The same principle applies to the event bus: application code calls <code>emit</code>/<code>on</code> without knowing whether the backing store is an array, a stream, or a ring buffer. The implementation can change without touching consumers.</p>
+
+<blockquote>
+  "We should start using the stream library as our convention for how the app is structured, and then take this opportunity to restructure our changes according to that pattern, reinforce that rule set."
+  <span class="attr">&mdash; design direction, 2026-11-04</span>
+</blockquote>
+
+<h3>2b. One code path, regardless of source</h3>
+
+<p>When the same kind of data arrives from different origins (live vs. historic messages, UI button vs. deep-link trigger, web vs. mobile), it should flow through the same code path. No branching on "where did this come from."</p>
+
+<p><strong>Example &mdash; chat messages:</strong> historic messages replayed on page load and live messages arriving in real time should both enter the component the same way. The component renders messages; it does not care whether they are new or old.</p>
+
+<p><strong>Example &mdash; recording sounds:</strong> pressing the record button and triggering recording via the iOS Shortcut should both play the same mic-on/mic-off sounds. The trigger mechanism is different; the behavior must be identical.</p>
+
+<blockquote>
+  "We don't want any special handling with these new messages. We want the same simple code path for loading new messages in this component, regardless if they are new or historic."
+  <span class="attr">&mdash; on chat history loading, 2026-11-04</span>
+</blockquote>
+
+<blockquote>
+  "For the trigger button, when the recording stops, you don't play the down-tempo sound. It only seems to work when we hit press record, so that needs to be consistent."
+  <span class="attr">&mdash; on recording sound inconsistency, 2026-11-04</span>
+</blockquote>
+
+<h3>2c. Simplify aggressively</h3>
+
+<p>When rebuilding, don't carry forward everything that existed before. Strip to what's actually used, move the rest out of the active code path. If something worked in the past but isn't part of the current product, it belongs in the attic &mdash; visible for reference, but clearly separated so it doesn't confuse.</p>
+
+<p>The supervisor page went from 7+ tabs to 2 (Agent + Memo). 30+ tile components moved to <code>attic/</code>. The mobile screen lost its ambient sound selector. Eight top-level directories moved to attic.</p>
+
+<blockquote>
+  "These are things that have worked in the past that we are no longer using. They need to be a separate part of our codebase, clearly labeled so we don't get confused, so we don't refer to it."
+  <span class="attr">&mdash; on the attic pattern, 2026-11-04</span>
+</blockquote>
+
+<h3>2d. Cross-platform consistency</h3>
+
+<p>Web and mobile should behave identically for the same action. Same sounds, same voice behavior, same connection lifecycle. The shared core (<code>shared/</code>) exists to enforce this &mdash; platform-specific code should be a thin shell over shared logic.</p>
+
+<p>When mobile had a barge-in bug (TTS kept playing while the user was speaking), the fix went into the shared voice controller, not into mobile-specific code. The principle: if it's wrong on one platform, it's wrong on both.</p>
+
+<blockquote>
+  "I am talking and I see listening, and the agent is still speaking over me."
+  <span class="attr">&mdash; reporting the mobile barge-in bug, 2026-11-04</span>
+</blockquote>
+
+<blockquote>
+  "We want to, if we can, take this opportunity to restructure the mobile app according to the stream library patterns."
+  <span class="attr">&mdash; on mobile restructuring, 2026-11-04</span>
+</blockquote>
+
+<h3>2e. Background reliability</h3>
+
+<p>The mobile app must work reliably across app lifecycle transitions &mdash; foreground, background, sleep, resume. Connection loss is expected (iOS kills WebSockets after ~30s in background); what matters is that reconnection is automatic and the user has audible feedback when state changes.</p>
+
+<blockquote>
+  "The most important thing from here is the ability to carry the phone in the background and still have a methodology that we know works, that is able to keep the connection to the agent."
+  <span class="attr">&mdash; on mobile background behavior, 2026-11-04</span>
+</blockquote>
+
+<!-- ───────────────── What changed ───────────────── -->
+
+<h2>3. What changed</h2>
+
+<h3>Stream library (PR #254)</h3>
+<p>New layered messaging library at <code>shared/lib/stream/</code>. Transports (WebSocket, HTTP, in-memory), codecs (JSON, binary), envelopes, ring buffers, dedup, replay, and a compatibility adapter that provides the same <code>on/emit</code> API the app already used. 50+ files, 116 tests.</p>
+
+<h3>Migration (PR #256)</h3>
+<p>Swapped the old event bus for the stream-backed bus. Wrapped all WebSocket connections with stream transports. Added monotonic sequence numbers to the Go chatbus for cursor-based replay. 20 files changed.</p>
+
+<h3>Post-merge cleanup</h3>
+<ul>
+  <li><strong>Chat history fix</strong> &mdash; fresh page loads were using a stale timestamp, getting 0 messages. Fixed by distinguishing first load (get last N) from reconnect (get since timestamp).</li>
+  <li><strong>Mobile barge-in fix</strong> &mdash; TTS now cancels immediately when the user starts recording, instead of waiting for VAD detection (unreliable on mobile due to speaker-to-mic bleed).</li>
+  <li><strong>Trigger sound consistency</strong> &mdash; deep-link toggle actions now play the same mic-on/mic-off sounds as the UI buttons.</li>
+  <li><strong>UI simplification</strong> &mdash; supervisor stripped to Agent + Memo tabs. 30+ retired tiles moved to <code>attic/</code>.</li>
+  <li><strong>Repo cleanup</strong> &mdash; 8 obsolete directories moved to attic. README written with full entrypoint map.</li>
+  <li><strong>EAS optimization</strong> &mdash; <code>.easignore</code> updated to exclude worktrees and attic (873 MB &rarr; ~100 MB).</li>
+</ul>
+
+<!-- ───────────────── Files affected ───────────────── -->
+
+<h2>4. Areas affected</h2>
+
+<table>
+  <tr><th>Area</th><th>What changed</th></tr>
+  <tr><td><code>shared/lib/stream/</code></td><td>New library (50+ files)</td></tr>
+  <tr><td><code>shared/core/</code></td><td>Connections switched to transports, voice controller barge-in fix</td></tr>
+  <tr><td><code>web/src/</code></td><td>Bus swap, mode bar simplified, tiles stripped</td></tr>
+  <tr><td><code>mobile/src/</code></td><td>Bus swap, ambient removed, trigger sounds fixed</td></tr>
+  <tr><td><code>pkg/provider/bus/</code></td><td>Sequence numbers on envelopes (Go)</td></tr>
+  <tr><td><code>attic/</code></td><td>30+ retired files moved here</td></tr>
+</table>
+
+<!-- ───────────────── Future enforcement ───────────────── -->
+
+<h2>5. Rules to enforce</h2>
+
+<p>General rules derived from the patterns above, suitable for automated review or skill-based enforcement.</p>
+
+<div class="callout yellow">
+  <p><strong>Encapsulate protocol details</strong></p>
+  <p>Flag raw WebSocket construction, manual reconnect timers, or inline JSON.parse/stringify in application code. These should go through an abstraction layer.</p>
+</div>
+
+<div class="callout yellow">
+  <p><strong>Uniform code paths</strong></p>
+  <p>Flag branching on message origin (historic vs live, trigger vs button, web vs mobile). If the same kind of data takes different paths depending on how it arrived, that's a design smell.</p>
+</div>
+
+<div class="callout yellow">
+  <p><strong>Shared core for cross-platform behavior</strong></p>
+  <p>Flag platform-specific logic that duplicates shared core behavior. Voice, chat, and connection logic should live in <code>shared/</code>. Platform code should be a thin adapter.</p>
+</div>
+
+<div class="callout yellow">
+  <p><strong>Consistent audible feedback</strong></p>
+  <p>Every recording start/stop path must play the corresponding sound. Every connection state change on mobile must be audible. No silent transitions.</p>
+</div>
+
+<div class="callout yellow">
+  <p><strong>Aggressive cleanup</strong></p>
+  <p>When code is replaced, move the old version to <code>attic/</code> in the same PR. Don't leave dead code in the active tree "for reference." The attic is the reference.</p>
+</div>
+
+<!-- ───────────────── Appendix: quotes ───────────────── -->
+
+<h2>Appendix: Design direction quotes</h2>
+
+<p>Verbatim quotes that motivated the patterns above. Preserved for future skill and rule authoring.</p>
+
+<hr>
+
+<h3 id="q1">On the stream library as convention</h3>
+<blockquote>
+  "We should start using the stream library as our convention for how the app is structured, and then take this opportunity to restructure our changes according to that pattern, reinforce that rule set."
+</blockquote>
+
+<h3 id="q2">On restructuring mobile</h3>
+<blockquote>
+  "We want to, if we can, take this opportunity to restructure the mobile app according to the stream library patterns."
+</blockquote>
+
+<h3 id="q3">On the attic pattern</h3>
+<blockquote>
+  "These are things that have worked in the past that we are no longer using. They need to be a separate part of our codebase, clearly labeled so we don't get confused, so we don't refer to it."
+</blockquote>
+
+<h3 id="q4">On uniform message handling</h3>
+<blockquote>
+  "We don't want any special handling with these new messages. We want the same simple code path for loading new messages in this component, regardless if they are new or historic."
+</blockquote>
+
+<h3 id="q5">On sound consistency</h3>
+<blockquote>
+  "For the trigger button, when the recording stops, you don't play the down-tempo sound. It only seems to work when we hit press record, so that needs to be consistent."
+</blockquote>
+
+<h3 id="q6">On background reliability</h3>
+<blockquote>
+  "The most important thing from here is the ability to carry the phone in the background and still have a methodology that we know works, that is able to keep the connection to the agent."
+</blockquote>
+
+<h3 id="q7">On the barge-in bug</h3>
+<blockquote>
+  "I am talking and I see listening, and the agent is still speaking over me."
+</blockquote>
+
+<h3 id="q8">On encapsulation</h3>
+<blockquote>
+  "JSON should not be inlined &mdash; that implies we want an encapsulation pattern."
+  <span class="attr">&mdash; on the migration summary review, 2026-11-04</span>
+</blockquote>
+
+</body>
+</html>
