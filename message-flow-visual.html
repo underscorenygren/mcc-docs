@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Message Flow: Scenarios</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --text: #e0e0e0;
+    --text-muted: #a0a0b0;
+    --accent: #e94560;
+    --accent2: #0f9b8e;
+    --link: #5dade2;
+    --code-bg: #0d1b2a;
+    --border: #2a2a4a;
+    --sent: #5c5caa;
+    --delivered: #2d6a4f;
+    --processing: #b56727;
+    --responded: #0f9b8e;
+    --stalled: #e94560;
+    --lag: #e94560;
+    --user-bubble: #0f3460;
+    --agent-bubble: #16213e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 { font-size: 2rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+  .subtitle { color: var(--text-muted); font-size: 1rem; margin-bottom: 2rem; }
+  h2 {
+    font-size: 1.4rem; font-weight: 600; color: #fff;
+    margin-top: 3rem; margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;
+  }
+  h3 { font-size: 1.1rem; font-weight: 600; color: var(--accent2); margin-top: 1.5rem; margin-bottom: 0.8rem; }
+  p { margin-bottom: 1rem; }
+  a { color: var(--link); text-decoration: none; }
+  strong { color: #fff; }
+  code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    background: var(--code-bg); padding: 0.15em 0.4em;
+    border-radius: 3px; font-size: 0.88em; color: var(--accent);
+  }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+  /* Legend */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 1rem;
+    margin-bottom: 2rem; font-size: 0.85rem;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .legend-dot {
+    width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+  }
+
+  /* Timeline */
+  .timeline {
+    position: relative;
+    margin: 1.5rem 0 2rem;
+  }
+  .time-row {
+    display: grid;
+    grid-template-columns: 70px 1fr 40px 1fr 70px;
+    gap: 0;
+    align-items: start;
+    min-height: 52px;
+    position: relative;
+  }
+  .time-label {
+    font-family: 'SF Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: right;
+    padding-right: 12px;
+    padding-top: 4px;
+  }
+  .col-user, .col-agent {
+    padding: 4px 8px;
+  }
+  .col-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+  .col-center::before {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .pipe-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    padding-bottom: 4px;
+    text-align: center;
+  }
+  .pipe-label.left { text-align: right; padding-right: 8px; }
+  .pipe-label.right { text-align: left; padding-left: 8px; }
+
+  /* Bubbles */
+  .bubble {
+    border-radius: 12px;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+  }
+  .bubble.user {
+    background: var(--user-bubble);
+    border: 1px solid #1a4a8a;
+  }
+  .bubble.agent {
+    background: var(--agent-bubble);
+    border: 1px solid var(--border);
+  }
+  .bubble .msg-text { color: var(--text); }
+
+  /* Status indicators */
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 3px;
+    font-size: 0.75rem;
+  }
+  .check {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .check svg { width: 14px; height: 14px; }
+  .check.sent svg { fill: var(--sent); }
+  .check.delivered svg { fill: var(--delivered); }
+  .check.processing svg { fill: var(--processing); }
+  .check.responded svg { fill: var(--responded); }
+  .check.stalled svg { fill: var(--stalled); }
+  .check.inactive svg { fill: #333; }
+  .check-label { color: var(--text-muted); }
+
+  /* Events on the wire */
+  .wire-event {
+    font-family: 'SF Mono', monospace;
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin: 2px 0;
+    white-space: nowrap;
+  }
+  .wire-event.right-arrow { background: var(--surface); color: var(--accent2); }
+  .wire-event.left-arrow { background: var(--surface); color: var(--link); }
+  .wire-event.ack { background: #1a3a2a; color: var(--delivered); }
+  .wire-event.alert { background: #3a1a1a; color: var(--stalled); }
+
+  /* Arrow markers */
+  .arrow {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    gap: 4px;
+  }
+  .arrow.right { justify-content: flex-end; }
+  .arrow.left { justify-content: flex-start; }
+  .arrow span { font-size: 1.2rem; }
+
+  /* Scenario cards */
+  .scenario {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .scenario-title {
+    font-weight: 600;
+    color: #fff;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
+  .scenario-desc {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Sequence diagram (ASCII-art style but styled) */
+  .seq-diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    overflow-x: auto;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.8rem;
+    line-height: 1.8;
+  }
+  .seq-row {
+    display: grid;
+    grid-template-columns: 55px 130px 30px 130px 30px 130px 30px 130px;
+    gap: 0;
+    align-items: center;
+    white-space: nowrap;
+  }
+  .seq-time {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+  }
+  .seq-col {
+    text-align: center;
+    padding: 0 4px;
+    min-height: 24px;
+  }
+  .seq-wire {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+  .seq-event {
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: inline-block;
+    font-size: 0.75rem;
+  }
+  .seq-event.user-msg { background: var(--user-bubble); color: var(--link); border: 1px solid #1a4a8a; }
+  .seq-event.bus-msg { background: #1a2a3a; color: var(--accent2); }
+  .seq-event.agent-msg { background: #1a3a2a; color: var(--delivered); }
+  .seq-event.ack-msg { background: #2a2a1a; color: var(--processing); }
+  .seq-event.alert-msg { background: #3a1a1a; color: var(--stalled); }
+  .seq-event.reply-msg { background: var(--agent-bubble); color: var(--responded); border: 1px solid var(--border); }
+
+  .seq-header {
+    display: grid;
+    grid-template-columns: 55px 130px 30px 130px 30px 130px 30px 130px;
+    gap: 0;
+    margin-bottom: 4px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .seq-header-label {
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* State panel */
+  .state-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .state-box {
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+  }
+  .state-box .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+  }
+  .state-box .value {
+    font-family: 'SF Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  .state-box .value.ok { color: var(--accent2); }
+  .state-box .value.warn { color: var(--processing); }
+  .state-box .value.bad { color: var(--stalled); }
+
+  /* Callout */
+  .callout {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.25rem;
+    margin: 1.25rem 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* Chat mockup */
+  .chat-mockup {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    max-width: 400px;
+    margin: 1rem auto;
+  }
+  .chat-mockup .chat-header {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.75rem;
+  }
+  .chat-msg {
+    margin-bottom: 0.6rem;
+    display: flex;
+    flex-direction: column;
+  }
+  .chat-msg.from-user { align-items: flex-end; }
+  .chat-msg.from-agent { align-items: flex-start; }
+  .chat-bubble {
+    border-radius: 12px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    max-width: 80%;
+  }
+  .chat-bubble.user-b { background: var(--user-bubble); border: 1px solid #1a4a8a; }
+  .chat-bubble.agent-b { background: var(--agent-bubble); border: 1px solid var(--border); }
+  .chat-checks {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+  .chat-checks .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .chat-status-line {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    padding: 4px 0;
+    font-style: italic;
+  }
+  .series-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    background: var(--surface);
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+  }
+  .series-nav .series-label {
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-right: 0.25rem;
+  }
+  .series-nav a {
+    color: var(--link);
+    text-decoration: none;
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+  }
+  .series-nav a:hover { background: var(--surface2); }
+  .series-nav a.current {
+    color: #fff;
+    background: var(--surface2);
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<div class="series-nav">
+  <span class="series-label">Series:</span>
+  <a href="message-mechanics.html">Fundamentals</a>
+  <a href="message-flow-visual.html" class="current">Scenarios</a>
+  <a href="message-mechanics-decisions.html">Decisions</a>
+  <a href="stream-library.html">Stream Library</a>
+  <a href="stream-library-research.html">Library Survey</a>
+</div>
+
+<h1>Message Flow: Seven Scenarios</h1>
+<p class="subtitle">
+  How messages move through the system &mdash; from fast chat to voice round-trips,
+  reconnection, barge-in, multi-agent routing, and work dispatch.
+  Companion to <a href="message-mechanics.html">Message Mechanics</a>.
+</p>
+
+<hr>
+
+<h2>The setup</h2>
+<p>
+  The user sends two messages to an agent:
+</p>
+<ol>
+  <li><code>"Write me a poem"</code> &mdash; seq 1</li>
+  <li><code>"that rhymes"</code> &mdash; seq 2 (sent 3 seconds later, amending the first)</li>
+</ol>
+<p>
+  Four actors in the system:
+</p>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background: var(--link)"></div> User (browser)</div>
+  <div class="legend-item"><div class="legend-dot" style="background: var(--accent2)"></div> Chatbus (router)</div>
+  <div class="legend-item"><div class="legend-dot" style="background: var(--processing)"></div> Channel (MCP bridge)</div>
+  <div class="legend-item"><div class="legend-dot" style="background: var(--delivered)"></div> Agent (Claude)</div>
+</div>
+
+<hr>
+
+<h2>Scenario A: Agent responds immediately</h2>
+<p class="scenario-desc">Best case. The agent is idle, picks up each message within 200ms.</p>
+
+<div class="seq-diagram">
+  <div class="seq-header">
+    <div></div>
+    <div class="seq-header-label">User</div>
+    <div></div>
+    <div class="seq-header-label">Chatbus</div>
+    <div></div>
+    <div class="seq-header-label">Channel</div>
+    <div></div>
+    <div class="seq-header-label">Agent</div>
+  </div>
+
+  <div class="seq-row">
+    <div class="seq-time">0.0s</div>
+    <div class="seq-col"><span class="seq-event user-msg">"Write me a poem"</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">0.05s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event bus-msg">assign seq=1</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">0.1s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event ack-msg">ack seq=1</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">0.15s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event agent-msg">processing seq=1</span></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">2.5s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event reply-msg">"Roses are red..."</span></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">2.6s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event bus-msg">broadcast seq=1 reply</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">2.7s</div>
+    <div class="seq-col"><span class="seq-event user-msg">displays poem</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+
+  <div class="seq-row" style="margin-top: 8px; border-top: 1px dashed #2a2a4a; padding-top: 8px;">
+    <div class="seq-time">3.0s</div>
+    <div class="seq-col"><span class="seq-event user-msg">"that rhymes"</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">3.05s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event bus-msg">assign seq=2</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">3.1s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event ack-msg">ack seq=2</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">3.15s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event agent-msg">processing seq=2</span></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">6.0s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event reply-msg">"Roses are red, violets..."</span></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">6.2s</div>
+    <div class="seq-col"><span class="seq-event user-msg">displays rhyming poem</span></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event bus-msg">broadcast</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+</div>
+
+<h3>What the user sees (chat UI)</h3>
+<div class="chat-mockup">
+  <div class="chat-header">Agent Chat</div>
+  <div class="chat-msg from-user">
+    <div class="chat-bubble user-b">Write me a poem</div>
+    <div class="chat-checks"><div class="dot" style="background: var(--responded)"></div> Responded &middot; 0.0s</div>
+  </div>
+  <div class="chat-msg from-agent">
+    <div class="chat-bubble agent-b">Roses are red, the sky is quite blue...</div>
+  </div>
+  <div class="chat-msg from-user">
+    <div class="chat-bubble user-b">that rhymes</div>
+    <div class="chat-checks"><div class="dot" style="background: var(--responded)"></div> Responded &middot; 3.0s</div>
+  </div>
+  <div class="chat-msg from-agent">
+    <div class="chat-bubble agent-b">Roses are red, violets are blue, you asked for a rhyme, so here's one for you.</div>
+  </div>
+</div>
+
+<div class="state-panel">
+  <div class="state-box">
+    <div class="label">Head sequence</div>
+    <div class="value ok">2</div>
+  </div>
+  <div class="state-box">
+    <div class="label">Agent acked</div>
+    <div class="value ok">2</div>
+  </div>
+  <div class="state-box">
+    <div class="label">Consumer lag</div>
+    <div class="value ok">0</div>
+  </div>
+  <div class="state-box">
+    <div class="label">Status</div>
+    <div class="value ok">Caught up</div>
+  </div>
+</div>
+
+<p>Clean. Each message gets sent, delivered, processed, and responded to before the next one arrives. Lag stays at zero.</p>
+
+<hr>
+
+<h2>Scenario B: Agent is busy (1 minute lag)</h2>
+<p class="scenario-desc">
+  The agent is mid-tool-call when the first message arrives. It doesn't process
+  either message until 60 seconds later. This is what we see today &mdash; but
+  today we have no visibility into where the message is.
+</p>
+
+<div class="seq-diagram">
+  <div class="seq-header">
+    <div></div>
+    <div class="seq-header-label">User</div>
+    <div></div>
+    <div class="seq-header-label">Chatbus</div>
+    <div></div>
+    <div class="seq-header-label">Channel</div>
+    <div></div>
+    <div class="seq-header-label">Agent</div>
+  </div>
+
+  <div class="seq-row">
+    <div class="seq-time">0.0s</div>
+    <div class="seq-col"><span class="seq-event user-msg">"Write me a poem"</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">0.05s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event bus-msg">assign seq=1</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">0.1s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event ack-msg">ack seq=1</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col" style="color: var(--stalled); font-size: 0.75rem;">(busy&mdash;tool call)</div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">MCP queued, waiting</div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+
+  <div class="seq-row" style="margin-top: 8px; border-top: 1px dashed #2a2a4a; padding-top: 8px;">
+    <div class="seq-time">3.0s</div>
+    <div class="seq-col"><span class="seq-event user-msg">"that rhymes"</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">3.05s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event bus-msg">assign seq=2</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">3.1s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event ack-msg">ack seq=2</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col" style="color: var(--stalled); font-size: 0.75rem;">(still busy)</div>
+  </div>
+
+  <div class="seq-row" style="margin-top: 12px;">
+    <div class="seq-time">5s</div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event alert-msg">lag=2, no processing ack</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">15s</div>
+    <div class="seq-col"><span class="seq-event alert-msg">nudge &rarr; agent</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"><span class="seq-event bus-msg">re-notify</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"><span class="seq-event ack-msg">nudge via MCP</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">30s</div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;"></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event alert-msg">fast-respond fallback</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">30.1s</div>
+    <div class="seq-col"><span class="seq-event reply-msg">"Working on your poem..."</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+
+  <div class="seq-row" style="margin-top: 12px; border-top: 1px dashed #2a2a4a; padding-top: 8px;">
+    <div class="seq-time">62s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event agent-msg">tool call done, reads queue</span></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">62.1s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event agent-msg">processing seq=1,2</span></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">65s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event reply-msg">rhyming poem</span></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">65.2s</div>
+    <div class="seq-col"><span class="seq-event user-msg">displays rhyming poem</span></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event bus-msg">broadcast</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+</div>
+
+<h3>What the user sees today (no acks)</h3>
+<div class="chat-mockup">
+  <div class="chat-header">Agent Chat &mdash; current system</div>
+  <div class="chat-msg from-user">
+    <div class="chat-bubble user-b">Write me a poem</div>
+    <div class="chat-checks"><div class="dot" style="background: var(--sent)"></div> Sent &middot; 0.0s</div>
+  </div>
+  <div class="chat-msg from-user">
+    <div class="chat-bubble user-b">that rhymes</div>
+    <div class="chat-checks"><div class="dot" style="background: var(--sent)"></div> Sent &middot; 3.0s</div>
+  </div>
+  <div class="chat-status-line">... 60 seconds of silence ...</div>
+  <div class="chat-msg from-agent">
+    <div class="chat-bubble agent-b">Roses are red, violets are blue, you asked for a rhyme, so here's one for you.</div>
+  </div>
+</div>
+
+<p>The user has no idea what happened during those 60 seconds. Did the agent get the message? Is it thinking? Did something break?</p>
+
+<h3>What the user sees with acks + escalation</h3>
+<div class="chat-mockup">
+  <div class="chat-header">Agent Chat &mdash; with sequence acks</div>
+  <div class="chat-msg from-user">
+    <div class="chat-bubble user-b">Write me a poem</div>
+    <div class="chat-checks"><div class="dot" style="background: var(--delivered)"></div> Delivered &middot; seq 1</div>
+  </div>
+  <div class="chat-msg from-user">
+    <div class="chat-bubble user-b">that rhymes</div>
+    <div class="chat-checks"><div class="dot" style="background: var(--delivered)"></div> Delivered &middot; seq 2</div>
+  </div>
+  <div class="chat-status-line">Delivered to agent, waiting for pickup... (lag: 2)</div>
+  <div class="chat-status-line" style="color: var(--processing);">Agent busy &mdash; nudged at 15s</div>
+  <div class="chat-msg from-agent">
+    <div class="chat-bubble agent-b" style="border-color: var(--processing); font-style: italic;">Working on your poem &mdash; agent is finishing another task.</div>
+    <div class="chat-checks" style="font-style: italic;"><div class="dot" style="background: var(--processing)"></div> Fast-respond &middot; 30s</div>
+  </div>
+  <div class="chat-status-line" style="color: var(--accent2);">Agent processing seq 1 &amp; 2</div>
+  <div class="chat-msg from-agent">
+    <div class="chat-bubble agent-b">Roses are red, violets are blue, you asked for a rhyme, so here's one for you.</div>
+    <div class="chat-checks"><div class="dot" style="background: var(--responded)"></div> Responded &middot; 65s</div>
+  </div>
+</div>
+
+<div class="state-panel">
+  <div class="state-box">
+    <div class="label">Head sequence</div>
+    <div class="value ok">2</div>
+  </div>
+  <div class="state-box">
+    <div class="label">Agent acked</div>
+    <div class="value ok">2 (at 62s)</div>
+  </div>
+  <div class="state-box">
+    <div class="label">Peak lag</div>
+    <div class="value warn">2 for 62s</div>
+  </div>
+  <div class="state-box">
+    <div class="label">Escalation</div>
+    <div class="value warn">Nudge @ 15s, fast-respond @ 30s</div>
+  </div>
+</div>
+
+<p>
+  Same 60-second delay, but the user has visibility the entire time. They know the message
+  was delivered, they know the agent is busy, and they get a holding response at 30s so
+  the silence isn't total.
+</p>
+
+<hr>
+
+<h2>The state machine</h2>
+<p>
+  Every message goes through these states. The sequence number is the anchor across all of them.
+</p>
+
+<div class="seq-diagram" style="font-size: 0.85rem; line-height: 2;">
+  <span style="color: var(--sent);">SENT</span> &rarr; <span style="color: var(--delivered);">DELIVERED</span> &rarr; <span style="color: var(--processing);">PROCESSING</span> &rarr; <span style="color: var(--responded);">RESPONDED</span>
+                                                &searr;
+                                        <span style="color: var(--stalled);">STALLED</span> (no processing ack within threshold)
+                                            &darr;
+                                    escalation ladder kicks in
+</div>
+
+<table>
+  <thead><tr><th>State</th><th>Trigger</th><th>UI indicator</th><th>What the system knows</th></tr></thead>
+  <tbody>
+    <tr>
+      <td style="color: var(--sent);"><strong>Sent</strong></td>
+      <td>Chatbus assigns seq N</td>
+      <td>Single check</td>
+      <td>Message is in the log, routed to agent</td>
+    </tr>
+    <tr>
+      <td style="color: var(--delivered);"><strong>Delivered</strong></td>
+      <td>Channel acks seq N</td>
+      <td>Double check</td>
+      <td>Agent's channel server received it, queued for MCP</td>
+    </tr>
+    <tr>
+      <td style="color: var(--processing);"><strong>Processing</strong></td>
+      <td>Agent emits "processing N"</td>
+      <td>Thinking indicator</td>
+      <td>Claude has the message and is working on it</td>
+    </tr>
+    <tr>
+      <td style="color: var(--responded);"><strong>Responded</strong></td>
+      <td>Reply message referencing seq N</td>
+      <td>Response displayed</td>
+      <td>Done</td>
+    </tr>
+    <tr>
+      <td style="color: var(--stalled);"><strong>Stalled</strong></td>
+      <td>Delivered but no processing ack within threshold</td>
+      <td>"Agent busy" indicator</td>
+      <td>Message is in the channel but agent hasn't picked it up</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <p>
+    <strong>Key design point:</strong> every state transition is driven by an event with a
+    sequence number, not a timer. Timers are only used for the escalation ladder (detecting
+    stalls). The UI never guesses &mdash; it reflects actual system state.
+  </p>
+</div>
+
+<hr>
+
+<h2>Scenario C: Voice round-trip</h2>
+<p class="scenario-desc">
+  User speaks "Write me a poem" via voice. Shows the full delay stack:
+  VAD &rarr; STT &rarr; chat pipeline &rarr; agent &rarr; TTS &rarr; playback.
+</p>
+
+<div class="seq-diagram">
+  <div class="seq-header">
+    <div></div>
+    <div class="seq-header-label">Browser</div>
+    <div></div>
+    <div class="seq-header-label">Bridge</div>
+    <div></div>
+    <div class="seq-header-label">Chatbus</div>
+    <div></div>
+    <div class="seq-header-label">Agent</div>
+  </div>
+
+  <div class="seq-row">
+    <div class="seq-time">0.0s</div>
+    <div class="seq-col"><span class="seq-event user-msg">VAD: speech start</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time"></div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">streaming PCM frames &rarr;</div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">buffering audio</div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">1.2s</div>
+    <div class="seq-col"><span class="seq-event user-msg">VAD: speech end</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"><span class="seq-event bus-msg">STT (Whisper)</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time"></div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">UI: "Transcribing..."</div>
+    <div class="seq-wire"></div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">~800ms</div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">2.0s</div>
+    <div class="seq-col"><span class="seq-event user-msg">shows transcription</span></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event bus-msg">"Write me a poem"</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"><span class="seq-event bus-msg">assign seq=1</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">2.1s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event ack-msg">delivered</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"><span class="seq-event agent-msg">processing</span></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time"></div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">UI: "Thinking..."</div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">~2s inference</div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">4.2s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event reply-msg">broadcast poem</span></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event reply-msg">"Roses are red..."</span></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">4.3s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event bus-msg">TTS synthesis</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">~300ms first chunk</div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">4.6s</div>
+    <div class="seq-col"><span class="seq-event reply-msg">audio playback starts</span></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event bus-msg">streaming PCM</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">7.0s</div>
+    <div class="seq-col"><span class="seq-event reply-msg">playback ends</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+</div>
+
+<p>
+  <strong>Total round trip: ~4.6s to first audio.</strong> Breakdown: 1.2s speech + 0.8s STT +
+  0.1s routing + 2.0s inference + 0.3s TTS + 0.1s buffer = 4.5s. The user hears silence for
+  ~3.4s after they stop speaking (STT + routing + inference + TTS).
+</p>
+<p>
+  With acks, the UI shows: <em>"Transcribing..."</em> (0.8s) &rarr; <em>"Sent"</em> (instant) &rarr;
+  <em>"Thinking..."</em> (2s) &rarr; <em>"Speaking..."</em> (audio plays). Each state is event-driven.
+</p>
+
+<hr>
+
+<h2>Scenario D: Reconnection with replay</h2>
+<p class="scenario-desc">
+  User's connection drops after receiving seq 3. Two more messages arrive while disconnected.
+  Client reconnects and replays from its cursor.
+</p>
+
+<div class="seq-diagram">
+  <div class="seq-header">
+    <div></div>
+    <div class="seq-header-label">Client</div>
+    <div></div>
+    <div class="seq-header-label">Server</div>
+    <div></div>
+    <div class="seq-header-label" style="grid-column: span 3;">Log</div>
+  </div>
+
+  <div class="seq-row" style="grid-template-columns: 55px 170px 30px 170px 30px 200px;">
+    <div class="seq-time"></div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">connected, receiving live</div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">seq 1, 2, 3 on disk</div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 170px 30px 170px 30px 200px;">
+    <div class="seq-time">0s</div>
+    <div class="seq-col"><span class="seq-event user-msg">last_seen_seq = 3</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 170px 30px 170px 30px 200px;">
+    <div class="seq-time">0.5s</div>
+    <div class="seq-col"><span class="seq-event alert-msg">CONNECTION DROPS</span></div>
+    <div class="seq-wire">&times;</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 170px 30px 170px 30px 200px;">
+    <div class="seq-time">5s</div>
+    <div class="seq-col" style="color: var(--stalled); font-size: 0.72rem;">offline</div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event bus-msg">agent replies &rarr; seq 4</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">seq 4 appended</div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 170px 30px 170px 30px 200px;">
+    <div class="seq-time">12s</div>
+    <div class="seq-col" style="color: var(--stalled); font-size: 0.72rem;">offline</div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event bus-msg">user msg from mobile &rarr; seq 5</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">seq 5 appended</div>
+  </div>
+
+  <div class="seq-row" style="grid-template-columns: 55px 170px 30px 170px 30px 200px; margin-top: 12px; border-top: 1px dashed #2a2a4a; padding-top: 8px;">
+    <div class="seq-time">20s</div>
+    <div class="seq-col"><span class="seq-event user-msg">reconnect</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 170px 30px 170px 30px 200px;">
+    <div class="seq-time">20.1s</div>
+    <div class="seq-col"><span class="seq-event ack-msg">subscribe since_seq=3</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"><span class="seq-event bus-msg">query: seq &gt; 3</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">returns seq 4, 5</div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 170px 30px 170px 30px 200px;">
+    <div class="seq-time">20.2s</div>
+    <div class="seq-col"><span class="seq-event reply-msg">receives seq 4 (replay)</span></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event bus-msg">replay seq 4, 5</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 170px 30px 170px 30px 200px;">
+    <div class="seq-time">20.2s</div>
+    <div class="seq-col"><span class="seq-event reply-msg">receives seq 5 (replay)</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 170px 30px 170px 30px 200px;">
+    <div class="seq-time">20.3s</div>
+    <div class="seq-col"><span class="seq-event ack-msg">last_seen_seq = 5, live</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">transition to live stream</div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+</div>
+
+<p>
+  <strong>No duplicates, no missed messages.</strong> The sequence cursor makes replay gapless &mdash;
+  "give me everything after seq 3" returns exactly the 2 messages the client missed.
+  Original IDs preserved. No <code>hist_</code> fallbacks.
+</p>
+<p>
+  Compare to today: client sends <code>since: "2026-10-16T01:00:00Z"</code>, server does a
+  timestamp range query, might miss messages with clock skew, and generates <code>hist_</code>
+  IDs that break dedup.
+</p>
+
+<hr>
+
+<h2>Scenario E: Barge-in (voice interrupt)</h2>
+<p class="scenario-desc">
+  Agent is speaking (TTS playing) when the user interrupts with new speech.
+  Shows cancellation flow with sequence numbers.
+</p>
+
+<div class="seq-diagram">
+  <div class="seq-header">
+    <div></div>
+    <div class="seq-header-label">Browser</div>
+    <div></div>
+    <div class="seq-header-label">Bridge</div>
+    <div></div>
+    <div class="seq-header-label">Chatbus</div>
+    <div></div>
+    <div class="seq-header-label">Agent</div>
+  </div>
+
+  <div class="seq-row">
+    <div class="seq-time"></div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">playing TTS for seq 1 reply</div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">streaming audio</div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">0.0s</div>
+    <div class="seq-col"><span class="seq-event alert-msg">VAD: user speaking!</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">0.01s</div>
+    <div class="seq-col"><span class="seq-event alert-msg">stop TTS playback</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"><span class="seq-event alert-msg">cancel TTS stream</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">0.02s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"><span class="seq-event alert-msg">barge_in event</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time"></div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">streaming new audio &rarr;</div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">buffering</div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">1.5s</div>
+    <div class="seq-col"><span class="seq-event user-msg">VAD: speech end</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"><span class="seq-event bus-msg">STT: "actually make it about dogs"</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">2.3s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"><span class="seq-event bus-msg">assign seq=2</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"><span class="seq-event agent-msg">receives seq=2</span></div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">agent sees barge_in + new msg</div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">abandons seq 1 work, starts seq 2</div>
+  </div>
+  <div class="seq-row">
+    <div class="seq-time">5.0s</div>
+    <div class="seq-col"><span class="seq-event reply-msg">new poem about dogs</span></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event bus-msg">TTS &rarr; audio</span></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event reply-msg">broadcast</span></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event reply-msg">poem about dogs</span></div>
+  </div>
+</div>
+
+<p>
+  <strong>The barge-in is clean because each message has a sequence number.</strong>
+  The agent knows seq 1's response was interrupted (barge_in event references it).
+  Seq 2 supersedes seq 1. The session manager marks seq 1 as "interrupted" and seq 2
+  as the active message.
+</p>
+
+<hr>
+
+<h2>Scenario F: Multi-agent routing</h2>
+<p class="scenario-desc">
+  User is talking to Atlas (research agent), then switches to Porter (code agent) mid-conversation.
+  Shows how streams are per-agent with independent sequence spaces.
+</p>
+
+<div class="seq-diagram">
+  <div class="seq-header" style="grid-template-columns: 55px 120px 30px 120px 30px 120px 30px 120px;">
+    <div></div>
+    <div class="seq-header-label">User</div>
+    <div></div>
+    <div class="seq-header-label">Chatbus</div>
+    <div></div>
+    <div class="seq-header-label">Atlas</div>
+    <div></div>
+    <div class="seq-header-label">Porter</div>
+  </div>
+
+  <div class="seq-row" style="grid-template-columns: 55px 120px 30px 120px 30px 120px 30px 120px;">
+    <div class="seq-time">0.0s</div>
+    <div class="seq-col"><span class="seq-event user-msg">"Research X"</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"><span class="seq-event bus-msg">route: atlas</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"><span class="seq-event agent-msg">atlas seq=12</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 120px 30px 120px 30px 120px 30px 120px;">
+    <div class="seq-time">3.0s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event reply-msg">broadcast</span></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event reply-msg">research results</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 120px 30px 120px 30px 120px 30px 120px;">
+    <div class="seq-time">3.2s</div>
+    <div class="seq-col"><span class="seq-event user-msg">displays results</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+
+  <div class="seq-row" style="grid-template-columns: 55px 120px 30px 120px 30px 120px 30px 120px; margin-top: 12px; border-top: 1px dashed #2a2a4a; padding-top: 8px;">
+    <div class="seq-time">5.0s</div>
+    <div class="seq-col"><span class="seq-event user-msg">"Porter, fix the bug"</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"><span class="seq-event bus-msg">route: porter</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">not routed here</div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"><span class="seq-event agent-msg">porter seq=1</span></div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 120px 30px 120px 30px 120px 30px 120px;">
+    <div class="seq-time">5.1s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col" style="color: var(--text-muted); font-size: 0.72rem;">waking up...</div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 120px 30px 120px 30px 120px 30px 120px;">
+    <div class="seq-time">7.0s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event ack-msg">processing seq=1</span></div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 120px 30px 120px 30px 120px 30px 120px;">
+    <div class="seq-time">15s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event reply-msg">broadcast</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event reply-msg">"Fixed, PR #45"</span></div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 120px 30px 120px 30px 120px 30px 120px;">
+    <div class="seq-time">15.1s</div>
+    <div class="seq-col"><span class="seq-event user-msg">displays fix</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+</div>
+
+<p>
+  <strong>Key: each agent has its own sequence space.</strong> Atlas is at seq 12 (long history),
+  Porter starts at seq 1 (just woke up). The chatbus routes by agent name &mdash; each agent's
+  stream is an independent log. The user's client subscribes to multiple streams simultaneously
+  and merges them in display order.
+</p>
+<p>
+  The 2-second wake-up delay for Porter (5.0s to 7.0s) is visible in the ack flow: the chatbus
+  accepts the message immediately (seq assigned), but the processing ack doesn't arrive until
+  the agent is ready. With acks, the UI shows "Delivered, waking agent..." during this gap.
+</p>
+
+<hr>
+
+<h2>Scenario G: Work dispatch to auto-worker</h2>
+<p class="scenario-desc">
+  Supervisor dispatches a code fix to the auto-worker via the chatbus. Long-running job with
+  periodic status updates. Shows how the same stream primitives work for machine-to-machine.
+</p>
+
+<div class="seq-diagram">
+  <div class="seq-header" style="grid-template-columns: 55px 130px 30px 130px 30px 130px;">
+    <div></div>
+    <div class="seq-header-label">Supervisor</div>
+    <div></div>
+    <div class="seq-header-label">Chatbus</div>
+    <div></div>
+    <div class="seq-header-label">Auto-worker</div>
+  </div>
+
+  <div class="seq-row" style="grid-template-columns: 55px 130px 30px 130px 30px 130px;">
+    <div class="seq-time">0.0s</div>
+    <div class="seq-col"><span class="seq-event user-msg">dispatch: fix login</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"><span class="seq-event bus-msg">auto/work seq=1</span></div>
+    <div class="seq-wire">&rarr;</div>
+    <div class="seq-col"></div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 130px 30px 130px 30px 130px;">
+    <div class="seq-time">0.5s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"><span class="seq-event ack-msg">ack seq=1, cloning</span></div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 130px 30px 130px 30px 130px;">
+    <div class="seq-time">5s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event ack-msg">status: running claude</span></div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 130px 30px 130px 30px 130px;">
+    <div class="seq-time">30s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event ack-msg">status: 3 files changed</span></div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 130px 30px 130px 30px 130px;">
+    <div class="seq-time">45s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event ack-msg">status: running tests</span></div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 130px 30px 130px 30px 130px;">
+    <div class="seq-time">55s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event agent-msg">status: tests pass</span></div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 130px 30px 130px 30px 130px;">
+    <div class="seq-time">60s</div>
+    <div class="seq-col"></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event reply-msg">broadcast result</span></div>
+    <div class="seq-wire">&larr;</div>
+    <div class="seq-col"><span class="seq-event reply-msg">done: PR #46 created</span></div>
+  </div>
+  <div class="seq-row" style="grid-template-columns: 55px 130px 30px 130px 30px 130px;">
+    <div class="seq-time">60.1s</div>
+    <div class="seq-col"><span class="seq-event user-msg">receives result</span></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+    <div class="seq-wire"></div>
+    <div class="seq-col"></div>
+  </div>
+</div>
+
+<p>
+  <strong>Same primitives, different use case.</strong> The auto-worker is just another consumer
+  on the bus. The dispatch message gets a sequence number. The worker acks receipt, then sends
+  periodic status updates back through the bus. The supervisor subscribes to the worker's
+  outbound stream and sees progress in real time.
+</p>
+<p>
+  Today the supervisor dispatches via <code>docker exec</code> and polls logs to check if the
+  worker received the job. With the stream library, dispatch is a publish to the worker's inbound
+  stream, and receipt is an ack &mdash; same mechanism as chat delivery. The escalation ladder
+  applies too: if no ack within 30s, the supervisor knows the worker is down.
+</p>
+
+<div class="callout">
+  <p>
+    <strong>Design insight:</strong> Work dispatch has stronger delivery requirements than chat.
+    A lost chat message is annoying; a lost work order means a task silently doesn't happen.
+    The stream library should support configurable delivery guarantees per stream &mdash;
+    at-most-once for chat, at-least-once for work dispatch (retry until acked).
+  </p>
+</div>
+
+<hr>
+
+<h2>Summary: seven scenarios, one model</h2>
+<p>
+  All seven scenarios use the same building blocks: sequence numbers, acks, typed messages,
+  and per-agent streams. The differences are in configuration, not mechanism:
+</p>
+
+<table>
+  <thead>
+    <tr><th>Scenario</th><th>Stream</th><th>Delivery</th><th>Key insight</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A: Fast response</td>
+      <td>chat (agent)</td>
+      <td>at-most-once</td>
+      <td>Lag = 0, acks confirm immediately</td>
+    </tr>
+    <tr>
+      <td>B: Agent busy</td>
+      <td>chat (agent)</td>
+      <td>at-most-once</td>
+      <td>Lag &gt; 0 triggers escalation ladder</td>
+    </tr>
+    <tr>
+      <td>C: Voice</td>
+      <td>chat + voice events</td>
+      <td>at-most-once</td>
+      <td>Voice signals (VAD, STT, TTS) on ephemeral event stream</td>
+    </tr>
+    <tr>
+      <td>D: Reconnect</td>
+      <td>chat (agent)</td>
+      <td>at-most-once + replay</td>
+      <td>Sequence cursor makes replay gapless</td>
+    </tr>
+    <tr>
+      <td>E: Barge-in</td>
+      <td>chat + voice events</td>
+      <td>at-most-once</td>
+      <td>Seq numbers track which message was interrupted</td>
+    </tr>
+    <tr>
+      <td>F: Multi-agent</td>
+      <td>chat (per agent)</td>
+      <td>at-most-once</td>
+      <td>Independent sequence spaces per agent</td>
+    </tr>
+    <tr>
+      <td>G: Work dispatch</td>
+      <td>work (worker)</td>
+      <td>at-least-once</td>
+      <td>Same ack model, stronger delivery guarantee</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+  This is the core argument for the <a href="stream-library.html">unified stream library</a>:
+  one set of primitives, configured per use case, replaces four ad-hoc connection types.
+</p>
+
+<hr>
+
+<p class="subtitle" style="margin-top: 2rem; margin-bottom: 0;">
+  Companion to <a href="message-mechanics.html">Message Mechanics</a> &middot;
+  <a href="message-mechanics-decisions.html">Decisions</a> &middot;
+  <a href="stream-library.html">Stream Library</a>
+</p>
+
+</body>
+</html>

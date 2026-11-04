@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>State: Fundamentals</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --text: #e0e0e0;
+    --text-muted: #a0a0b0;
+    --accent: #e94560;
+    --accent2: #0f9b8e;
+    --link: #5dade2;
+    --code-bg: #0d1b2a;
+    --border: #2a2a4a;
+    --client: #5dade2;
+    --server: #0f9b8e;
+    --bus: #b56727;
+    --agent: #e94560;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 { font-size: 2.2rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+  .subtitle { color: var(--text-muted); font-size: 1.05rem; margin-bottom: 0.5rem; line-height: 1.6; }
+  .meta { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2rem; }
+  .meta a { color: var(--link); text-decoration: none; }
+  h2 {
+    font-size: 1.5rem; font-weight: 600; color: #fff;
+    margin-top: 3rem; margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;
+  }
+  h3 { font-size: 1.15rem; font-weight: 600; color: var(--accent2); margin-top: 1.8rem; margin-bottom: 0.8rem; }
+  p { margin-bottom: 1rem; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: #fff; }
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    background: var(--code-bg);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+    font-size: 0.88em;
+    color: var(--accent);
+  }
+  pre {
+    background: var(--code-bg);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    font-size: 0.85em;
+    line-height: 1.6;
+  }
+  pre code { background: none; padding: 0; }
+  ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+  li { margin-bottom: 0.4rem; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+  .series-nav {
+    display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+    padding: 0.6rem 1rem; background: var(--surface); border-radius: 6px;
+    margin-bottom: 1.5rem; font-size: 0.85rem;
+  }
+  .series-nav .series-label { color: var(--text-muted); font-weight: 600; margin-right: 0.25rem; }
+  .series-nav a { color: var(--link); text-decoration: none; padding: 0.15em 0.5em; border-radius: 3px; }
+  .series-nav a:hover { background: var(--surface2); }
+  .series-nav a.current { color: #fff; background: var(--surface2); font-weight: 600; }
+
+  /* State diagram boxes */
+  .state-map {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .state-box {
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    border-left: 3px solid var(--border);
+  }
+  .state-box.client { border-left-color: var(--client); }
+  .state-box.server { border-left-color: var(--server); }
+  .state-box.bus { border-left-color: var(--bus); }
+  .state-box.agent { border-left-color: var(--agent); }
+  .state-box .label {
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 0.3rem; font-weight: 600;
+  }
+  .state-box.client .label { color: var(--client); }
+  .state-box.server .label { color: var(--server); }
+  .state-box.bus .label { color: var(--bus); }
+  .state-box.agent .label { color: var(--agent); }
+  .state-box .name { font-weight: 600; color: #fff; margin-bottom: 0.3rem; }
+  .state-box .desc { color: var(--text-muted); font-size: 0.9rem; }
+
+  .reference {
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    border-left: 3px solid var(--accent2);
+  }
+  .reference .ref-title { font-weight: 600; color: #fff; margin-bottom: 0.3rem; }
+  .reference .ref-author { color: var(--accent2); font-size: 0.85rem; margin-bottom: 0.3rem; }
+  .reference .ref-body { color: var(--text-muted); font-size: 0.9rem; }
+
+  .vision-box {
+    background: var(--surface);
+    border: 1px dashed var(--accent);
+    border-radius: 6px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .vision-box .vision-label {
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--accent); font-weight: 600; margin-bottom: 0.5rem;
+  }
+
+  .empty-slot {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+  }
+
+  @media (max-width: 600px) {
+    .state-map { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="series-nav">
+  <span class="series-label">Series:</span>
+  <a href="state-fundamentals.html" class="current">Fundamentals</a>
+  <a href="state-scenarios.html">Scenarios</a>
+  <a href="state-decisions.html">Decisions</a>
+</div>
+
+<h1>State: Fundamentals</h1>
+<p class="subtitle">
+  Where state lives in our system, how it flows, and the vision for
+  executable scenarios that double as documentation and tests.
+</p>
+<p class="meta">Last updated: 2026-10-16</p>
+
+<hr>
+
+<h2>The question</h2>
+
+<p>
+  Our system has state scattered across multiple boundaries: the mobile/web client,
+  the bridge server, the chatbus, the sysbus, and each agent's Claude session.
+  Messages flow between them, but there's no formal model for <em>what state exists where</em>,
+  <em>who owns it</em>, or <em>how we prove it's correct</em>.
+</p>
+
+<p>
+  The goal: formalize state into something we can <strong>visualize</strong>,
+  <strong>execute</strong>, and <strong>test</strong> — using the same language
+  for all three.
+</p>
+
+<hr>
+
+<h2>Current state landscape</h2>
+
+<h3>Where state lives today</h3>
+
+<div class="state-map">
+  <div class="state-box client">
+    <div class="label">Client</div>
+    <div class="name">Orchestrator</div>
+    <div class="desc">
+      Voice state (recording, processing, speaking), chat messages,
+      connection status, current agent. Mutable object with <code>emitState()</code>
+      broadcasts. ~20 boolean/string fields.
+    </div>
+  </div>
+
+  <div class="state-box client">
+    <div class="label">Client</div>
+    <div class="name">Event Bus</div>
+    <div class="desc">
+      Pub/sub with sticky values. Cross-component glue. No schema —
+      any string event, any payload. ~40 distinct event types today.
+    </div>
+  </div>
+
+  <div class="state-box server">
+    <div class="label">Server</div>
+    <div class="name">Bridge</div>
+    <div class="desc">
+      WebSocket connection state, audio pipeline state (STT/TTS in-flight),
+      session auth. Per-connection, in-memory, lost on restart.
+    </div>
+  </div>
+
+  <div class="state-box bus">
+    <div class="label">Bus</div>
+    <div class="name">Chatbus</div>
+    <div class="desc">
+      Message history (JSONL per agent). Ring buffer in memory, append-only
+      on disk. The closest thing to a "log" — but no sequence numbers yet.
+    </div>
+  </div>
+
+  <div class="state-box bus">
+    <div class="label">Bus</div>
+    <div class="name">Sysbus</div>
+    <div class="desc">
+      Tool-call events, lifecycle signals. Fire-and-forget, no persistence.
+      Consumed by UI for activity feed. Ephemeral.
+    </div>
+  </div>
+
+  <div class="state-box agent">
+    <div class="label">Agent</div>
+    <div class="name">Claude session</div>
+    <div class="desc">
+      Conversation context, tool state, in-progress work. Opaque to us —
+      we see inputs and outputs but not internal state.
+    </div>
+  </div>
+</div>
+
+<h3>How state flows</h3>
+
+<p>
+  State changes propagate through <strong>messages</strong>, not shared memory.
+  The client doesn't read server state directly — it receives WebSocket messages
+  that it interprets into local state. The bridge doesn't read agent state —
+  it receives bus messages. This is already message-passing, but it's implicit
+  and untyped.
+</p>
+
+<pre><code>User speaks → client PCM → bridge STT → transcription message → client state update
+                                       → chatbus publish → agent receives
+                                       → agent reply → chatbus → bridge → client TTS</code></pre>
+
+<p>
+  Each arrow is a state transition, but we don't model it that way. We model
+  it as "send a message and hope the other side does the right thing."
+</p>
+
+<hr>
+
+<h2>The problems</h2>
+
+<h3>1. No single source of truth</h3>
+<p>
+  The client thinks it's recording. The bridge thinks the connection is idle.
+  The chatbus has a message the client hasn't seen yet. These states can diverge,
+  and we have no mechanism to detect or reconcile the divergence.
+</p>
+
+<h3>2. State is mutable and implicit</h3>
+<p>
+  The orchestrator is a bag of mutable variables (<code>recording</code>,
+  <code>vadSpeaking</code>, <code>ttsDeferred</code>, <code>micStarting</code>).
+  Transitions happen as side effects of message handlers. There's no state machine —
+  just conditionals checking combinations of flags.
+</p>
+
+<h3>3. No replay / time-travel</h3>
+<p>
+  When something goes wrong, we can't reconstruct what happened. The bus events
+  are ephemeral (sysbus) or append-only without cursors (chatbus). The client
+  state is gone when you refresh.
+</p>
+
+<h3>4. Can't test state transitions</h3>
+<p>
+  We test behavior ("send audio, get transcription") but not state ("after
+  two messages with a delayed ack, the client is in state X and the server
+  is in state Y"). The state machine is invisible.
+</p>
+
+<hr>
+
+<h2>The vision: executable scenarios</h2>
+
+<div class="vision-box">
+  <div class="vision-label">North star</div>
+  <p>
+    A scenario is a <strong>sequence of events</strong> with <strong>state assertions</strong>
+    at each step. The same scenario definition serves three purposes:
+  </p>
+  <ol>
+    <li><strong>Documentation</strong> — renders as a visual timeline showing messages and state</li>
+    <li><strong>Test</strong> — runs against real client + server code, asserts state at each step</li>
+    <li><strong>Proof</strong> — if the test passes, the visual is guaranteed accurate</li>
+  </ol>
+  <p>
+    The scenario language is declarative: "send message A, wait 100ms, send message B,
+    assert client state is X, assert server state is Y." The runtime executes it against
+    our actual orchestrator and bus code.
+  </p>
+</div>
+
+<p>What a scenario might look like:</p>
+
+<pre><code>scenario "reconnect with missed messages":
+  # Setup
+  client connects to bridge
+  assert client.state == { connected: true, chatLoaded: false }
+
+  # History replay
+  bridge sends history_end
+  assert client.state == { connected: true, chatLoaded: true }
+
+  # Normal message
+  user sends "hello"
+  assert chatbus.messages.length == 1
+
+  # Disconnect
+  bridge drops connection
+  assert client.state == { connected: false }
+
+  # Reconnect with replay
+  client reconnects with since: last_message_time
+  bridge replays missed messages
+  bridge sends history_end
+  assert client.state == { connected: true, chatLoaded: true }
+  assert client.messages == chatbus.messages  # no duplicates, no gaps</code></pre>
+
+<p>
+  This scenario is simultaneously a spec, a diagram source, and a test.
+  The visual rendering shows the timeline with state boxes at each assertion point.
+  The test runner executes the real code and checks the assertions.
+</p>
+
+<hr>
+
+<h2>Informing models</h2>
+
+<p>
+  We're not inventing this from scratch. Several established patterns inform
+  how we might formalize state:
+</p>
+
+<div class="reference">
+  <div class="ref-title">Event Sourcing</div>
+  <div class="ref-author">Greg Young, Martin Fowler</div>
+  <div class="ref-body">
+    State is derived from an append-only log of events. You never mutate state directly —
+    you append an event, and the current state is computed by replaying events from the beginning.
+    <strong>Relevant:</strong> our chatbus is already an append-only log. If we treat bus messages
+    as the source of truth, client state becomes a projection of the event stream.
+  </div>
+</div>
+
+<div class="reference">
+  <div class="ref-title">The Log: What every software engineer should know</div>
+  <div class="ref-author">Jay Kreps (LinkedIn / Confluent), 2013</div>
+  <div class="ref-body">
+    The log is the fundamental data structure for distributed systems. Every database,
+    message queue, and replication system is built on ordered, append-only logs.
+    <strong>Relevant:</strong> our stream library design (L0-L5 layers) is directly informed
+    by this. The log IS the state — everything else is a materialized view.
+    <br><a href="https://engineering.linkedin.com/distributed-systems/log-what-every-software-engineer-should-know-about-real-time-datas-unifying">Read the original</a>
+  </div>
+</div>
+
+<div class="reference">
+  <div class="ref-title">Elm Architecture / Redux</div>
+  <div class="ref-author">Evan Czaplicki / Dan Abramov</div>
+  <div class="ref-body">
+    Unidirectional data flow: <code>(state, action) → newState</code>.
+    State is immutable. Every transition is an explicit action. Time-travel debugging
+    comes for free because you can replay actions.
+    <strong>Relevant:</strong> our orchestrator could be modeled this way — each bus event
+    is an action, the state is a pure function of the action history.
+  </div>
+</div>
+
+<div class="reference">
+  <div class="ref-title">Rust ownership / borrow checker</div>
+  <div class="ref-author">Rust lang</div>
+  <div class="ref-body">
+    State has exactly one owner at a time. Mutations require exclusive access.
+    The compiler proves at build time that no data races exist.
+    <strong>Relevant:</strong> the principle that state ownership should be explicit.
+    Who owns the "recording" flag — the client, the bridge, or the bus?
+    In our system, ownership is ambiguous. Making it explicit (like Rust forces you to)
+    would eliminate entire categories of bugs.
+  </div>
+</div>
+
+<div class="reference">
+  <div class="ref-title">CRDTs (Conflict-free Replicated Data Types)</div>
+  <div class="ref-author">Shapiro et al.</div>
+  <div class="ref-body">
+    Data structures that can be replicated across nodes and merged without conflicts.
+    Eventual consistency without coordination.
+    <strong>Relevant:</strong> if client and server both maintain state, their states will
+    diverge during network partitions. CRDTs give us a framework for thinking about
+    how to merge them back — though we may not need full CRDTs if we pick the right
+    ownership model.
+  </div>
+</div>
+
+<div class="reference">
+  <div class="ref-title">TLA+ / Formal specification</div>
+  <div class="ref-author">Leslie Lamport</div>
+  <div class="ref-body">
+    Specify the set of valid states and transitions. A model checker exhaustively
+    explores all possible interleavings to find bugs.
+    <strong>Relevant:</strong> our executable scenarios are a lightweight version of this.
+    We're not doing full model checking, but we're specifying valid state transitions
+    and checking them against real code.
+  </div>
+</div>
+
+<hr>
+
+<h2>Where this connects</h2>
+
+<p>
+  This exploration feeds directly into several ongoing efforts:
+</p>
+
+<ul>
+  <li>
+    <strong><a href="message-mechanics.html">Message Mechanics</a></strong> —
+    the message flow patterns are the events that drive state transitions.
+    Sequence numbers (decided there) give us the ordered log we need.
+  </li>
+  <li>
+    <strong><a href="stream-library.html">Stream Library</a></strong> —
+    the L0-L5 layer model is the infrastructure for typed, ordered,
+    replayable events. State becomes a materialized view of the stream.
+  </li>
+  <li>
+    <strong>Typed state events</strong> — the planned refactor from
+    <code>OrchestratorState</code> into per-domain bus events
+    (VoiceState, ChatState, AgentState) is the first step toward
+    making state transitions explicit and observable.
+  </li>
+</ul>
+
+<hr>
+
+<h2>Next steps</h2>
+
+<ul>
+  <li><strong>Scenarios doc</strong> — pick 3-4 concrete scenarios (reconnect, interruption, agent switch) and write them in the executable format</li>
+  <li><strong>State ownership map</strong> — for each piece of state, declare who owns it and how it propagates</li>
+  <li><strong>Prototype runner</strong> — a minimal JS harness that can execute a scenario against the real orchestrator + a mock bus, rendering the timeline</li>
+</ul>
+
+<div class="empty-slot">Your reactions — what resonates? What's missing? Which scenario should we prototype first?</div>
+
+<hr>
+
+<p class="subtitle" style="margin-top: 2rem; margin-bottom: 0;">
+  Next: <a href="state-scenarios.html">Scenarios</a> — concrete executable scenarios
+</p>
+
+</body>
+</html>

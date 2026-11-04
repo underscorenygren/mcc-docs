@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Task Management</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --text: #e0e0e0;
+    --text-muted: #a0a0b0;
+    --accent: #e94560;
+    --accent2: #0f9b8e;
+    --link: #5dade2;
+    --code-bg: #0d1b2a;
+    --border: #2a2a4a;
+    --warn: #f59e0b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 { font-size: 2.2rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+  .subtitle { color: var(--text-muted); font-size: 1.05rem; margin-bottom: 0.5rem; line-height: 1.6; }
+  .meta { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2rem; }
+  .meta a { color: var(--link); text-decoration: none; }
+  h2 {
+    font-size: 1.5rem; font-weight: 600; color: #fff;
+    margin-top: 3rem; margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;
+  }
+  h3 { font-size: 1.15rem; font-weight: 600; color: var(--accent2); margin-top: 1.8rem; margin-bottom: 0.8rem; }
+  p { margin-bottom: 1rem; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: #fff; }
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    background: var(--code-bg);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+    font-size: 0.88em;
+    color: var(--accent);
+  }
+  pre {
+    background: var(--code-bg);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  pre code { background: none; padding: 0; color: inherit; }
+  ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+  li { margin-bottom: 0.3rem; }
+
+  .tldr {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.25rem;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 2rem;
+  }
+  .tldr strong { color: var(--accent); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .scenario {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 3px solid var(--accent2);
+  }
+  .scenario .label {
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--accent2); margin-bottom: 0.5rem; font-weight: 600;
+  }
+
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .compare > div {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+  }
+  .compare .col-title {
+    font-weight: 600; font-size: 0.85rem; text-transform: uppercase;
+    letter-spacing: 0.05em; margin-bottom: 0.6rem;
+  }
+  .compare .now .col-title { color: var(--text-muted); }
+  .compare .next .col-title { color: var(--accent2); }
+
+  .diagram {
+    background: var(--code-bg);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    white-space: pre;
+    overflow-x: auto;
+    color: var(--text-muted);
+  }
+  .diagram .highlight { color: var(--accent2); }
+  .diagram .accent { color: var(--accent); }
+  .diagram .link { color: var(--link); }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+  th { text-align: left; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;
+       letter-spacing: 0.05em; padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--border); }
+  td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  tr:last-child td { border-bottom: none; }
+
+  @media (max-width: 600px) {
+    .compare { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Agent Task Management</h1>
+<p class="subtitle">A unified system for dispatching, tracking, and observing agent work across distributed hosts.</p>
+<p class="meta">2026-10-22 &middot; <a href="index.html">Docs Index</a></p>
+
+<div class="tldr">
+<strong>TL;DR</strong>
+<p style="margin-bottom:0">We need a lightweight task dashboard that shows <em>what</em> is running, <em>where</em> it's running, and <em>how</em> it's doing &mdash; across the supervisor, teammates (worktree agents), hosted shrooms, and potentially remote boxes. Inspired by Graham's "trove" pattern: simple custom UI, launch agents from the sidebar, see live status. The key insight is that visibility into running work is more valuable than sophisticated scheduling.</p>
+</div>
+
+<h2>The Problem</h2>
+
+<p>Right now we have several disconnected systems for tracking agent work:</p>
+
+<ul>
+<li><strong>TASKS.md</strong> &mdash; a flat text file, manually maintained, no live status</li>
+<li><strong>data/attention.md</strong> &mdash; transient work state, easily stale</li>
+<li><strong>Scheduler</strong> &mdash; manages agent wake/sleep but doesn't expose task-level state</li>
+<li><strong>Bus-follower</strong> &mdash; classifies tasks from message history, but runs every 30 minutes and misses ~60% of tasks</li>
+<li><strong>Sysbus activity feed</strong> &mdash; shows tool calls and lifecycle events, but not task-level progress</li>
+<li><strong>GitHub issues/PRs</strong> &mdash; durable but disconnected from live execution state</li>
+</ul>
+
+<p>When the supervisor dispatches work to teammates via worktrees, or a shroom picks up a bus message, or an agent wakes on another box &mdash; there is no unified view of what's happening. The user has to ask "what's the status?" and the supervisor has to manually check worktrees, PRs, and bus messages to assemble an answer.</p>
+
+<h2>What Graham's Trove Gets Right</h2>
+
+<p>The trove pattern is compelling because it prioritizes <strong>visibility over sophistication</strong>:</p>
+
+<ol>
+<li><strong>Sidebar shows running agents</strong> &mdash; you can see at a glance what's active, what's idle, what's stuck</li>
+<li><strong>Launch from UI</strong> &mdash; click to start an agent with a task, no terminal required</li>
+<li><strong>Simple custom UI</strong> &mdash; not a general-purpose project management tool, purpose-built for the agent workflow</li>
+<li><strong>Notes alongside agents</strong> &mdash; context travels with the work, not buried in chat history</li>
+</ol>
+
+<p>The trove is a <em>workbench</em>, not a task board. It answers "what is this system doing right now?" rather than "what should it do next?"</p>
+
+<h2>Our Version: The Dispatch Board</h2>
+
+<p>A live sidebar panel showing all active work units across all execution contexts.</p>
+
+<h3>What's a Work Unit?</h3>
+
+<p>A work unit is anything that was dispatched and is expected to complete. Each has a type, a location, and a status:</p>
+
+<table>
+<tr><th>Type</th><th>Where it runs</th><th>How we know it's done</th></tr>
+<tr><td>Teammate</td><td>Git worktree (local)</td><td>Agent exits, PR created</td></tr>
+<tr><td>Background task</td><td>Local subprocess</td><td>Process exits</td></tr>
+<tr><td>Shroom job</td><td>Docker container</td><td>Bus message: result published</td></tr>
+<tr><td>Agent session</td><td>MCP channel (local or remote)</td><td>Session ends or goes idle</td></tr>
+<tr><td>Remote agent</td><td>Another box</td><td>Heartbeat stops or result published</td></tr>
+<tr><td>EAS build</td><td>Expo cloud</td><td>Build status API / webhook</td></tr>
+<tr><td>GitHub Action</td><td>GitHub</td><td>Check run status API</td></tr>
+</table>
+
+<h3>Data Model</h3>
+
+<p>Each work unit is a small record, stored in a single place (not scattered across files):</p>
+
+<pre><code>{
+  id:          "work_1792701742",
+  type:        "teammate",
+  title:       "Fix #243: mute TTS bug",
+  branch:      "auto/fix-243-mute-tts",
+  host:        "local",              // or "remote-box-1", "expo-cloud"
+  agent:       "implementer",        // who's doing it
+  dispatched:  "2026-10-22T14:30:00Z",
+  status:      "running",            // pending | running | done | failed | stale
+  last_signal: "2026-10-22T14:35:12Z",
+  result:      null,                 // PR URL, commit hash, error message
+  context:     "Fix mute button wiring in voice-react.tsx"
+}</code></pre>
+
+<h3>Status Lifecycle</h3>
+
+<div class="diagram">
+  <span class="link">pending</span> ──dispatch──▶ <span class="highlight">running</span> ──complete──▶ <span class="highlight">done</span>
+                                │                    │
+                                ├──timeout──▶ <span class="accent">stale</span>
+                                │
+                                └──error───▶ <span class="accent">failed</span>
+</div>
+
+<p><strong>Stale detection:</strong> If <code>last_signal</code> is older than <code>stale_timeout</code> (default: 15 minutes for teammates, 30 for shrooms), the unit is marked stale. This catches hung processes, crashed agents, and forgotten worktrees.</p>
+
+<h2>Architecture</h2>
+
+<div class="compare">
+<div class="now">
+  <div class="col-title">How it works now</div>
+  <p style="font-size:0.88rem;color:var(--text-muted);margin:0">Supervisor dispatches via bus or worktree. Checks status manually when asked. No live view. Teammate results discovered by polling PRs or reading worktree output.</p>
+</div>
+<div class="next">
+  <div class="col-title">Proposed</div>
+  <p style="font-size:0.88rem;color:var(--text-muted);margin:0">Dispatch board as a sysbus consumer. Work units emit heartbeats/signals to sysbus. Board aggregates into a single view. UI sidebar shows live state. Click to inspect, retry, or kill.</p>
+</div>
+</div>
+
+<h3>Signal Flow</h3>
+
+<div class="diagram">
+  Supervisor ──dispatch──▶ <span class="highlight">Sysbus</span> ──event──▶ <span class="link">Board UI</span>
+                              ▲
+  Teammate   ──heartbeat──┘  │
+  Shroom     ──result─────┘  │
+  Remote Box ──heartbeat──┘  │
+  EAS/GitHub ──poll───────┘  ▼
+                          <span class="link">Sidebar Panel</span>
+</div>
+
+<p>The dispatch board is a <strong>read model</strong> built from sysbus events. It doesn't own execution &mdash; it observes it. This means:</p>
+
+<ul>
+<li>No new infrastructure required for the core feature</li>
+<li>Sysbus already carries lifecycle signals (dispatch, build, deploy, session events)</li>
+<li>We just need agents to emit signals, and a UI to consume them</li>
+</ul>
+
+<h3>What Needs to Emit Signals</h3>
+
+<table>
+<tr><th>Source</th><th>Signal type</th><th>How</th></tr>
+<tr><td>Supervisor dispatch</td><td><code>work:dispatched</code></td><td>Already emit <code>dispatch:sending</code> &mdash; extend with work unit metadata</td></tr>
+<tr><td>Teammate agent</td><td><code>work:heartbeat</code></td><td>New: periodic POST to sysbus from worktree agent (every 60s)</td></tr>
+<tr><td>Teammate completion</td><td><code>work:done</code></td><td>New: emit on PR creation or clean exit</td></tr>
+<tr><td>Shroom job</td><td><code>work:result</code></td><td>Already publish results to chatbus &mdash; bus-follower could relay to sysbus</td></tr>
+<tr><td>Remote box</td><td><code>work:heartbeat</code></td><td>New: remote sysbus bridge or HTTP POST from remote agent</td></tr>
+<tr><td>External (EAS, GH)</td><td><code>work:external</code></td><td>Cron-based poll, publish to sysbus</td></tr>
+</table>
+
+<h2>UI: The Sidebar</h2>
+
+<p>A collapsible sidebar panel (like the mobile simulator tile) showing active work:</p>
+
+<div class="scenario">
+<div class="label">Mockup</div>
+<pre style="margin:0;background:none;padding:0;font-size:0.82rem;color:var(--text-muted)">
+┌─ Active Work ─────────────────────────┐
+│                                       │
+│  ● Fix #243: mute TTS         2m ago  │
+│    teammate · auto/fix-243    local   │
+│                                       │
+│  ● Stream lib research        5m ago  │
+│    teammate · auto/stream     local   │
+│                                       │
+│  ◐ Build bridge              building │
+│    shroom · builder           docker  │
+│                                       │
+│  ○ EAS iOS preview           queued   │
+│    external · eas-build       expo    │
+│                                       │
+│  ⚠ Fix #240: timestamp       12m ago  │
+│    teammate · auto/fix-240    stale   │
+│                                       │
+│  ✓ Fix #241: auth (PR #245)     done  │
+│    teammate · auto/fix-241    merged  │
+│                                       │
+├───────────────────────────────────────┤
+│  [+ Dispatch]  [Refresh]  [History]   │
+└───────────────────────────────────────┘
+</pre>
+</div>
+
+<h3>Interactions</h3>
+
+<ul>
+<li><strong>Click a work unit</strong> &mdash; expand to show: last heartbeat, branch, commit log, PR link, agent output tail</li>
+<li><strong>Dispatch button</strong> &mdash; open a form: select agent type, describe task, pick branch name. Supervisor creates the work unit and dispatches.</li>
+<li><strong>Kill / Retry</strong> &mdash; for stale or failed units, offer to kill the process or re-dispatch</li>
+<li><strong>Auto-collapse done items</strong> &mdash; after 10 minutes, done items move to a "Recent" section</li>
+</ul>
+
+<h2>Distributed: Remote Boxes</h2>
+
+<p>When agents run on different machines (e.g., a beefy GPU box for inference, a CI runner for builds), we need cross-host visibility. Two approaches:</p>
+
+<h3>Option A: Sysbus Bridge (Recommended)</h3>
+
+<p>Each remote box runs a lightweight agent that forwards local sysbus events to the central sysbus. The dispatch board doesn't need to know about networking &mdash; it just sees events with different <code>host</code> fields.</p>
+
+<pre><code># Remote box agent — forward events to central sysbus
+while read event; do
+  curl -sf -X POST $CENTRAL_SYSBUS/events \
+    -H 'Content-Type: application/json' \
+    -d "{\"host\":\"$HOSTNAME\", ...}" 2>/dev/null || true
+done</code></pre>
+
+<h3>Option B: Pull-Based Discovery</h3>
+
+<p>Central sysbus polls remote boxes for their work state. Simpler for the remote side (just expose a <code>/status</code> endpoint) but adds latency and requires the central system to know about all boxes.</p>
+
+<p><strong>Recommendation:</strong> Option A. Push-based means the board updates in real-time, and adding a new box just means running the bridge agent on it. No central configuration needed.</p>
+
+<h2>Teammates</h2>
+
+<p>Worktree teammates are the most common work unit today. They need the lightest-weight integration:</p>
+
+<ol>
+<li><strong>On dispatch:</strong> Supervisor emits <code>work:dispatched</code> with branch, title, agent type</li>
+<li><strong>During execution:</strong> The mailman coordinator already monitors worktree output. Add periodic sysbus heartbeat (every 60s) with: current file being edited, test results, progress estimate</li>
+<li><strong>On completion:</strong> Emit <code>work:done</code> with PR URL or commit hash</li>
+<li><strong>On failure:</strong> Emit <code>work:failed</code> with error summary</li>
+</ol>
+
+<p>The teammate doesn't need to know about the dispatch board. The supervisor (or mailman coordinator) handles all signaling. The teammate just does its work.</p>
+
+<h2>Implementation Plan</h2>
+
+<h3>Phase 1: Local visibility (no new services)</h3>
+
+<ol>
+<li>Define <code>WorkUnit</code> type in <code>shared/core/</code></li>
+<li>Extend sysbus event types: <code>work:dispatched</code>, <code>work:heartbeat</code>, <code>work:done</code>, <code>work:failed</code></li>
+<li>Build dispatch board tile (React, same pattern as mobile-sim-react.tsx)</li>
+<li>Wire supervisor dispatch to emit work events</li>
+<li>Add stale detection (timer-based, client-side)</li>
+</ol>
+
+<h3>Phase 2: Shroom and external integration</h3>
+
+<ol>
+<li>Bus-follower relays shroom results to sysbus as work events</li>
+<li>Cron-based EAS/GitHub status polling, publish as <code>work:external</code></li>
+<li>Builder shroom emits work signals directly</li>
+</ol>
+
+<h3>Phase 3: Distributed</h3>
+
+<ol>
+<li>Sysbus bridge agent for remote boxes</li>
+<li>Host field in work units, filter/group by host in UI</li>
+<li>Remote agent discovery (registry-based or mDNS)</li>
+</ol>
+
+<h3>Phase 4: Launch from UI</h3>
+
+<ol>
+<li>Dispatch form in sidebar: task description, agent type, branch</li>
+<li>POST to admin API, which creates branch + dispatches via bus</li>
+<li>Template library: common task types (fix issue, write doc, research)</li>
+</ol>
+
+<h2>What We Don't Need</h2>
+
+<p>Explicit non-goals, to keep this from becoming a project management tool:</p>
+
+<ul>
+<li><strong>No task dependencies or DAGs.</strong> If work has dependencies, the supervisor sequences it. The board just shows what's running.</li>
+<li><strong>No priority queues.</strong> The supervisor decides what to dispatch and when. The board is a mirror, not a scheduler.</li>
+<li><strong>No user assignment.</strong> Work is dispatched to agent types, not people. The registry maps types to implementations.</li>
+<li><strong>No Gantt charts or timelines.</strong> We care about "is it running?" and "is it done?", not "when will it finish?"</li>
+<li><strong>No persistence beyond the session.</strong> Done work items are ephemeral in the board. Durable records live in git (commits, PRs) and GitHub issues. The board is a live view, not a database.</li>
+</ul>
+
+<h2>Relationship to Existing Systems</h2>
+
+<table>
+<tr><th>System</th><th>Role</th><th>Changes</th></tr>
+<tr><td>TASKS.md</td><td>Human-readable task list</td><td>No change &mdash; remains the canonical "what to do" list</td></tr>
+<tr><td>GitHub Issues</td><td>Durable work items</td><td>No change &mdash; dispatch board links to issues but doesn't replace them</td></tr>
+<tr><td>Scheduler</td><td>Agent lifecycle (wake/sleep)</td><td>Emits work signals when waking/suspending agents</td></tr>
+<tr><td>Bus-follower</td><td>Task classification</td><td>Optionally relays classified tasks as work events</td></tr>
+<tr><td>Sysbus</td><td>Event transport</td><td>New event types: <code>work:*</code></td></tr>
+<tr><td>Mailman</td><td>Multi-agent coordination</td><td>Coordinator emits work signals during orchestration</td></tr>
+<tr><td>Registry</td><td>Agent/service catalog</td><td>Board reads registry for agent metadata (type, host, status)</td></tr>
+</table>
+
+<h2>Open Questions</h2>
+
+<ul>
+<li><strong>Heartbeat frequency vs. sysbus load.</strong> 60s heartbeats from 4 teammates = 4 events/min. Fine for now. At 20+ agents, consider aggregation.</li>
+<li><strong>Teammate output tailing.</strong> Should the board show live output from worktree agents? Useful but potentially noisy. Maybe on-demand (click to expand).</li>
+<li><strong>Remote auth.</strong> Sysbus bridge from remote boxes needs authentication. Mutual TLS? Shared secret? Depends on network topology.</li>
+<li><strong>Mobile view.</strong> The sidebar works on desktop. On mobile, maybe a floating badge with count of active items, tap to expand.</li>
+</ul>
+
+</body>
+</html>

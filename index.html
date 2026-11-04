@@ -14,7 +14,48 @@
 <h2>Message Mechanics</h2>
 <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.8rem;">
   How messages flow through the system — from voice to agent and back.
+  A four-part series that drove key architecture decisions.
 </p>
+
+<div class="card">
+  <div class="title"><a href="message-mechanics.html">Fundamentals</a></div>
+  <div class="desc">
+    <span class="tag series">Series</span>
+    IDs, ordering, delivery guarantees, the two buses, voice layer, and the blocking problem.
+  </div>
+</div>
+
+<div class="card">
+  <div class="title"><a href="message-flow-visual.html">Scenarios</a></div>
+  <div class="desc">
+    <span class="tag series">Series</span>
+    Seven visual walkthroughs: basic chat, voice pipeline, reconnect, multi-tab, agent routing, work dispatch.
+  </div>
+</div>
+
+<div class="card">
+  <div class="title"><a href="message-mechanics-decisions.html">Decisions</a></div>
+  <div class="desc">
+    <span class="tag series">Series</span>
+    What we keep, change, and need to explore. Dual ID model, sequence numbers, session manager.
+  </div>
+</div>
+
+<div class="card">
+  <div class="title"><a href="stream-library.html">Stream Library</a></div>
+  <div class="desc">
+    <span class="tag series">Series</span>
+    PR/FAQ for the unified stream library — six layers (L0-L5) from bytes to business logic.
+  </div>
+</div>
+
+<div class="card">
+  <div class="title"><a href="stream-library-guide.html">Stream Library — Code Guide</a></div>
+  <div class="desc">
+    <span class="tag new">New</span>
+    Walkthrough of the stream library implementation: file map, code extracts, layer-by-layer explanation.
+  </div>
+</div>
 
 <div class="card">
   <div class="title"><a href="stream-migration-summary.html">Stream Migration Summary</a></div>
@@ -25,18 +66,84 @@
 </div>
 
 <div class="card">
-  <div class="title">Stream Library (coming soon)</div>
+  <div class="title"><a href="stream-library-research.html">Stream Library Research</a></div>
   <div class="desc">
-    <span class="tag series">Series</span>
-    Six layers (L0-L5) from bytes to business logic. Unified messaging for web and mobile.
+    <span class="tag standalone">Research</span>
+    Survey of existing TypeScript stream and messaging libraries as alternatives.
+  </div>
+</div>
+
+<h2>State</h2>
+<p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.8rem;">
+  Formalizing state across client, server, and bus. Executable scenarios as docs + tests.
+</p>
+
+<div class="card">
+  <div class="title"><a href="state-fundamentals.html">State Fundamentals</a></div>
+  <div class="desc">
+    <span class="tag new">New</span>
+    Where state lives today, the problems, executable scenario vision, and reference material
+    (event sourcing, The Log, Elm/Redux, Rust ownership, CRDTs).
+  </div>
+</div>
+
+<h2>Projects</h2>
+<p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.8rem;">
+  Independent explorations and ideas, each in their own context.
+</p>
+
+<div class="card">
+  <div class="title"><a href="projects/game/intro.html">Game: Introduction</a></div>
+  <div class="desc">
+    <span class="tag new">New</span>
+    Pixel art game experiments with Godot 4 + SpriteLab. Lovecraftian theme — dark blues, teals, purples.
   </div>
 </div>
 
 <div class="card">
-  <div class="title">Message Flow Scenarios (coming soon)</div>
+  <div class="title"><a href="projects/game/lighthouse.html">Game: Sprite Experiments</a></div>
   <div class="desc">
-    <span class="tag series">Series</span>
-    Visual walkthroughs: basic chat, voice pipeline, reconnect, multi-tab, agent routing, work dispatch.
+    <span class="tag new">New</span>
+    SpriteLab prompt iteration — eye cloud, lighthouse, learnings.
+  </div>
+</div>
+
+<div class="card">
+  <div class="title"><a href="projects/game/scene.html">Game: Scene Iteration</a></div>
+  <div class="desc">
+    <span class="tag new">New</span>
+    DALL-E background generation — coastal night scene, cliff ratios, parallax prep.
+  </div>
+</div>
+
+<div class="card">
+  <div class="title"><a href="projects/game/playground.html">Game: Playground</a></div>
+  <div class="desc">
+    <span class="tag new">New</span>
+    Parallax layer editor — toggle layers, adjust position/scale/velocity, animate left-to-right.
+  </div>
+</div>
+
+<h2>Agent Infrastructure</h2>
+<p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.8rem;">
+  How agents are dispatched, tracked, and observed across hosts.
+</p>
+
+<div class="card">
+  <div class="title"><a href="agent-task-management.html">Agent Task Management</a></div>
+  <div class="desc">
+    <span class="tag new">New</span>
+    Dispatch board design: unified sidebar for tracking teammates, shrooms, remote agents, and external builds.
+  </div>
+</div>
+
+<h2>Reference</h2>
+
+<div class="card">
+  <div class="title"><a href="blog-conventions.html">Blog &amp; Doc Conventions</a></div>
+  <div class="desc">
+    <span class="tag standalone">Convention</span>
+    Internal guide: file structure, nav rules, styling, series progression, URL verification.
   </div>
 </div>
 

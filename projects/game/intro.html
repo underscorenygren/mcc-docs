@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Project: Introduction</title>
+<style>
+  :root {
+    --bg: #0a0a1a;
+    --surface: #111128;
+    --surface2: #1a1a3e;
+    --text: #c8c8e0;
+    --text-muted: #7878a0;
+    --accent: #6a4c93;
+    --accent2: #1b998b;
+    --link: #4da8da;
+    --code-bg: #080818;
+    --border: #252548;
+    --eldritch: #2d1b69;
+    --deep-teal: #0d7377;
+    --cosmic: #4a1942;
+    --fog: #3a3a6a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.8;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 2.2rem; font-weight: 700; color: #d8d8f0; margin-bottom: 0.5rem;
+    text-shadow: 0 0 30px rgba(106, 76, 147, 0.3);
+  }
+  .subtitle { color: var(--text-muted); font-size: 1.05rem; margin-bottom: 0.5rem; line-height: 1.6; }
+  .meta { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2rem; font-family: sans-serif; }
+  h2 {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 1.5rem; font-weight: 600; color: #d0d0e8;
+    margin-top: 3rem; margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;
+  }
+  h3 {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 1.15rem; font-weight: 600; color: var(--accent2);
+    margin-top: 1.8rem; margin-bottom: 0.8rem;
+  }
+  p { margin-bottom: 1rem; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: #d8d8f0; }
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    background: var(--code-bg); padding: 0.15em 0.4em;
+    border-radius: 3px; font-size: 0.88em; color: var(--accent);
+  }
+  pre {
+    background: var(--code-bg); border-radius: 6px;
+    padding: 1rem 1.25rem; margin-bottom: 1rem;
+    overflow-x: auto; font-size: 0.85em; line-height: 1.6;
+  }
+  pre code { background: none; padding: 0; }
+  ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+  li { margin-bottom: 0.4rem; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+  .tool-card {
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    border-left: 3px solid var(--border);
+  }
+  .tool-card.primary { border-left-color: var(--accent); }
+  .tool-card.secondary { border-left-color: var(--accent2); }
+  .tool-card .tool-name {
+    font-family: sans-serif; font-weight: 600; color: #d8d8f0;
+    margin-bottom: 0.3rem; font-size: 1.05rem;
+  }
+  .tool-card .tool-role {
+    font-family: sans-serif; font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 0.1em; margin-bottom: 0.4rem;
+  }
+  .tool-card.primary .tool-role { color: var(--accent); }
+  .tool-card.secondary .tool-role { color: var(--accent2); }
+  .tool-card .tool-body { color: var(--text-muted); font-size: 0.9rem; }
+  .tool-card .tool-link { font-family: sans-serif; font-size: 0.85rem; margin-top: 0.4rem; }
+
+  .palette {
+    display: flex; gap: 0; margin-bottom: 1.5rem; border-radius: 6px; overflow: hidden;
+  }
+  .palette .swatch {
+    flex: 1; height: 60px; display: flex; align-items: flex-end;
+    padding: 4px 8px; font-family: monospace; font-size: 0.7rem; color: rgba(255,255,255,0.6);
+  }
+
+  .example-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .example-box .ex-title {
+    font-family: sans-serif; font-weight: 600; color: #d8d8f0;
+    margin-bottom: 0.5rem;
+  }
+
+  .pixel-grid {
+    display: grid;
+    gap: 1px;
+    width: fit-content;
+    margin: 1rem auto;
+    background: var(--code-bg);
+    padding: 1px;
+    border-radius: 4px;
+    image-rendering: pixelated;
+  }
+  .pixel-grid .px {
+    width: 8px; height: 8px;
+  }
+
+  .reference {
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    border-left: 3px solid var(--fog);
+  }
+  .reference .ref-title { font-weight: 600; color: #d8d8f0; margin-bottom: 0.2rem; font-family: sans-serif; }
+  .reference .ref-body { color: var(--text-muted); font-size: 0.9rem; }
+
+  .empty-slot {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>Game Project: Introduction</h1>
+<p class="subtitle">
+  Pixel art game experiments with Godot 4 and AI-generated assets.
+  Theme: Lovecraftian cosmic horror — dark, atmospheric, unknowable.
+</p>
+<p class="meta">Started: 2026-10-16 · Status: Exploration</p>
+
+<nav style="padding: 0.8rem 1.25rem; background: var(--surface); border-radius: 6px; font-family: sans-serif; font-size: 0.9rem; margin-bottom: 1.5rem;">
+  <div style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Game project</div>
+  <div><strong style="color: #d8d8f0;">Introduction</strong> (this page)</div>
+  <div><a href="lighthouse.html">The Lighthouse at Innsmouth Bay</a> — animated scene demo</div>
+  <div style="margin-top: 0.5rem; font-size: 0.85rem;"><a href="../../index.html">All docs</a></div>
+</nav>
+
+<hr>
+
+<h2>The palette</h2>
+
+<p>
+  Lovecraft's world is blue-black oceans, phosphorescent fog, nameless
+  colors from space, and the sickly glow of things that shouldn't exist.
+  The palette is constrained — no bright reds, no warm yellows. Everything
+  is cold, deep, and slightly wrong.
+</p>
+
+<div class="palette">
+  <div class="swatch" style="background: #0a0a1a;">#0a0a1a</div>
+  <div class="swatch" style="background: #111128;">#111128</div>
+  <div class="swatch" style="background: #1a1a3e;">#1a1a3e</div>
+  <div class="swatch" style="background: #2d1b69;">#2d1b69</div>
+  <div class="swatch" style="background: #4a1942;">#4a1942</div>
+  <div class="swatch" style="background: #6a4c93;">#6a4c93</div>
+  <div class="swatch" style="background: #0d7377;">#0d7377</div>
+  <div class="swatch" style="background: #1b998b;">#1b998b</div>
+  <div class="swatch" style="background: #3a3a6a;">#3a3a6a</div>
+  <div class="swatch" style="background: #c8c8e0;">#c8c8e0</div>
+</div>
+
+<p>
+  This is a starting palette — 10 colors. Pixel art works best with tight palettes
+  (16-32 colors max). We'll refine as we see things in-engine.
+</p>
+
+<!-- Inline pixel art demo: a simple 16x16 lantern/tentacle thing using the palette -->
+<div class="example-box">
+  <div class="ex-title">What 16x16 pixel art looks like at this palette</div>
+  <p style="color: var(--text-muted); font-size: 0.9rem;">
+    Below is a hand-coded CSS pixel grid — a tiny cosmic eye. This is the level
+    of detail we're working at. Each sprite is 16x16 or 32x32 pixels. At this
+    resolution, every pixel is a design decision.
+  </p>
+  <div class="pixel-grid" style="grid-template-columns: repeat(12, 8px);">
+    <!-- Row 1 --> <div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#111128"></div><div class="px" style="background:#111128"></div><div class="px" style="background:#111128"></div><div class="px" style="background:#111128"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div>
+    <!-- Row 2 --> <div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#111128"></div><div class="px" style="background:#1a1a3e"></div><div class="px" style="background:#2d1b69"></div><div class="px" style="background:#3a3a6a"></div><div class="px" style="background:#3a3a6a"></div><div class="px" style="background:#2d1b69"></div><div class="px" style="background:#1a1a3e"></div><div class="px" style="background:#111128"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div>
+    <!-- Row 3 --> <div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#111128"></div><div class="px" style="background:#2d1b69"></div><div class="px" style="background:#6a4c93"></div><div class="px" style="background:#0d7377"></div><div class="px" style="background:#1b998b"></div><div class="px" style="background:#1b998b"></div><div class="px" style="background:#0d7377"></div><div class="px" style="background:#6a4c93"></div><div class="px" style="background:#2d1b69"></div><div class="px" style="background:#111128"></div><div class="px" style="background:#0a0a1a"></div>
+    <!-- Row 4 --> <div class="px" style="background:#111128"></div><div class="px" style="background:#1a1a3e"></div><div class="px" style="background:#6a4c93"></div><div class="px" style="background:#1b998b"></div><div class="px" style="background:#c8c8e0"></div><div class="px" style="background:#c8c8e0"></div><div class="px" style="background:#c8c8e0"></div><div class="px" style="background:#c8c8e0"></div><div class="px" style="background:#1b998b"></div><div class="px" style="background:#6a4c93"></div><div class="px" style="background:#1a1a3e"></div><div class="px" style="background:#111128"></div>
+    <!-- Row 5 --> <div class="px" style="background:#111128"></div><div class="px" style="background:#2d1b69"></div><div class="px" style="background:#0d7377"></div><div class="px" style="background:#c8c8e0"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#c8c8e0"></div><div class="px" style="background:#c8c8e0"></div><div class="px" style="background:#0d7377"></div><div class="px" style="background:#2d1b69"></div><div class="px" style="background:#111128"></div>
+    <!-- Row 6 --> <div class="px" style="background:#111128"></div><div class="px" style="background:#2d1b69"></div><div class="px" style="background:#0d7377"></div><div class="px" style="background:#c8c8e0"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#2d1b69"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#c8c8e0"></div><div class="px" style="background:#0d7377"></div><div class="px" style="background:#2d1b69"></div><div class="px" style="background:#111128"></div>
+    <!-- Row 7 --> <div class="px" style="background:#111128"></div><div class="px" style="background:#1a1a3e"></div><div class="px" style="background:#6a4c93"></div><div class="px" style="background:#1b998b"></div><div class="px" style="background:#c8c8e0"></div><div class="px" style="background:#c8c8e0"></div><div class="px" style="background:#c8c8e0"></div><div class="px" style="background:#c8c8e0"></div><div class="px" style="background:#1b998b"></div><div class="px" style="background:#6a4c93"></div><div class="px" style="background:#1a1a3e"></div><div class="px" style="background:#111128"></div>
+    <!-- Row 8 --> <div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#111128"></div><div class="px" style="background:#2d1b69"></div><div class="px" style="background:#6a4c93"></div><div class="px" style="background:#0d7377"></div><div class="px" style="background:#1b998b"></div><div class="px" style="background:#1b998b"></div><div class="px" style="background:#0d7377"></div><div class="px" style="background:#6a4c93"></div><div class="px" style="background:#2d1b69"></div><div class="px" style="background:#111128"></div><div class="px" style="background:#0a0a1a"></div>
+    <!-- Row 9 --> <div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#111128"></div><div class="px" style="background:#1a1a3e"></div><div class="px" style="background:#2d1b69"></div><div class="px" style="background:#3a3a6a"></div><div class="px" style="background:#3a3a6a"></div><div class="px" style="background:#2d1b69"></div><div class="px" style="background:#1a1a3e"></div><div class="px" style="background:#111128"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div>
+    <!-- Row 10 --> <div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#111128"></div><div class="px" style="background:#111128"></div><div class="px" style="background:#111128"></div><div class="px" style="background:#111128"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div><div class="px" style="background:#0a0a1a"></div>
+  </div>
+  <p style="color: var(--text-muted); font-size: 0.8rem; text-align: center;">
+    A cosmic eye — 12x10 pixels, 10-color palette. Pure CSS, no images.
+  </p>
+</div>
+
+<hr>
+
+<h2>The toolkit</h2>
+
+<div class="tool-card primary">
+  <div class="tool-role">Engine</div>
+  <div class="tool-name">Godot 4</div>
+  <div class="tool-body">
+    Open-source game engine with a dedicated 2D renderer. Pixel-perfect rendering
+    out of the box. GDScript (Python-like) for logic. Cross-platform export
+    (desktop, web, mobile). No royalties, no subscription.
+    <br><br>
+    Godot's 2D isn't an afterthought — it has its own rendering pipeline, physics,
+    tilemaps, and animation system. For pixel art, you set the viewport to your
+    target resolution (e.g. 320x180) and let the engine scale up with nearest-neighbor
+    filtering. Every pixel stays crisp.
+  </div>
+  <div class="tool-link">
+    <a href="https://godotengine.org/">godotengine.org</a> ·
+    <a href="https://docs.godotengine.org/en/stable/getting_started/first_2d_game/index.html">First 2D game tutorial</a> ·
+    <a href="https://www.youtube.com/watch?v=dZ2zN3h1Kp4">Pixel art in Godot (video)</a>
+  </div>
+</div>
+
+<div class="tool-card primary">
+  <div class="tool-role">AI Art</div>
+  <div class="tool-name">SpriteLab</div>
+  <div class="tool-body">
+    AI pixel art generator built for game devs. Outputs game-ready sprites with
+    clean 1px outlines, limited palettes, and transparent backgrounds. Supports:
+    sprites, animations, 4/8-direction rotations, tilesets, isometric props, UI kits.
+    Direct Godot export. REST API and MCP server available.
+    <br><br>
+    The key advantage over generic AI image generators: SpriteLab produces <em>actual</em>
+    pixel art at exact target sizes, not high-res images that look pixelated.
+    Palette locking lets us feed our Lovecraftian palette and get consistent output.
+  </div>
+  <div class="tool-link">
+    <a href="https://spritelab.dev/">spritelab.dev</a>
+  </div>
+</div>
+
+<div class="tool-card secondary">
+  <div class="tool-role">Art Editor</div>
+  <div class="tool-name">Aseprite</div>
+  <div class="tool-body">
+    The standard pixel art editor. For cleaning up AI output, animating sprites,
+    managing palettes, and exporting sprite sheets. $20 one-time purchase
+    (or compile from source for free).
+  </div>
+  <div class="tool-link">
+    <a href="https://www.aseprite.org/">aseprite.org</a>
+  </div>
+</div>
+
+<div class="tool-card secondary">
+  <div class="tool-role">AI Art (Alternative)</div>
+  <div class="tool-name">PixelLab</div>
+  <div class="tool-body">
+    Best for animated characters — treats sprites as skeletons you can pose and
+    rotate, not just static images. Has an Aseprite extension for direct integration.
+    Good for characters that need multiple animation frames.
+  </div>
+  <div class="tool-link">
+    <a href="https://www.pixellab.ai/">pixellab.ai</a>
+  </div>
+</div>
+
+<hr>
+
+<h2>What's achievable</h2>
+
+<h3>With AI + Godot, no art skill</h3>
+
+<div class="example-box">
+  <div class="ex-title">Prototype scope (weeks, not months)</div>
+  <ul>
+    <li><strong>Top-down exploration</strong> — a character walks through Lovecraftian environments. Tilesets for stone walls, fog, water, eldritch geometry. SpriteLab can generate all of these.</li>
+    <li><strong>Simple combat or puzzle</strong> — turn-based or real-time. Godot handles both. AI generates enemy sprites and effects.</li>
+    <li><strong>Atmosphere</strong> — Godot's lighting, particle systems, and shaders can add fog, flickering lights, screen distortion. This is where the Lovecraft feel comes alive — the code, not the art, creates dread.</li>
+    <li><strong>Sound</strong> — ambient drones, wet footsteps, distant whispers. Free sound libraries + our synth generation experience.</li>
+  </ul>
+</div>
+
+<div class="example-box">
+  <div class="ex-title">Game concepts that fit the theme</div>
+  <ul>
+    <li><strong>Arkham investigator</strong> — explore a town, talk to NPCs, find clues. Sanity mechanic. Classic Lovecraft structure.</li>
+    <li><strong>Deep sea descent</strong> — side-scrolling or top-down. Going deeper into an underwater ruin. Each level is darker, stranger. Pressure mechanic.</li>
+    <li><strong>Dream logic</strong> — rooms that don't connect sensibly. Geometry shifts. A roguelike where the map is unreliable.</li>
+    <li><strong>Lighthouse keeper</strong> — you maintain a lighthouse on a remote island. Things come from the sea at night. Tower defense meets survival horror.</li>
+  </ul>
+</div>
+
+<h3>What needs a human artist (later)</h3>
+
+<ul>
+  <li><strong>Character personality</strong> — AI can generate a character, but making it <em>feel</em> like a specific person takes iteration and taste</li>
+  <li><strong>Animation polish</strong> — AI gives you the keyframes, a human adds the in-betweens that make it feel alive</li>
+  <li><strong>Tileset coherence</strong> — individual tiles look fine, but making a full environment feel like one world takes art direction</li>
+  <li><strong>UI/menu design</strong> — functional UI is easy, beautiful UI is an art skill</li>
+</ul>
+
+<hr>
+
+<h2>Getting started</h2>
+
+<ol>
+  <li><strong>Install Godot 4</strong> — download from <a href="https://godotengine.org/download">godotengine.org/download</a>. It's a single binary, no installer.</li>
+  <li><strong>Run the first 2D tutorial</strong> — <a href="https://docs.godotengine.org/en/stable/getting_started/first_2d_game/index.html">docs.godotengine.org/first_2d_game</a>. Takes about an hour. Covers movement, collisions, scoring.</li>
+  <li><strong>Set up pixel-perfect rendering</strong> — Project Settings → Display → Window → Viewport Width: 320, Height: 180, Stretch Mode: viewport, Aspect: keep. This gives you a tiny canvas that scales up crisp.</li>
+  <li><strong>Generate first assets on SpriteLab</strong> — try a character sprite with our palette. Export as PNG sprite sheet.</li>
+  <li><strong>Import into Godot</strong> — drag PNG into project, set import filter to "Nearest" (not linear). Create an AnimatedSprite2D node.</li>
+</ol>
+
+<hr>
+
+<h2>Resources</h2>
+
+<div class="reference">
+  <div class="ref-title">Godot documentation</div>
+  <div class="ref-body"><a href="https://docs.godotengine.org/en/stable/">docs.godotengine.org</a> — comprehensive, well-written. The "Getting Started" section is genuinely good.</div>
+</div>
+
+<div class="reference">
+  <div class="ref-title">Pixel art fundamentals</div>
+  <div class="ref-body"><a href="https://lospec.com/pixel-art-tutorials">lospec.com/pixel-art-tutorials</a> — curated tutorials from basic to advanced. Lospec also has a <a href="https://lospec.com/palette-list">palette database</a> — search "dark", "cosmic", "horror" for Lovecraftian palettes.</div>
+</div>
+
+<div class="reference">
+  <div class="ref-title"><a href="https://store.steampowered.com/app/257850/Hyper_Light_Drifter/">Hyper Light Drifter</a></div>
+  <div class="ref-body">
+    The north star. The way the music (Disasterpeace) crescendos over panoramic views of
+    forgotten plains — that's the feeling we're chasing. Atmospheric pixel art at its absolute
+    peak. The world tells its story through ruins, color, and silence. The soundtrack is
+    inseparable from the visuals.
+    <br><em style="color: var(--text-muted);">Personal favorite. The mood, the music, the vistas.</em>
+  </div>
+</div>
+
+<div class="reference">
+  <div class="ref-title"><a href="https://store.steampowered.com/app/367520/Hollow_Knight/">Hollow Knight</a></div>
+  <div class="ref-body">
+    Both games. The hand-drawn art direction is beyond what AI can replicate — but the
+    world-building, atmosphere, and how each area has a distinct mood through color and
+    ambient sound is directly relevant. The interconnected map design is also worth studying.
+    <br><em style="color: var(--text-muted);">The art ceiling we aspire to, knowing AI gets us partway there.</em>
+  </div>
+</div>
+
+<div class="reference">
+  <div class="ref-title"><a href="https://store.steampowered.com/app/1562430/DREDGE/">DREDGE</a></div>
+  <div class="ref-body">
+    Probably the closest reference to what we're attempting — fishing adventure with
+    Lovecraftian horror lurking beneath the surface. Sinister undercurrent, mysterious
+    archipelago, dredging up long-buried secrets. Proves dark maritime atmosphere works
+    as a game. Only complaint: too short. We should plan for enough content to sustain
+    the atmosphere.
+    <br><em style="color: var(--text-muted);">Closest comp. Proof that this scope and mood work.</em>
+  </div>
+</div>
+
+<div class="reference">
+  <div class="ref-title"><a href="https://store.steampowered.com/app/262060/Darkest_Dungeon/">Darkest Dungeon</a></div>
+  <div class="ref-body">
+    Not pixel art, but the mood and Lovecraftian tone are spot-on. The stress/sanity
+    mechanics are a direct influence. A bit too gory for our taste — we lean more toward
+    cosmic dread and atmosphere than body horror.
+    <br><em style="color: var(--text-muted);">Mood reference, not art reference. Tone down the gore, keep the dread.</em>
+  </div>
+</div>
+
+<div class="reference">
+  <div class="ref-title">Other references</div>
+  <div class="ref-body"><a href="https://store.steampowered.com/app/774361/Blasphemous/"><strong>Blasphemous</strong></a> (dark pixel art combat), <a href="https://store.steampowered.com/app/304650/Sunless_Sea/"><strong>Sunless Sea</strong></a> (Lovecraftian themes + maritime atmosphere), <a href="https://store.steampowered.com/app/312520/Rain_World/"><strong>Rain World</strong></a> (ecosystem-driven pixel art world).</div>
+</div>
+
+<div class="reference">
+  <div class="ref-title">GDScript quick reference</div>
+  <div class="ref-body"><a href="https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_basics.html">GDScript basics</a> — if you know Python, you know 80% of GDScript. Key differences: <code>var</code> instead of none, <code>func</code> instead of <code>def</code>, signals instead of callbacks.</div>
+</div>
+
+<div class="example-box">
+  <div class="ex-title">Scene demos</div>
+  <ul>
+    <li><a href="lighthouse.html"><strong>The Lighthouse at Innsmouth Bay</strong></a> — animated CSS scene. Twinkling stars, sweeping beam, drifting fog, things in the water. No images, no JS.</li>
+  </ul>
+</div>
+
+<div class="empty-slot">Your reactions — which game concept speaks to you? What should the first prototype target?</div>
+
+
+</body>
+</html>

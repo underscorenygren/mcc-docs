@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Message Mechanics: Reactions & Decisions</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --text: #e0e0e0;
+    --text-muted: #a0a0b0;
+    --accent: #e94560;
+    --accent2: #0f9b8e;
+    --link: #5dade2;
+    --code-bg: #0d1b2a;
+    --border: #2a2a4a;
+    --keep: #2d6a4f;
+    --change: #b56727;
+    --explore: #5c5caa;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #fff;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+  }
+  .meta {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 2rem;
+  }
+  .meta a { color: var(--link); text-decoration: none; }
+  .meta a:hover { text-decoration: underline; }
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    color: #fff;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-top: 1.8rem;
+    margin-bottom: 0.8rem;
+    color: var(--accent2);
+  }
+  p { margin-bottom: 1rem; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: #fff; }
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    background: var(--code-bg);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+    font-size: 0.88em;
+    color: var(--accent);
+  }
+  ul, ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+  li { margin-bottom: 0.4rem; }
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* Decision cards */
+  .decision {
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  .decision .topic {
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 0.4rem;
+    font-size: 1.05rem;
+  }
+  .decision .verdict {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+  }
+  .decision .body { color: var(--text-muted); font-size: 0.95rem; }
+  .decision .body p:last-child { margin-bottom: 0; }
+
+  .decision.keep { background: var(--surface); border-left: 3px solid var(--keep); }
+  .decision.keep .verdict { background: var(--keep); color: #fff; }
+
+  .decision.change { background: var(--surface); border-left: 3px solid var(--change); }
+  .decision.change .verdict { background: var(--change); color: #fff; }
+
+  .decision.explore { background: var(--surface); border-left: 3px solid var(--explore); }
+  .decision.explore .verdict { background: var(--explore); color: #fff; }
+
+  /* Reaction / commentary */
+  .reaction {
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    border-left: 3px solid var(--accent2);
+  }
+  .reaction .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent2);
+    margin-bottom: 0.3rem;
+  }
+
+  .empty-slot {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+  }
+  .series-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    background: var(--surface);
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+  }
+  .series-nav .series-label {
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-right: 0.25rem;
+  }
+  .series-nav a {
+    color: var(--link);
+    text-decoration: none;
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+  }
+  .series-nav a:hover { background: var(--surface2); }
+  .series-nav a.current {
+    color: #fff;
+    background: var(--surface2);
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<div class="series-nav">
+  <span class="series-label">Series:</span>
+  <a href="message-mechanics.html">Fundamentals</a>
+  <a href="message-flow-visual.html">Scenarios</a>
+  <a href="message-mechanics-decisions.html" class="current">Decisions</a>
+  <a href="stream-library.html">Stream Library</a>
+  <a href="stream-library-research.html">Library Survey</a>
+</div>
+
+<h1>Message Mechanics: Reactions & Decisions</h1>
+<p class="subtitle">
+  Companion to <a href="message-mechanics.html">Message Mechanics</a>.
+  My takes on what we keep, what we change, and what needs more thought.
+</p>
+<p class="meta">Last updated: 2026-10-17</p>
+
+<hr>
+
+<h2>Message IDs</h2>
+
+<div class="decision keep">
+  <div class="verdict">Keep</div>
+  <div class="topic">Client-generated IDs with type prefixes</div>
+  <div class="body">
+    <p>
+      The <code>chat_</code> / <code>reply_</code> / <code>msg_</code> prefix convention works.
+      It's simple, debuggable (you can tell what generated a message by looking at the ID),
+      and the timestamp component gives rough ordering without coordination.
+    </p>
+  </div>
+</div>
+
+<div class="decision change">
+  <div class="verdict">Change</div>
+  <div class="topic">Eliminate hist_ IDs entirely — subsumed by sequence numbers</div>
+  <div class="body">
+    <p>
+      The <code>hist_</code> fallback IDs were a symptom of not having a proper replay cursor.
+      With server sequence numbers, replay returns original messages with original IDs.
+      No generated fallback IDs, no dedup mismatch. Issue #222 goes away as a side effect.
+    </p>
+  </div>
+</div>
+
+<div class="decision change">
+  <div class="verdict">Change</div>
+  <div class="topic">Add server-assigned sequence numbers — dual ID model</div>
+  <div class="body">
+    <p>
+      <strong>Decision (2026-10-16):</strong> Move to the industry-standard dual ID model:
+    </p>
+    <ul>
+      <li><strong>Client ID</strong> (<code>chat_xxx</code>) — owned by the sender, used for retry idempotency. Chatbus dedup cache uses this to suppress duplicate sends.</li>
+      <li><strong>Server sequence number</strong> — assigned by chatbus on receipt, per-agent monotonic counter. This becomes the canonical ordering and replay cursor.</li>
+    </ul>
+    <p>
+      This is how WhatsApp, Discord, and S2 work. Replay becomes "give me everything after
+      sequence 47" (gapless) instead of "after this timestamp" (lossy). Eliminates the
+      <code>hist_</code> problem entirely — original IDs survive because there's no reason
+      to generate new ones.
+    </p>
+    <p>
+      Implementation: atomic counter per agent in chatbus, persisted alongside JSONL log.
+      Each log entry gets a <code>seq</code> field. Client subscribe sends
+      <code>{ since_seq: N }</code> instead of timestamp.
+    </p>
+  </div>
+</div>
+
+<hr>
+
+<h2>Ordering</h2>
+
+<div class="decision keep">
+  <div class="verdict">Keep</div>
+  <div class="topic">Per-agent ordering (not global)</div>
+  <div class="body">
+    <p>
+      We don't need total ordering across agents. Each agent conversation is independent.
+      Per-agent JSONL log gives us what we need.
+    </p>
+  </div>
+</div>
+
+<div class="decision change">
+  <div class="verdict">Change</div>
+  <div class="topic">Unbounded log with archival — no hard ring buffer cap</div>
+  <div class="body">
+    <p>
+      <strong>Decision (2026-10-17):</strong> Don't hard-cap the message log. Let it grow
+      unbounded, with a cron task monitoring disk usage to warn before we run out.
+      Messages older than ~2 weeks are low value — archive them to a cheap storage layer
+      (compressed files, cold storage) rather than dropping them.
+    </p>
+    <p>
+      Partial bound: recent messages stay hot and fast, old messages move to cold archive.
+      This gives us the safety of a cap without data loss.
+    </p>
+  </div>
+</div>
+
+<hr>
+
+<h2>Delivery guarantees</h2>
+
+<div class="decision keep">
+  <div class="verdict">Keep</div>
+  <div class="topic">At-most-once for chat</div>
+  <div class="body">
+    <p>
+      Chat messages don't need exactly-once. The two-layer dedup (server TTL + client seenIds)
+      is good enough. Adding ack/retry machinery would complicate everything for minimal gain.
+    </p>
+  </div>
+</div>
+
+<div class="decision change">
+  <div class="verdict">Change</div>
+  <div class="topic">Akka-style work dispatch — sender-side reliability, not message-layer</div>
+  <div class="body">
+    <p>
+      <strong>Decision (2026-10-17):</strong> Don't solve work dispatch reliability in the
+      message layer. Keep delivery guarantees weak (at-most-once is fine for the transport).
+      Instead, build reliability at the supervisor/worker level:
+    </p>
+    <ul>
+      <li>Workers ACK receipt via heartbeat/sysbus-style signals</li>
+      <li>Supervisor monitors ACKs — if a worker stalls or crashes, it re-issues the work</li>
+      <li>Inspired by Akka's "let it crash" model: supervisors own retry logic, not the message bus</li>
+    </ul>
+    <p>
+      This keeps the stream library simple (no exactly-once, no persistent queues at the transport level)
+      and puts recovery logic where it has the most context — the sender.
+    </p>
+  </div>
+</div>
+
+<hr>
+
+<h2>Connections & reconnection</h2>
+
+<div class="decision keep">
+  <div class="verdict">Keep</div>
+  <div class="topic">Cursor-based reconnect with timestamp</div>
+  <div class="body">
+    <p>
+      The <code>since</code> + <code>last: N</code> fallback pattern is solid.
+      Handles both reconnect (delta) and page reload (last N) cleanly.
+    </p>
+  </div>
+</div>
+
+<div class="decision keep">
+  <div class="verdict">Keep</div>
+  <div class="topic">Current replay window (last 50) is fine for now</div>
+  <div class="body">
+    <p>
+      With unbounded storage and archival, the replay window is just about what to show
+      on reconnect. Last 50 messages covers a session. Sequence-based replay (#222) makes
+      this precise. No need to over-engineer yet.
+    </p>
+  </div>
+</div>
+
+<div class="decision change">
+  <div class="verdict">Add</div>
+  <div class="topic">Interruption context: deliver last two messages on agent interrupt</div>
+  <div class="body">
+    <p>
+      When a user interrupts an agent mid-work, the agent's new context should include
+      the <em>last two messages</em>: the one that was interrupted plus the new interrupting
+      message. This gives the agent enough context to understand what was happening and
+      what the user now wants, without replaying the entire conversation.
+    </p>
+    <p>
+      Without this, an interrupted agent only sees the new message and loses the thread
+      of what it was doing. The interrupted message may contain partial results or
+      in-progress status that informs the next action.
+    </p>
+  </div>
+</div>
+
+<hr>
+
+<h2>Architecture</h2>
+
+<div class="decision change">
+  <div class="verdict">Change</div>
+  <div class="topic">Unify sockets, buses, chat into one layered stream library</div>
+  <div class="body">
+    <p>
+      <strong>Decision (2026-10-16):</strong> Instead of separate ChatTransport, BusTransport, etc.,
+      build a single typed stream library with layers. One core abstraction that handles
+      chat, voice, multi-agent, and events — with typed messages at each layer.
+    </p>
+    <p>
+      Today we have: WebSocket (bridge), HTTP pub/sub (chatbus), WebSocket (sysbus),
+      and MCP (agent channels) — four different connection types with overlapping concerns.
+      The goal is one stream primitive with layers for transport, framing, typing, and semantics.
+    </p>
+    <p>
+      Informed by S2's model (append-only, sequence-numbered, typed records) but implemented
+      as our own library, not a dependency.
+    </p>
+  </div>
+</div>
+
+<div class="decision change">
+  <div class="verdict">Change</div>
+  <div class="topic">Message session manager in channel server</div>
+  <div class="body">
+    <p>
+      <strong>Decision (2026-10-16):</strong> Promote the channel server from dumb pipe to
+      stateful session manager. It takes custody of the message chain per agent, tracks
+      per-message state (sent/delivered/processing/responded), maintains the agent cursor,
+      computes lag, emits acks to sysbus, and runs escalation logic.
+    </p>
+    <p>
+      Exposes <code>/agent/{name}/chain</code> HTTP endpoint for state reflection.
+      Start with implicit acks (from reply) + inferred acks (from tool activity).
+      Add explicit <code>ack()</code> tool later.
+    </p>
+  </div>
+</div>
+
+<div class="decision change">
+  <div class="verdict">Change</div>
+  <div class="topic">Not S2 — self-hosted Redis Streams as the message backbone</div>
+  <div class="body">
+    <p>
+      <strong>Decision (2026-10-17):</strong> Instead of S2 (external dependency, cost) or
+      building our own pub/sub from scratch, self-host Redis and use Redis Streams.
+      We have very low volume — a single Redis instance is more than enough.
+    </p>
+    <p>
+      Redis Streams gives us: consumer groups for fan-out, built-in ordering, persistence,
+      ACK/NACK, and mature TS client libraries (ioredis). This replaces the chatbus HTTP
+      pub/sub entirely, letting us focus on L3-L5 (protocol, routing, business logic)
+      instead of reinventing the transport.
+    </p>
+    <p>
+      Research pass (#238) will evaluate Redis Streams alongside pure-TS libraries to
+      confirm this is the right call.
+    </p>
+  </div>
+</div>
+
+<div class="decision change">
+  <div class="verdict">Change</div>
+  <div class="topic">Consumer groups via Redis Streams — fan-out solved</div>
+  <div class="body">
+    <p>
+      <strong>Decision (2026-10-17):</strong> Redis Streams consumer groups handle this natively.
+      Each consumer (notification service, logger, UI client) gets its own consumer group
+      with independent read cursors and ACKs. No custom fan-out code needed.
+    </p>
+  </div>
+</div>
+
+<hr>
+
+<h2>Implementation stack</h2>
+
+<div class="decision change">
+  <div class="verdict">Change</div>
+  <div class="topic">Consider moving to TypeScript-only — drop Go</div>
+  <div class="body">
+    <p>
+      <strong>Decision (2026-10-17):</strong> Evaluate moving away from Go entirely.
+      If we're building the stream library in TS and reimplementing both sides of the pipe,
+      Go doesn't provide unique value. TS everywhere (web, mobile, server) simplifies the
+      stack, shares types, and reduces cognitive overhead.
+    </p>
+    <p>
+      This is a decision to <em>evaluate</em>, not a done deal. #239 tracks the tradeoffs.
+      Must be resolved before starting stream library implementation.
+    </p>
+  </div>
+</div>
+
+<div class="decision change">
+  <div class="verdict">Change</div>
+  <div class="topic">Replace chatbus HTTP pub/sub</div>
+  <div class="body">
+    <p>
+      <strong>Decision (2026-10-17):</strong> The current chatbus uses HTTP POST for publish
+      and HTTP fetch for subscribe. This is legacy from early prototyping — there's no
+      strong reason for HTTP over WebSocket or a proper message broker.
+    </p>
+    <p>
+      HTTP pub/sub adds latency, requires polling, and can't push. Redis Streams (or whatever
+      the research picks) should replace this entirely. The constraint to check: if there
+      <em>was</em> a reason for HTTP (firewall traversal, proxy compatibility), note it
+      so we don't lose it in the rewrite.
+    </p>
+  </div>
+</div>
+
+<hr>
+
+<h2>References that shaped my thinking</h2>
+
+<div class="reaction">
+  <div class="label">Reaction</div>
+  <div class="empty-slot">What was the article you read "back in the day"? Add it here along with what stuck with you from it.</div>
+</div>
+
+<div class="reaction">
+  <div class="label">On S2.dev</div>
+  <div class="empty-slot">Your take on S2 — what's relevant to us, what isn't?</div>
+</div>
+
+<div class="reaction">
+  <div class="label">On Jay Kreps / The Log</div>
+  <div class="empty-slot">What resonated? What doesn't apply to our scale?</div>
+</div>
+
+<hr>
+
+<p class="subtitle" style="margin-top: 2rem; margin-bottom: 0;">
+  Companion to <a href="message-mechanics.html">Message Mechanics</a>
+</p>
+
+</body>
+</html>

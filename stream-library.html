@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stream Library: PR/FAQ</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --text: #e0e0e0;
+    --text-muted: #a0a0b0;
+    --accent: #e94560;
+    --accent2: #0f9b8e;
+    --link: #5dade2;
+    --code-bg: #0d1b2a;
+    --border: #2a2a4a;
+    --layer0: #5c5caa;
+    --layer1: #2d6a4f;
+    --layer2: #b56727;
+    --layer3: #0f9b8e;
+    --layer4: #e94560;
+    --layer5: #5dade2;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 { font-size: 2.2rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+  .subtitle { color: var(--text-muted); font-size: 1.05rem; margin-bottom: 0.5rem; line-height: 1.6; }
+  .meta { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2rem; }
+  .meta a { color: var(--link); text-decoration: none; }
+  h2 {
+    font-size: 1.5rem; font-weight: 600; color: #fff;
+    margin-top: 3rem; margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;
+  }
+  h3 { font-size: 1.15rem; font-weight: 600; color: var(--accent2); margin-top: 1.8rem; margin-bottom: 0.8rem; }
+  p { margin-bottom: 1rem; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: #fff; }
+  code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    background: var(--code-bg); padding: 0.15em 0.4em;
+    border-radius: 3px; font-size: 0.88em; color: var(--accent);
+  }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1rem 1.25rem; overflow-x: auto;
+    margin-bottom: 1.25rem; line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; color: var(--text); font-size: 0.85rem; }
+  ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+  li { margin-bottom: 0.4rem; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1.25rem; font-size: 0.92rem; }
+  th { text-align: left; padding: 0.6rem 0.8rem; background: var(--surface2); color: #fff; font-weight: 600; border-bottom: 2px solid var(--border); }
+  td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--border); }
+  .callout {
+    background: var(--surface); border-left: 3px solid var(--accent);
+    padding: 1rem 1.25rem; margin: 1.25rem 0; border-radius: 0 6px 6px 0;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  .diagram {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1rem 1.25rem; margin: 1.25rem 0;
+    font-family: 'SF Mono', monospace; font-size: 0.82rem; line-height: 1.7;
+    overflow-x: auto; white-space: pre; color: var(--text-muted);
+  }
+  .layer-card {
+    background: var(--surface); border-radius: 6px;
+    padding: 1rem 1.25rem; margin-bottom: 1rem;
+    border-left: 3px solid var(--accent2);
+  }
+  .layer-card .layer-num {
+    font-family: 'SF Mono', monospace; font-size: 0.75rem;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 0.3rem;
+  }
+  .layer-card .layer-name {
+    font-weight: 600; color: #fff; font-size: 1.05rem; margin-bottom: 0.4rem;
+  }
+  .layer-card .layer-desc { color: var(--text-muted); font-size: 0.95rem; }
+  .layer-card .layer-desc p:last-child { margin-bottom: 0; }
+  .faq { background: var(--surface); border-radius: 6px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+  .faq .q { font-weight: 600; color: #fff; margin-bottom: 0.4rem; }
+  .faq .a { color: var(--text-muted); font-size: 0.95rem; }
+  .faq .a p:last-child { margin-bottom: 0; }
+  .comparison { font-size: 0.85rem; }
+  .series-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    background: var(--surface);
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+  }
+  .series-nav .series-label {
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-right: 0.25rem;
+  }
+  .series-nav a {
+    color: var(--link);
+    text-decoration: none;
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+  }
+  .series-nav a:hover { background: var(--surface2); }
+  .series-nav a.current {
+    color: #fff;
+    background: var(--surface2);
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<div class="series-nav">
+  <span class="series-label">Series:</span>
+  <a href="message-mechanics.html">Fundamentals</a>
+  <a href="message-flow-visual.html">Scenarios</a>
+  <a href="message-mechanics-decisions.html">Decisions</a>
+  <a href="stream-library.html" class="current">Stream Library</a>
+  <a href="stream-library-research.html">Library Survey</a>
+</div>
+
+<h1>Stream Library</h1>
+<p class="subtitle">
+  A unified, layered abstraction for all message passing in the system &mdash;
+  chat, voice, events, work dispatch, agent communication. One library, typed messages,
+  multiple transports.
+</p>
+<p class="meta">
+  PR/FAQ format &mdash; describing how it works before building it.<br>
+  Companion to <a href="message-mechanics.html">Message Mechanics</a> and
+  <a href="message-mechanics-decisions.html">Decisions</a>.
+</p>
+
+<hr>
+
+<h2>The press release</h2>
+
+<p>
+  Today, messages in our system travel through four different mechanisms: WebSocket (bridge),
+  HTTP pub/sub (chatbus), WebSocket (sysbus), and MCP stdio (agent channels). Each has its own
+  framing, its own ID scheme, its own replay logic (or none). A chat message and a tool_use event
+  are fundamentally the same thing &mdash; a typed record moving from producer to consumer &mdash;
+  but they're implemented as if they're different species.
+</p>
+
+<p>
+  The <strong>stream library</strong> replaces these with one abstraction: a <strong>typed, ordered,
+  replayable stream of records</strong>. Every message in the system &mdash; chat text, voice
+  events, agent acks, build status, work dispatch &mdash; is a record in a stream. Streams are
+  per-agent, per-channel, or per-topic. Records have sequence numbers, typed payloads, and
+  optional client IDs for dedup.
+</p>
+
+<p>
+  The library is layered. You choose how deep you go:
+</p>
+<ul>
+  <li>Need a raw WebSocket? Layer 0.</li>
+  <li>Need typed JSON messages? Add Layer 1&ndash;3.</li>
+  <li>Need replay and dedup? Add Layer 4.</li>
+  <li>Need per-message ack tracking and lag? Add Layer 5.</li>
+</ul>
+<p>
+  Each layer is independent. Voice uses layers 0&ndash;3 (transport + framing + typing, no replay needed
+  for audio frames). Chat uses layers 0&ndash;5 (full stack). Events use layers 0&ndash;3 (ephemeral, no replay).
+  The session manager uses layer 5 on top of a chat stream.
+</p>
+
+<hr>
+
+<h2>The layers</h2>
+
+<div class="layer-card" style="border-left-color: var(--layer0);">
+  <div class="layer-num" style="color: var(--layer0);">Layer 0</div>
+  <div class="layer-name">Transport</div>
+  <div class="layer-desc">
+    <p>The pipe. How bytes move between two endpoints.</p>
+    <p>
+      Implementations: <code>WebSocketTransport</code>, <code>HttpPollTransport</code>,
+      <code>StdioTransport</code> (MCP), <code>SSETransport</code>.
+    </p>
+    <p>
+      Interface: <code>connect()</code>, <code>send(bytes)</code>, <code>onReceive(bytes)</code>,
+      <code>disconnect()</code>. That's it. No opinions about what the bytes contain.
+    </p>
+  </div>
+</div>
+
+<div class="layer-card" style="border-left-color: var(--layer1);">
+  <div class="layer-num" style="color: var(--layer1);">Layer 1</div>
+  <div class="layer-name">Framing</div>
+  <div class="layer-desc">
+    <p>Message boundaries and serialization. Turns a byte stream into discrete messages.</p>
+    <p>
+      For WebSocket: each WS frame = one message (framing is built into the transport).
+      For stdio: newline-delimited JSON. For HTTP: each request/response body = one message.
+    </p>
+    <p>
+      Interface: <code>encode(message) &rarr; bytes</code>,
+      <code>decode(bytes) &rarr; message</code>.
+      Default: JSON. Could be protobuf, msgpack, or raw binary (audio frames).
+    </p>
+  </div>
+</div>
+
+<div class="layer-card" style="border-left-color: var(--layer2);">
+  <div class="layer-num" style="color: var(--layer2);">Layer 2</div>
+  <div class="layer-name">Identity</div>
+  <div class="layer-desc">
+    <p>Every message gets a sequence number and optional client ID. This is the envelope.</p>
+<pre><code>{
+  seq: 42,                    // server-assigned, monotonic
+  client_id: "chat_17290...", // sender-assigned, for dedup
+  stream: "porter",           // which stream this belongs to
+  timestamp: "2026-10-16T...",
+  payload: { ... }            // typed content (Layer 3)
+}</code></pre>
+    <p>
+      The sequence number is assigned by the stream server on append.
+      The client ID is assigned by the producer before sending.
+      Together they give you: ordering (seq), dedup (client_id), and replay cursor (seq).
+    </p>
+  </div>
+</div>
+
+<div class="layer-card" style="border-left-color: var(--layer3);">
+  <div class="layer-num" style="color: var(--layer3);">Layer 3</div>
+  <div class="layer-name">Typing</div>
+  <div class="layer-desc">
+    <p>The payload is a tagged union &mdash; a <code>type</code> field discriminates the shape.</p>
+<pre><code>// Chat
+{ type: "chat.message", from: "user", text: "Write me a poem" }
+{ type: "chat.message", from: "agent", text: "Roses are red...", ref_seq: 1 }
+
+// Voice
+{ type: "voice.speech_start" }
+{ type: "voice.stt_complete", text: "Write me a poem", duration_ms: 1200 }
+{ type: "voice.tts_chunk", audio: &lt;base64&gt;, seq_in_utterance: 3 }
+
+// Events
+{ type: "event.tool_use", tool: "Bash", agent: "porter" }
+{ type: "event.build", status: "done", service: "bridge" }
+
+// Acks
+{ type: "ack.delivered", ref_seq: 5 }
+{ type: "ack.processing", ref_seq: 5 }
+
+// Control
+{ type: "control.subscribe", since_seq: 42, limit: 10 }
+{ type: "control.ping" }
+{ type: "control.pong" }</code></pre>
+    <p>
+      Types are namespaced: <code>chat.*</code>, <code>voice.*</code>, <code>event.*</code>,
+      <code>ack.*</code>, <code>control.*</code>. A consumer subscribes to a stream and filters
+      by type namespace. A chat UI ignores <code>event.*</code> records. A status tile ignores
+      <code>chat.*</code> records. But they're all records in the same stream infrastructure.
+    </p>
+    <p>
+      In TypeScript, this is a discriminated union:
+    </p>
+<pre><code>type StreamRecord =
+  | { type: "chat.message"; from: string; text: string; ref_seq?: number }
+  | { type: "chat.thinking"; agent: string }
+  | { type: "voice.speech_start" }
+  | { type: "voice.stt_complete"; text: string; duration_ms: number }
+  | { type: "voice.tts_chunk"; audio: string; seq_in_utterance: number }
+  | { type: "event.tool_use"; tool: string; agent: string }
+  | { type: "ack.delivered"; ref_seq: number }
+  | { type: "ack.processing"; ref_seq: number }
+  | { type: "control.subscribe"; since_seq?: number; limit?: number }
+  // ...etc</code></pre>
+  </div>
+</div>
+
+<div class="layer-card" style="border-left-color: var(--layer4);">
+  <div class="layer-num" style="color: var(--layer4);">Layer 4</div>
+  <div class="layer-name">Delivery</div>
+  <div class="layer-desc">
+    <p>Replay, dedup, and cursor management. This is where "stream" becomes more than a pipe.</p>
+    <p><strong>Server side:</strong></p>
+    <ul>
+      <li>Append-only log (JSONL on disk, ring buffer in memory)</li>
+      <li>Assign sequence number on append</li>
+      <li>Dedup by client_id (TTL cache)</li>
+      <li>Query by seq range: <code>GET /stream/{name}?after_seq=42&limit=20</code></li>
+    </ul>
+    <p><strong>Client side:</strong></p>
+    <ul>
+      <li>Store last-seen seq in localStorage</li>
+      <li>On connect: send <code>control.subscribe</code> with <code>since_seq</code></li>
+      <li>Receive replay records, dedup via seenIds set</li>
+      <li>Transition to live records seamlessly</li>
+    </ul>
+    <p>
+      Not every stream needs Layer 4. Voice audio frames are ephemeral &mdash; no replay,
+      no persistence. Events are ephemeral &mdash; ring buffer only, no disk. Chat is persistent
+      &mdash; full Layer 4. The layer is opt-in per stream.
+    </p>
+  </div>
+</div>
+
+<div class="layer-card" style="border-left-color: var(--layer5);">
+  <div class="layer-num" style="color: var(--layer5);">Layer 5</div>
+  <div class="layer-name">Session</div>
+  <div class="layer-desc">
+    <p>
+      Per-consumer state tracking. This is the message session manager &mdash; it lives on top
+      of a Layer 4 stream and adds:
+    </p>
+    <ul>
+      <li><strong>Consumer cursor:</strong> the last seq this consumer acknowledged</li>
+      <li><strong>Lag:</strong> head_seq &minus; consumer_cursor</li>
+      <li><strong>Per-message state:</strong> sent &rarr; delivered &rarr; processing &rarr; responded</li>
+      <li><strong>Escalation:</strong> timers that trigger nudge, fast-respond, circuit breaker</li>
+      <li><strong>State reflection:</strong> HTTP endpoint exposing the full chain state</li>
+    </ul>
+    <p>
+      Layer 5 is specific to agent consumers. A browser chat client doesn't need it &mdash;
+      it just reads the stream. The channel server uses Layer 5 to track the agent's progress
+      through the message chain.
+    </p>
+  </div>
+</div>
+
+<hr>
+
+<h2>How current components map</h2>
+
+<table class="comparison">
+  <thead><tr><th>Current component</th><th>L0</th><th>L1</th><th>L2</th><th>L3</th><th>L4</th><th>L5</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Bridge WebSocket</strong></td>
+      <td style="color: var(--accent2);">WS</td>
+      <td style="color: var(--accent2);">JSON</td>
+      <td style="color: var(--accent);">ad-hoc</td>
+      <td style="color: var(--accent2);">type field</td>
+      <td style="color: var(--accent);">timestamp</td>
+      <td style="color: var(--accent);">&mdash;</td>
+      <td>Has typing but no seq numbers, replay uses timestamps</td>
+    </tr>
+    <tr>
+      <td><strong>Chatbus</strong></td>
+      <td style="color: var(--accent2);">HTTP</td>
+      <td style="color: var(--accent2);">JSON</td>
+      <td style="color: var(--accent2);">envelope</td>
+      <td style="color: var(--accent);">partial</td>
+      <td style="color: var(--accent);">partial</td>
+      <td style="color: var(--accent);">&mdash;</td>
+      <td>Has envelopes but no seq numbers, dedup via TTL, JSONL persistence</td>
+    </tr>
+    <tr>
+      <td><strong>Sysbus</strong></td>
+      <td style="color: var(--accent2);">WS</td>
+      <td style="color: var(--accent2);">JSON</td>
+      <td style="color: var(--accent2);">envelope</td>
+      <td style="color: var(--accent2);">type field</td>
+      <td style="color: var(--accent);">&mdash;</td>
+      <td style="color: var(--accent);">&mdash;</td>
+      <td>Ephemeral, no replay needed. Snapshot on connect.</td>
+    </tr>
+    <tr>
+      <td><strong>MCP (agent channel)</strong></td>
+      <td style="color: var(--accent2);">stdio</td>
+      <td style="color: var(--accent2);">JSON-RPC</td>
+      <td style="color: var(--accent);">&mdash;</td>
+      <td style="color: var(--accent);">method</td>
+      <td style="color: var(--accent);">&mdash;</td>
+      <td style="color: var(--accent);">&mdash;</td>
+      <td>Separate protocol entirely. Channel server bridges to stream.</td>
+    </tr>
+    <tr>
+      <td><strong>Voice audio</strong></td>
+      <td style="color: var(--accent2);">WS</td>
+      <td style="color: var(--accent);">binary</td>
+      <td style="color: var(--accent);">&mdash;</td>
+      <td style="color: var(--accent);">implicit</td>
+      <td style="color: var(--accent);">&mdash;</td>
+      <td style="color: var(--accent);">&mdash;</td>
+      <td>Raw PCM frames. No identity, no replay. Pure L0+L1.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="font-size: 0.85rem; color: var(--text-muted);">
+  <span style="color: var(--accent2);">Green</span> = has this layer.
+  <span style="color: var(--accent);">Red</span> = missing or ad-hoc.
+</p>
+
+<h3>What's duplicated</h3>
+<ul>
+  <li><strong>Envelope wrapping</strong> &mdash; chatbus and sysbus both use <code>pkg/provider/bus/envelope.go</code> but bridge WebSocket has its own ad-hoc framing</li>
+  <li><strong>Dedup</strong> &mdash; chatbus has server-side TTL cache, ChatStore has client-side seenIds, both doing the same job at different layers</li>
+  <li><strong>Connection management</strong> &mdash; bridge WS, sysbus WS, and agent chat WS all have separate ping/pong, reconnect, and timeout logic</li>
+  <li><strong>Replay</strong> &mdash; bridge replays from JSONL, chatbus replays from ring buffer, sysbus sends snapshot on connect &mdash; three implementations of "give me what I missed"</li>
+</ul>
+
+<h3>What's missing</h3>
+<ul>
+  <li><strong>Sequence numbers</strong> &mdash; no component has them yet</li>
+  <li><strong>Cross-stream typing</strong> &mdash; each bus defines its own message shapes, no shared type system</li>
+  <li><strong>Ack protocol</strong> &mdash; nothing tracks consumer progress</li>
+  <li><strong>Voice as a stream participant</strong> &mdash; voice events are invisible outside the browser</li>
+</ul>
+
+<hr>
+
+<h2>How you use it</h2>
+
+<h3>Producer: sending a chat message</h3>
+<pre><code>// Browser client
+const stream = createStream("porter", {
+  transport: "websocket",
+  url: "/ws/stream/porter",
+  layers: [framing.json, identity.clientId, delivery.replay]
+});
+
+await stream.connect();
+
+// Send a message — client_id generated automatically
+const { seq } = await stream.append({
+  type: "chat.message",
+  from: "user",
+  text: "Write me a poem"
+});
+// seq = 5 (assigned by server)
+
+// Listen for responses
+stream.on("chat.message", (record) => {
+  if (record.payload.from === "agent") {
+    displayMessage(record.payload.text);
+  }
+});
+
+// Listen for acks (from sysbus, merged into the stream view)
+stream.on("ack.*", (record) => {
+  updateCheckmark(record.payload.ref_seq, record.payload.type);
+});</code></pre>
+
+<h3>Consumer: agent channel server</h3>
+<pre><code>// Channel server (Node.js)
+const agentStream = createStream("porter", {
+  transport: "http",
+  url: "http://chatbus:9095",
+  layers: [framing.json, identity.envelope, delivery.replay, session.manager]
+});
+
+await agentStream.connect();
+
+// Session manager tracks the chain
+agentStream.onMessage((record) => {
+  // Deliver to Claude via MCP
+  mcpTransport.sendNotification("message", record.payload);
+
+  // Emit delivery ack to sysbus
+  sysbus.emit({ type: "ack.delivered", ref_seq: record.seq, agent: "porter" });
+});
+
+// When agent replies via tool call
+function onAgentReply(text, refSeq) {
+  agentStream.append({
+    type: "chat.message",
+    from: "agent",
+    text: text,
+    ref_seq: refSeq
+  });
+  // Session manager automatically marks refSeq as "responded"
+}
+
+// Query chain state
+// GET /agent/porter/chain → { head_seq: 8, cursor: 6, lag: 2, messages: [...] }</code></pre>
+
+<h3>Voice: audio + events on the same stream</h3>
+<pre><code>// Voice uses a lightweight stream — no replay, no persistence
+const voiceStream = createStream("voice-session-abc", {
+  transport: "websocket",
+  url: "/ws/stream/voice",
+  layers: [framing.binary]  // raw audio frames, no identity layer
+});
+
+// But voice *events* go on the agent's main stream
+const agentStream = getStream("porter");
+agentStream.append({ type: "voice.speech_start" });
+// ... STT runs ...
+agentStream.append({ type: "voice.stt_complete", text: "Write me a poem", duration_ms: 1200 });
+// This becomes a regular chat message in the stream, with a seq number
+agentStream.append({ type: "chat.message", from: "user", text: "Write me a poem" });</code></pre>
+
+<h3>Events: ephemeral stream</h3>
+<pre><code>// Sysbus becomes just another stream with fewer layers
+const eventStream = createStream("system-events", {
+  transport: "websocket",
+  url: "/ws/stream/events",
+  layers: [framing.json, identity.envelope]  // no delivery layer — ephemeral
+});
+
+eventStream.on("event.*", (record) => {
+  updateActivityTimeline(record);
+});
+
+// Snapshot on connect replaces the current sysbus snapshot mechanism
+// It's just "replay the ring buffer" — same as chat replay but smaller window</code></pre>
+
+<hr>
+
+<h2>Migration path</h2>
+
+<p>
+  We don't rewrite everything at once. The library wraps existing infrastructure first,
+  then replaces it layer by layer.
+</p>
+
+<table>
+  <thead><tr><th>Phase</th><th>What changes</th><th>What stays</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>1. Types</strong></td>
+      <td>Define the <code>StreamRecord</code> discriminated union. Shared between Go and TypeScript.</td>
+      <td>All existing transport, routing, persistence unchanged.</td>
+    </tr>
+    <tr>
+      <td><strong>2. Identity</strong></td>
+      <td>Add sequence numbers to chatbus. Envelope gets <code>seq</code> field. Client sends <code>since_seq</code>.</td>
+      <td>Transport unchanged. Replay still works (timestamp fallback for old logs).</td>
+    </tr>
+    <tr>
+      <td><strong>3. Client library</strong></td>
+      <td>TypeScript <code>createStream()</code> that wraps existing WebSocket/HTTP connections with the layer model.</td>
+      <td>Server unchanged. Client library adapts to existing protocols.</td>
+    </tr>
+    <tr>
+      <td><strong>4. Session manager</strong></td>
+      <td>Channel server gets Layer 5. Ack emission to sysbus. <code>/chain</code> endpoint.</td>
+      <td>Chatbus, sysbus unchanged. Session manager is additive.</td>
+    </tr>
+    <tr>
+      <td><strong>5. Unify transports</strong></td>
+      <td>Replace bridge WS, chatbus HTTP, sysbus WS with stream endpoints. One connection per agent.</td>
+      <td>This is the big consolidation &mdash; but by now every layer is proven independently.</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>FAQ</h2>
+
+<div class="faq">
+  <div class="q">Why not just use Kafka / NATS / Redis Streams?</div>
+  <div class="a">
+    <p>
+      Scale. We have one server, a handful of agents, and hundreds of messages per hour.
+      Kafka is a distributed system for millions of messages per second. The operational
+      complexity of running Kafka (or NATS, or Redis Streams) far exceeds the complexity
+      of the problem we're solving. Our JSONL files + ring buffer are the right weight.
+    </p>
+    <p>
+      The library borrows <em>concepts</em> from these systems (append-only logs, sequence
+      numbers, consumer cursors) without importing their infrastructure.
+    </p>
+  </div>
+</div>
+
+<div class="faq">
+  <div class="q">Why not use S2.dev as the backend?</div>
+  <div class="a">
+    <p>
+      S2 is interesting and worth watching. It solves exactly the problem we have (ordered,
+      durable, replayable streams) with a clean API. But it's a hosted service with a cost,
+      and it would make our system dependent on external infrastructure. Our current approach
+      (local JSONL + ring buffer) is zero-dependency and good enough. If we outgrow it, S2
+      is a natural migration target &mdash; the library's Layer 4 could swap backends.
+    </p>
+  </div>
+</div>
+
+<div class="faq">
+  <div class="q">Does this replace MCP?</div>
+  <div class="a">
+    <p>
+      No. MCP is the protocol between the channel server and Claude. It's Layer 0 (stdio transport)
+      with its own framing (JSON-RPC). The stream library doesn't replace MCP &mdash; the channel
+      server bridges between the stream world and the MCP world. Messages come in on a stream,
+      get delivered to Claude via MCP, and responses come back via MCP and get appended to the stream.
+    </p>
+  </div>
+</div>
+
+<div class="faq">
+  <div class="q">Does every message type need every layer?</div>
+  <div class="a">
+    <p>
+      No. That's the point of layers being opt-in:
+    </p>
+    <ul>
+      <li><strong>Audio frames:</strong> L0 + L1 only (transport + binary framing). No identity, no replay.</li>
+      <li><strong>Events:</strong> L0 + L1 + L2 + L3 (transport + framing + identity + typing). No persistence.</li>
+      <li><strong>Chat:</strong> L0 through L4 (full delivery with replay and dedup).</li>
+      <li><strong>Agent messages:</strong> L0 through L5 (full stack with session tracking).</li>
+    </ul>
+  </div>
+</div>
+
+<div class="faq">
+  <div class="q">How does voice fit in?</div>
+  <div class="a">
+    <p>
+      Audio frames stay on their own lightweight stream (L0 + L1). But voice <em>events</em>
+      (speech_start, stt_complete, tts_start, barge_in) are records on the agent's main stream
+      with full typing and sequence numbers. This makes voice state visible to every component
+      that reads the stream &mdash; the session manager can see that STT just completed, the UI
+      can show "transcribing..." without polling, and the agent can be notified of barge-in.
+    </p>
+  </div>
+</div>
+
+<div class="faq">
+  <div class="q">What happens to chatbus and sysbus?</div>
+  <div class="a">
+    <p>
+      They converge. In Phase 5, both become stream servers &mdash; same code, different
+      configuration. Chatbus is a persistent stream server (JSONL + ring, seq numbers, dedup).
+      Sysbus is an ephemeral stream server (ring only, no dedup). The client library connects
+      to both the same way. Eventually they could be one server with per-stream configuration.
+    </p>
+  </div>
+</div>
+
+<div class="faq">
+  <div class="q">What about multi-agent? User talks to porter, then switches to runa.</div>
+  <div class="a">
+    <p>
+      Each agent has its own stream. Switching agents means subscribing to a different stream.
+      The client library manages multiple stream connections. A "meta" stream could carry
+      routing decisions ("user switched to runa") so other components can react.
+    </p>
+  </div>
+</div>
+
+<div class="faq">
+  <div class="q">What about multi-party? Human + two agents in the same conversation.</div>
+  <div class="a">
+    <p>
+      A shared stream. All parties append to the same stream. The <code>from</code> field
+      distinguishes who said what. Each agent's session manager (Layer 5) tracks its own
+      cursor independently. Human sees all messages. Each agent sees all messages but acks
+      at its own pace.
+    </p>
+  </div>
+</div>
+
+<div class="faq">
+  <div class="q">Is this a lot of work?</div>
+  <div class="a">
+    <p>
+      The migration path is designed so each phase is useful on its own. Phase 1 (types) is
+      a TypeScript/Go type definition. Phase 2 (seq numbers) is a chatbus change. Phase 3
+      (client library) is a wrapper around existing connections. You get value at every step,
+      and you can stop at any phase.
+    </p>
+  </div>
+</div>
+
+<hr>
+
+<h2>One picture</h2>
+
+<div class="diagram">
+                          ┌───────────────────────────────────────────┐
+                          &boxv;              Stream Server                  &boxv;
+                          &boxv;  (chatbus + sysbus converged, or separate) &boxv;
+                          &boxv;                                           &boxv;
+                          &boxv;   ┌─────────┐  ┌─────────┐  ┌────────┐  &boxv;
+                          &boxv;   &boxv; porter  &boxv;  &boxv; events  &boxv;  &boxv; voice  &boxv;  &boxv;
+                          &boxv;   &boxv; stream  &boxv;  &boxv; stream  &boxv;  &boxv; stream &boxv;  &boxv;
+                          &boxv;   &boxv; (L0-L5) &boxv;  &boxv; (L0-L3) &boxv;  &boxv; (L0-L1)&boxv;  &boxv;
+                          &boxv;   &boxv; JSONL+  &boxv;  &boxv; ring    &boxv;  &boxv; ephemrl&boxv;  &boxv;
+                          &boxv;   &boxv; ring+seq&boxv;  &boxv; only    &boxv;  &boxv;        &boxv;  &boxv;
+                          &boxv;   └────┬────┘  └────┬────┘  └───┬────┘  &boxv;
+                          └────────&boxv;────────────&boxv;────────────&boxv;──────┘
+                                   &boxv;            &boxv;            &boxv;
+                    ┌──────────────┼────────────┼────────────┼──────────────┐
+                    &boxv;              &boxv;            &boxv;            &boxv;              &boxv;
+              ┌─────┴─────┐  ┌─────┴─────┐  ┌──┴───┐  ┌────┴────┐  ┌─────┴─────┐
+              &boxv;  Browser  &boxv;  &boxv;  Channel  &boxv;  &boxv; Status&boxv;  &boxv; Timeline&boxv;  &boxv;  Mobile  &boxv;
+              &boxv;  Chat UI  &boxv;  &boxv;  Server  &boxv;  &boxv;  tile &boxv;  &boxv;   tile  &boxv;  &boxv;   App   &boxv;
+              &boxv;  (L0-L4)  &boxv;  &boxv;  (L0-L5) &boxv;  &boxv; (L0-L3)&boxv;  &boxv; (L0-L3) &boxv;  &boxv;  (L0-L4) &boxv;
+              └───────────┘  └─────┬─────┘  └──────┘  └─────────┘  └───────────┘
+                                   &boxv;
+                              MCP (stdio)
+                                   &boxv;
+                             ┌─────┴─────┐
+                             &boxv;   Agent   &boxv;
+                             &boxv;  (Claude) &boxv;
+                             └───────────┘
+</div>
+
+<hr>
+
+<p class="subtitle" style="margin-top: 2rem; margin-bottom: 0;">
+  Companion to <a href="message-mechanics.html">Message Mechanics</a> &middot;
+  <a href="message-mechanics-decisions.html">Decisions</a> &middot;
+  <a href="message-flow-visual.html">Flow Scenarios</a>
+</p>
+
+</body>
+</html>

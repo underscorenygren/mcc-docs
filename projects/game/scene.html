@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scene Iteration — DALL-E Backgrounds</title>
+<style>
+  :root {
+    --bg: #0a0a1a;
+    --surface: #111128;
+    --surface2: #1a1a3e;
+    --text: #c8c8e0;
+    --text-muted: #7878a0;
+    --accent: #6a4c93;
+    --accent2: #1b998b;
+    --link: #4da8da;
+    --border: #252548;
+    --code-bg: #080818;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.8;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 2rem; font-weight: 700; color: #d8d8f0;
+    margin-bottom: 0.3rem;
+    text-shadow: 0 0 30px rgba(106, 76, 147, 0.3);
+  }
+  .subtitle { color: var(--text-muted); font-size: 1rem; margin-bottom: 0.3rem; }
+  .meta { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; font-family: sans-serif; }
+  h2 {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 1.5rem; font-weight: 600; color: #d0d0e8;
+    margin-top: 3rem; margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;
+  }
+  h3 {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 1.1rem; font-weight: 600; color: var(--accent2);
+    margin-top: 1.5rem; margin-bottom: 0.5rem;
+  }
+  p { margin-bottom: 1rem; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: #d8d8f0; }
+  code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    background: var(--code-bg); padding: 0.15em 0.4em;
+    border-radius: 3px; font-size: 0.88em; color: var(--accent);
+  }
+  ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+  li { margin-bottom: 0.4rem; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+  nav {
+    padding: 0.8rem 1.25rem;
+    background: var(--surface);
+    border-radius: 6px;
+    font-family: sans-serif;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+  nav .nav-label {
+    color: var(--text-muted); font-size: 0.75rem;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+  }
+  nav .nav-back { margin-top: 0.5rem; font-size: 0.85rem; }
+
+  .scene-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3/2;
+    overflow: hidden;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #050510;
+    margin: 1rem 0;
+  }
+  .scene-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    image-rendering: pixelated;
+  }
+  .scene-notes {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+  }
+  .prompt-block {
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    margin: 0.75rem 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    border-left: 3px solid var(--border);
+    cursor: pointer;
+  }
+  .prompt-block:hover { border-left-color: var(--accent2); }
+  .prompt-label {
+    font-family: sans-serif;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent2);
+    margin-bottom: 0.3rem;
+    font-weight: 600;
+  }
+  .settings-row {
+    margin-top: 0.5rem;
+    font-family: sans-serif;
+    font-size: 0.8rem;
+  }
+  .settings-row span {
+    display: inline-block;
+    background: var(--surface2);
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+    margin-right: 0.4rem;
+    color: var(--text);
+  }
+</style>
+</head>
+<body>
+
+<h1>Scene Iteration</h1>
+<p class="subtitle">DALL-E background generation — iterating toward the right composition and mood.</p>
+<p class="meta">Started: 2026-10-16 · Status: In progress</p>
+
+<nav>
+  <div class="nav-label">Game project</div>
+  <div><a href="intro.html">Introduction</a> — palette, toolkit, concepts</div>
+  <div><a href="lighthouse.html">Sprite Experiments</a> — SpriteLab prompts, eye cloud, lighthouse</div>
+  <div><strong style="color: #d8d8f0;">Scene Iteration</strong> (this page)</div>
+  <div><a href="playground.html">Playground</a> — parallax layer editor</div>
+  <div class="nav-back"><a href="../../index.html">All docs</a></div>
+</nav>
+
+<hr>
+
+<h2>Goal</h2>
+<p>
+  A single painted background scene for the lighthouse at Innsmouth Bay. The sprites
+  (eye cloud, lighthouse) overlay on top. Later this becomes parallax layers, but first
+  we lock down the composition and mood as one image.
+</p>
+
+<h3>Key ratios we're working out</h3>
+<ul>
+  <li><strong>Cliff:</strong> ~1/3 scene height, ~1/3 scene width, bottom-right</li>
+  <li><strong>Ocean + sky:</strong> fills the rest — vast, desolate</li>
+  <li><strong>Lighthouse:</strong> centered on the cliff ledge, small relative to the scene</li>
+  <li><strong>Rocks:</strong> scattered in the water with teal wave spray — important detail, keep these</li>
+</ul>
+
+<hr>
+
+<h2 id="v1">v1 — first pass</h2>
+
+<div class="scene-frame">
+  <img src="results/bg-dalle-v1.png">
+</div>
+
+<div class="prompt-block" onclick="navigator.clipboard.writeText(this.querySelector('.prompt-text').textContent.trim())">
+  <div class="prompt-label">Prompt (click to copy)</div>
+  <div class="prompt-text">Pixel art night scene, 16:9 wide. Dark ocean and sky fill the left two-thirds. A rocky coastline enters from the bottom-right, rising to a cliff. Horizon at 40% from top. Craggy rocks scattered in dark water. Sky is void black at top fading to deep indigo with subtle dark violet nebula clouds. Ocean is dark navy with faint teal shimmer near rocks. All blues and purples only — no warm colors except tiny pale stars. Desolate, Lovecraftian, edge of the world. Clean pixel art, limited palette, no anti-aliasing.</div>
+  <div class="settings-row">
+    <span>gpt-image-1</span>
+    <span>1536x1024</span>
+  </div>
+</div>
+
+<div class="scene-notes">
+  Composition is right but more painterly than pixel art. Very dark.
+</div>
+
+<hr>
+
+<h2 id="v2">v2 — pixel art emphasis</h2>
+
+<div class="scene-frame">
+  <img src="results/bg-dalle-v2.png">
+</div>
+
+<div class="prompt-block" onclick="navigator.clipboard.writeText(this.querySelector('.prompt-text').textContent.trim())">
+  <div class="prompt-label">Prompt (click to copy)</div>
+  <div class="prompt-text">Retro pixel art, 8-bit style, visible pixels, limited color palette. Night coastal scene. Dark ocean fills left two-thirds, rocky cliff enters from bottom-right. Void black sky fading to deep indigo (#111138). Dark violet (#2d1b69) nebula wisps. Navy blue ocean (#0a0a1a). Faint teal (#0d7377) shimmer on water near rocks. Scattered tiny white stars. Rocky coastline in dark blue-black stone. No lighthouse, no buildings — just landscape. Desolate, ominous mood. Strictly pixel art with hard edges, no gradients, no anti-aliasing, blocky pixels visible.</div>
+  <div class="settings-row">
+    <span>gpt-image-1</span>
+    <span>1536x1024</span>
+  </div>
+</div>
+
+<div class="scene-notes">
+  Added "retro", "8-bit", "visible pixels", "hard edges", "blocky". Hex codes in prompt.
+  Much closer to pixel art. Right mood — but cliff too tall, scene too dark overall.
+</div>
+
+<hr>
+
+<h2 id="v3">v3 — shorter cliff</h2>
+
+<div class="scene-frame">
+  <img src="results/bg-dalle-v3.png">
+</div>
+
+<div class="prompt-block" onclick="navigator.clipboard.writeText(this.querySelector('.prompt-text').textContent.trim())">
+  <div class="prompt-label">Prompt (click to copy)</div>
+  <div class="prompt-text">Retro pixel art, 8-bit style, visible pixels, limited color palette. Night coastal scene. Dark ocean fills the left two-thirds, a SHORT rocky cliff enters from the bottom-right — the cliff is small, only occupying the bottom-right corner, about one-quarter of the scene. Scattered craggy sea rocks and rock outcrops in the water with teal (#0d7377) wave effects around them. Void black sky fading to deep indigo (#111138). Dark violet (#2d1b69) nebula wisps. Navy blue ocean (#0a0a1a). Faint teal shimmer on water near rocks. Scattered tiny white stars — sparse. The scene is SLIGHTLY LIGHTER than pitch black — deep navy and indigo tones. No lighthouse, no buildings — just landscape. Desolate, ominous mood. Strictly pixel art with hard edges, no gradients, no anti-aliasing, blocky pixels visible.</div>
+  <div class="settings-row">
+    <span>gpt-image-1</span>
+    <span>1536x1024</span>
+  </div>
+</div>
+
+<div class="scene-notes">
+  Cliff shorter. Rocks with wave effects kept. Still too tall — needs to be ~1/3 height, ~1/3 width.
+  Foreshortening not dramatic enough compared to v2.
+</div>
+
+<hr>
+
+<h2 id="v4">v4 — 1/3 cliff, dramatic angle</h2>
+
+<div class="scene-frame">
+  <img src="results/bg-dalle-v4.png">
+</div>
+
+<div class="prompt-block" onclick="navigator.clipboard.writeText(this.querySelector('.prompt-text').textContent.trim())">
+  <div class="prompt-label">Prompt (click to copy)</div>
+  <div class="prompt-text">Retro pixel art, 8-bit style, visible pixels, limited color palette. Night coastal scene. Dark ocean fills most of the scene. A rocky cliff enters from the BOTTOM-RIGHT corner — the cliff is SMALL, occupying only the bottom-right area: about ONE-THIRD of the scene height and ONE-THIRD of the scene width. The cliff has a dramatic foreshortened angle — steep, angular, leaning into the frame from the right edge. Low camera angle looking up at the cliff gives it drama. A flat ledge at the top of the cliff where a lighthouse would be centered. Scattered craggy sea rocks in the water with teal (#0d7377) wave spray effects around them — keep these, they look great. Void black sky at top fading to deep indigo (#111138). Dark violet (#2d1b69) nebula wisps. Navy blue ocean (#0a0a1a). Scattered tiny white stars — sparse. Scene is slightly lighter than pitch black — deep navy and indigo tones. Desolate, ominous. Strictly pixel art with hard edges, no anti-aliasing, blocky pixels visible.</div>
+  <div class="settings-row">
+    <span>gpt-image-1</span>
+    <span>1536x1024</span>
+  </div>
+</div>
+
+<div class="scene-notes">
+  Target ratios: cliff 1/3 height, 1/3 width. More dramatic foreshortened angle.
+  DALL-E added a lighthouse for scale reference — useful for placement planning.
+</div>
+
+<hr>
+
+<h2 id="v5">v5 — pixel-count constraints, no lighthouse</h2>
+
+<div class="scene-frame">
+  <img src="results/bg-dalle-v5.png">
+</div>
+
+<div class="prompt-block" onclick="navigator.clipboard.writeText(this.querySelector('.prompt-text').textContent.trim())">
+  <div class="prompt-label">Prompt (click to copy)</div>
+  <div class="prompt-text">Retro pixel art, 8-bit style, visible pixels, hard edges, blocky pixels. Night coastal scene, 1536x1024 pixels. The image is divided into regions: the rocky cliff ONLY appears in the bottom-right 512x340 pixel area. The remaining area is ocean and sky. NO lighthouse, NO buildings, NO structures — ONLY bare rock. The cliff is a steep angular rocky outcrop entering from the right edge, dramatic foreshortened perspective. Dark blue-black jagged rock (#0a0a1a, #111138). Flat ledge at the top of the cliff. Scattered craggy sea rocks in the ocean with faint teal (#0d7377) wave spray. Dark navy ocean (#0a0a1a). Deep indigo sky (#111138) with dark violet (#2d1b69) wisps. Sparse tiny white stars. Slightly lighter than pitch black. Desolate, ominous. Strictly pixel art, no anti-aliasing.</div>
+  <div class="settings-row">
+    <span>gpt-image-1</span>
+    <span>1536x1024</span>
+  </div>
+</div>
+
+<div class="scene-notes">
+  Used pixel-count constraints (512x340 box) instead of fractions. No lighthouse added this time.
+  Cliff still slightly tall — may need to go even smaller. No browns — palette is correct (blues, black, teal).
+  The dramatic silhouette is good — steep angular point works for the composition.
+</div>
+
+<hr>
+
+<h2 id="v6">v6 — strict bottom-third cliff</h2>
+
+<div class="scene-frame" style="position:relative">
+  <img src="results/bg-dalle-v6.png">
+  <!-- Guide box: bottom 1/3 height, right 1/3 width — where cliff should be contained -->
+  <div style="position:absolute;bottom:0;right:0;width:33.3%;height:33.3%;border:2px dashed rgba(13,115,119,0.7);pointer-events:none;box-sizing:border-box"></div>
+  <!-- Horizontal line at 2/3 mark -->
+  <div style="position:absolute;top:66.6%;left:0;width:100%;border-top:1px dashed rgba(13,115,119,0.4);pointer-events:none"></div>
+  <div style="position:absolute;top:66.6%;left:8px;font-family:sans-serif;font-size:0.65rem;color:rgba(13,115,119,0.7);pointer-events:none;margin-top:2px">⅔ line — cliff must stay below</div>
+</div>
+
+<div class="prompt-block" onclick="navigator.clipboard.writeText(this.querySelector('.prompt-text').textContent.trim())">
+  <div class="prompt-label">Prompt (click to copy)</div>
+  <div class="prompt-text">Retro pixel art, 8-bit style, visible pixels, hard edges, blocky pixels. Night coastal scene, 1536x1024 pixels. STRICT LAYOUT: the top TWO-THIRDS of the image (top 680 pixels) is ONLY sky and ocean horizon — no rock, no cliff, no land in the top two-thirds at all. The sky is dark void black (#050510) at the very top, fading to deep indigo (#111138). A few dark violet (#2d1b69) wispy clouds. Sparse tiny white stars. The horizon line sits at about 66% from the top. Below the horizon is dark navy ocean (#0a0a1a). The rocky cliff ONLY appears in the BOTTOM ONE-THIRD (bottom 340 pixels), entering from the right edge. Steep angular rocky outcrop, dramatic foreshortened silhouette in dark blue-black (#0a0a1a, #111138, #1a1a50). Flat ledge near the top of the cliff. Scattered small sea rocks in the water with faint teal (#0d7377) wave spray. NO lighthouse, NO buildings, NO structures, NO browns — ONLY blues, blacks, indigo, teal. Desolate, ominous. Strictly pixel art, no anti-aliasing.</div>
+  <div class="settings-row">
+    <span>gpt-image-1</span>
+    <span>1536x1024</span>
+  </div>
+</div>
+
+<div class="scene-notes">
+  Cliff respects the bottom-third boundary. Top 2/3 is sky and ocean. No lighthouse, no browns.
+  Dramatic angular silhouette. Good flat ledge for lighthouse placement. Pixel counts in prompt helped enforce layout.
+</div>
+
+<hr>
+
+<h2 id="v7">v7 — separate elements, composited</h2>
+
+<p>
+  Key learning: DALL-E can't enforce spatial constraints in a full scene. Instead, generate
+  each element separately and composite with CSS. We control exact size and position.
+</p>
+
+<h3>Standalone cliff</h3>
+<div style="display:flex;gap:1rem;align-items:start;margin:1rem 0">
+  <div style="flex:0 0 300px">
+    <img src="results/cliff-standalone-v3.png" style="width:100%;border-radius:4px;border:1px solid var(--border);image-rendering:pixelated">
+    <div style="font-size:0.7rem;color:var(--text-muted);font-family:sans-serif;margin-top:4px">1536x1024 (3:2), v3 — wider plateau, at 50%</div>
+  </div>
+</div>
+
+<div class="prompt-block" onclick="navigator.clipboard.writeText(this.querySelector('.prompt-text').textContent.trim())">
+  <div class="prompt-label">Prompt (click to copy)</div>
+  <div class="prompt-text">Retro pixel art, 8-bit style, visible pixels, hard edges, blocky pixels. A rocky cliff FILLING THE ENTIRE IMAGE. The cliff enters from the right side, steep angular dramatic foreshortened silhouette. Dark blue-black jagged rock (#0a0a1a, #111138, #1a1a50). Pixel texture showing rocky layers and cracks. A flat ledge at the top-right where a lighthouse could stand. The cliff slopes down dramatically to the left side. Teal (#0d7377) wave spray at the base of the cliff where ocean meets rock. The left side and top of the image where there is no rock should be solid black (#000000). NO lighthouse, NO buildings, NO structures — ONLY bare rock and wave spray. ONLY blues, blacks, indigo, teal — NO browns, NO grays, NO warm colors. Desolate, ominous. Strictly pixel art, no anti-aliasing.</div>
+  <div class="settings-row">
+    <span>gpt-image-1</span>
+    <span>1024x1024</span>
+  </div>
+</div>
+
+<h3>Composite — CSS ocean/sky + cliff at golden ratio</h3>
+<p style="font-size:0.85rem;color:var(--text-muted)">
+  Golden ratio split: 1/φ ≈ 38.2%. Cliff zone is 38.2% height × 38.2% width — slightly
+  larger than 1/3, more visually balanced.
+</p>
+<div class="scene-frame" style="position:relative">
+  <!-- Sky -->
+  <div style="position:absolute;top:0;left:0;width:100%;height:50%;background:linear-gradient(to bottom, #050510, #111138)"></div>
+  <!-- Ocean -->
+  <div style="position:absolute;bottom:0;left:0;width:100%;height:50%;background:#0a0a1a"></div>
+  <!-- Cliff v4 at 50%, bottom-right — no waves, just rock -->
+  <img src="results/cliff-standalone-v4.png" style="position:absolute;bottom:0;right:0;width:50%;height:50%;object-fit:cover;object-position:bottom right;image-rendering:pixelated;mix-blend-mode:lighten">
+  <!-- Guide box at 50% -->
+  <div style="position:absolute;bottom:0;right:0;width:50%;height:50%;border:1px dashed rgba(13,115,119,0.4);pointer-events:none;box-sizing:border-box"></div>
+  <!-- 50% horizontal line -->
+  <div style="position:absolute;top:50%;left:0;width:100%;border-top:1px dashed rgba(13,115,119,0.3);pointer-events:none"></div>
+</div>
+
+<div class="scene-notes">
+  Cliff at golden ratio (38.2%) instead of 1/3 (33.3%). Aspect ratio preserved with object-fit:contain.
+  Ocean and sky are CSS for now — will be replaced with separate DALL-E layers for parallax.
+  <br><strong style="color:var(--text)">Next:</strong> generate ocean layer and sky layer separately. Add sea rocks as another layer.
+</div>
+
+<hr>
+
+<h2 id="layers">Layer catalog</h2>
+
+<p>
+  Individual layers for compositing. All on black backgrounds for lighten-blend stacking.
+  Each layer is independently tunable — regenerate one without affecting the others.
+</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0">
+  <div>
+    <div style="font-size:0.72rem;color:var(--text-muted);font-family:sans-serif;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem">Ocean texture</div>
+    <img src="results/layer-ocean.png" style="width:100%;border-radius:4px;border:1px solid var(--border);image-rendering:pixelated">
+    <div style="font-size:0.7rem;color:var(--text-muted);font-family:sans-serif;margin-top:4px">Wave texture band. Height configurable via CSS — stretch to fill ocean area.</div>
+  </div>
+  <div>
+    <div style="font-size:0.72rem;color:var(--text-muted);font-family:sans-serif;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem">Sea rocks</div>
+    <img src="results/layer-rocks.png" style="width:100%;border-radius:4px;border:1px solid var(--border);image-rendering:pixelated">
+    <div style="font-size:0.7rem;color:var(--text-muted);font-family:sans-serif;margin-top:4px">Scattered rock outcrops with teal wave splash. Lighten blend over ocean.</div>
+  </div>
+  <div>
+    <div style="font-size:0.72rem;color:var(--text-muted);font-family:sans-serif;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem">Clouds — far</div>
+    <img src="results/layer-clouds-far.png" style="width:100%;border-radius:4px;border:1px solid var(--border);image-rendering:pixelated">
+    <div style="font-size:0.7rem;color:var(--text-muted);font-family:sans-serif;margin-top:4px">Small wispy clouds, high and distant. Cumulonimbus silhouettes matching the eye cloud.</div>
+  </div>
+  <div>
+    <div style="font-size:0.72rem;color:var(--text-muted);font-family:sans-serif;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem">Clouds — mid</div>
+    <img src="results/layer-clouds-mid.png" style="width:100%;border-radius:4px;border:1px solid var(--border);image-rendering:pixelated">
+    <div style="font-size:0.7rem;color:var(--text-muted);font-family:sans-serif;margin-top:4px">Medium cloud with eye-like shape. Could host the cosmic eye sprite.</div>
+  </div>
+  <div>
+    <div style="font-size:0.72rem;color:var(--text-muted);font-family:sans-serif;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem">Clouds — near</div>
+    <img src="results/layer-clouds-near.png" style="width:100%;border-radius:4px;border:1px solid var(--border);image-rendering:pixelated">
+    <div style="font-size:0.7rem;color:var(--text-muted);font-family:sans-serif;margin-top:4px">Large looming cloud. Note: has baked-in text artifact — regen needed. Shape and style are right.</div>
+  </div>
+  <div>
+    <div style="font-size:0.72rem;color:var(--text-muted);font-family:sans-serif;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem">Cliff (v4, no waves)</div>
+    <img src="results/cliff-standalone-v4.png" style="width:100%;border-radius:4px;border:1px solid var(--border);image-rendering:pixelated">
+    <div style="font-size:0.7rem;color:var(--text-muted);font-family:sans-serif;margin-top:4px">Wide plateau, dramatic face. Bare rock — waves come from ocean layer.</div>
+  </div>
+</div>
+
+<h3 id="full-composite">Full composite — all layers</h3>
+<div class="scene-frame" style="position:relative">
+  <!-- Sky gradient -->
+  <div style="position:absolute;top:0;left:0;width:100%;height:50%;background:linear-gradient(to bottom, #050510, #111138)"></div>
+  <!-- Ocean color -->
+  <div style="position:absolute;bottom:0;left:0;width:100%;height:50%;background:#0a0a1a"></div>
+  <!-- Far clouds -->
+  <img src="results/layer-clouds-far.png" style="position:absolute;top:0;left:0;width:100%;height:50%;object-fit:cover;image-rendering:pixelated;mix-blend-mode:lighten">
+  <!-- Mid cloud (eye host) -->
+  <img src="results/layer-clouds-mid.png" style="position:absolute;top:0;left:0;width:100%;height:50%;object-fit:cover;image-rendering:pixelated;mix-blend-mode:lighten">
+  <!-- Ocean texture -->
+  <img src="results/layer-ocean.png" style="position:absolute;bottom:0;left:0;width:100%;height:50%;object-fit:cover;image-rendering:pixelated;mix-blend-mode:lighten">
+  <!-- Sea rocks -->
+  <img src="results/layer-rocks.png" style="position:absolute;bottom:0;left:0;width:100%;height:50%;object-fit:cover;image-rendering:pixelated;mix-blend-mode:lighten">
+  <!-- Cliff -->
+  <img src="results/cliff-standalone-v4.png" style="position:absolute;bottom:0;right:0;width:50%;height:50%;object-fit:cover;object-position:bottom right;image-rendering:pixelated;mix-blend-mode:lighten">
+  <!-- Eye cloud sprite -->
+  <img src="results/eye-v4-ours.png" style="position:absolute;top:12%;left:30%;width:10%;image-rendering:pixelated;opacity:0.85;mix-blend-mode:lighten">
+  <!-- Lighthouse sprite -->
+  <img src="results/lighthouse-side.png" style="position:absolute;bottom:30%;right:20%;height:8%;image-rendering:pixelated">
+</div>
+
+<div class="scene-notes">
+  All layers composited. Stack order: sky gradient → far clouds → mid cloud → ocean color → ocean texture → sea rocks → cliff → sprites.
+  Each layer is independently replaceable. Sprite positions are approximate — tune after locking layers.
+</div>
+
+<hr>
+
+<h2 id="learnings">Learnings</h2>
+
+<ul>
+  <li><strong>DALL-E can't enforce spatial constraints.</strong> Fractions ("1/3 of the scene") and pixel counts ("bottom 340 pixels") are both unreliable. The model understands composition loosely but doesn't obey strict boundaries. Generate elements separately and composite with CSS.</li>
+  <li><strong>Separate elements, composite yourself.</strong> Generate each layer independently (cliff, ocean, rocks, clouds, sky) on solid black backgrounds. Stack with <code>mix-blend-mode: lighten</code> — black becomes transparent. This gives exact control over size, position, and aspect ratio.</li>
+  <li><strong>Match aspect ratios.</strong> A square cliff image (1024x1024) doesn't fill a 3:2 zone properly. Generate each element at the same aspect ratio as the final scene so <code>object-fit:cover</code> works without distortion.</li>
+  <li><strong>Golden ratio for proportions.</strong> 38.2% (1/φ) is a more balanced split than 1/3 (33.3%) for the cliff zone. But 50% ended up looking better — test visually, don't just calculate.</li>
+  <li><strong>Lock the game aspect ratio.</strong> All layers should share one aspect ratio (currently 3:2 via 1536x1024). This should be a constant — 16:9 is standard for games. Decide and lock before generating more layers.</li>
+  <li><strong>Negatives still leak.</strong> "NO lighthouse" was ignored when other prompt elements implied one. Removing all references to buildings/structures helps more than explicit negatives.</li>
+  <li><strong>CSS color layer solves palette mismatch.</strong> A flat CSS div for the ocean base color (#0a0a1a) guarantees consistency. Detail layers (waves, rocks) only add highlights on top.</li>
+  <li><strong>Cost tracking needed.</strong> Each gpt-image-1 call at 1536x1024 costs ~$0.08. Compare total session cost against SpriteLab subscription (~$10/month) to decide which tool for what.</li>
+</ul>
+
+<hr>
+
+<h2 id="next">Next steps</h2>
+
+<ul>
+  <li>Lock down the cliff composition — right ratio and angle</li>
+  <li>Overlay lighthouse and cloud eye sprites on the scene</li>
+  <li>Split into parallax layers: sky, ocean color, wave details, cliff, sprites</li>
+  <li>Animate: eye blink, subtle wave movement, parallax scroll</li>
+</ul>
+
+<p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 1.5rem; font-style: italic;">
+  Note on page styling: we don't love this CSS 'look', but we're keeping it as-is.
+  The purpose of this page is to ensure human and machine see the same thing — a shared
+  visual reference for prompt iteration. Functional, not final.
+</p>
+
+</body>
+</html>

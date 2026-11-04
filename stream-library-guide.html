@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stream Library — Usage Guide</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --text: #e0e0e0;
+    --text-muted: #a0a0b0;
+    --accent: #e94560;
+    --accent2: #0f9b8e;
+    --link: #5dade2;
+    --code-bg: #0d1b2a;
+    --border: #2a2a4a;
+    --green: #52b788;
+    --yellow: #e09f3e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 { font-size: 2.2rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+  .subtitle { color: var(--text-muted); font-size: 1.05rem; margin-bottom: 0.5rem; line-height: 1.6; }
+  .meta { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2rem; }
+  .meta a { color: var(--link); text-decoration: none; }
+  h2 {
+    font-size: 1.5rem; font-weight: 600; color: #fff;
+    margin-top: 3rem; margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;
+  }
+  h3 { font-size: 1.15rem; font-weight: 600; color: var(--accent2); margin-top: 1.8rem; margin-bottom: 0.8rem; }
+  p { margin-bottom: 1rem; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: #fff; }
+  code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    background: var(--code-bg); padding: 0.15em 0.4em;
+    border-radius: 3px; font-size: 0.88em; color: var(--accent);
+  }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1rem 1.25rem; overflow-x: auto;
+    margin-bottom: 0; line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; color: var(--text); font-size: 0.85rem; }
+  ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+  li { margin-bottom: 0.4rem; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+  .callout {
+    background: var(--surface); border-left: 3px solid var(--accent);
+    padding: 1rem 1.25rem; margin: 1.25rem 0; border-radius: 0 6px 6px 0;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  .series-nav {
+    display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+    padding: 0.6rem 1rem; background: var(--surface); border-radius: 6px;
+    margin-bottom: 1.5rem; font-size: 0.85rem;
+  }
+  .series-nav .series-label { color: var(--text-muted); font-weight: 600; margin-right: 0.25rem; }
+  .series-nav a { color: var(--link); padding: 0.15em 0.5em; border-radius: 3px; }
+  .series-nav a:hover { background: var(--surface2); }
+  .series-nav a.current { color: #fff; background: var(--surface2); font-weight: 600; }
+
+  /* Interactive example styles */
+  .example {
+    margin: 1.25rem 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .example pre {
+    border: none;
+    border-radius: 0;
+    margin: 0;
+  }
+  .example-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+  .run-btn {
+    background: var(--accent2);
+    color: #fff;
+    border: none;
+    padding: 0.3rem 0.9rem;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .run-btn:hover { opacity: 0.85; }
+  .run-btn:active { opacity: 0.7; }
+  .example-label {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    margin-left: auto;
+  }
+  .output {
+    background: #0a0f1a;
+    border-top: 1px solid var(--border);
+    padding: 0.75rem 1.25rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--green);
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    display: none;
+  }
+  .output.visible { display: block; }
+  .output .err { color: var(--accent); }
+  .output .muted { color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<div class="series-nav">
+  <span class="series-label">Series:</span>
+  <a href="message-mechanics.html">Fundamentals</a>
+  <a href="message-flow-visual.html">Scenarios</a>
+  <a href="message-mechanics-decisions.html">Decisions</a>
+  <a href="stream-library.html">Stream Library</a>
+  <a href="stream-library-research.html">Library Survey</a>
+  <a href="stream-library-guide.html" class="current">Usage Guide</a>
+</div>
+
+<h1>Stream Library &mdash; Usage Guide</h1>
+<p class="subtitle">
+  Interactive examples showing how to use the stream library.
+  Every example runs in your browser using the in-memory transport &mdash;
+  no server needed. Click <strong>Run</strong> to see results.
+</p>
+<p class="meta">
+  Source: <code>shared/lib/stream/</code> &mdash;
+  <a href="https://github.com/underscorenygren/claude-by-voice/pull/254">PR #254</a>
+</p>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>1. Quick start</h2>
+
+<p>
+  Create a stream, publish a message, subscribe to it.
+  <code>createStream</code> is the main entry point &mdash; give it a name and buffer capacity.
+</p>
+
+<div class="example">
+<pre><code id="ex-quickstart-code">// Create a stream with a 100-message ring buffer
+const stream = createStream({ name: 'demo', bufferCapacity: 100 });
+
+// Subscribe — handler receives envelopes (payload + metadata)
+const unsub = stream.on((envelope) => {
+  log('Received:', envelope.payload);
+  log('  seq=' + envelope.seq + ', from=' + envelope.from);
+});
+
+// Publish a message
+stream.append({ greeting: 'hello, stream library' });
+
+// Publish another
+stream.append({ greeting: 'messages are typed and sequenced' });
+
+// Unsubscribe
+unsub();
+stream.append({ greeting: 'this one is not received (unsubscribed)' });
+
+log('---');
+log('Buffer has', stream.latest(10).length, 'messages total');
+</code></pre>
+<div class="example-toolbar">
+  <button class="run-btn" onclick="runExample('ex-quickstart')">Run</button>
+  <span class="example-label">createStream + on + append</span>
+</div>
+<div class="output" id="ex-quickstart-output"></div>
+</div>
+
+<!-- ============================================================ -->
+<h2>2. Result types</h2>
+
+<p>
+  Every fallible operation returns <code>Result&lt;T, E&gt;</code> instead of throwing.
+  This makes error handling explicit &mdash; you always know whether something succeeded
+  by checking <code>.ok</code>, and you can chain operations with <code>map</code> and <code>flatMap</code>.
+</p>
+
+<div class="example">
+<pre><code id="ex-result-code">// Create success and failure values
+const good = ok(42);
+const bad = err(new Error('something broke'));
+
+log('good.ok =', good.ok, '  good.value =', good.value);
+log('bad.ok =', bad.ok, '   bad.error =', bad.error.message);
+
+// map — transform the success value
+const doubled = map(good, (n) => n * 2);
+log('map(good, x2) =', doubled.value);
+
+// map on an error passes through unchanged
+const stillBad = map(bad, (n) => n * 2);
+log('map(bad, x2).ok =', stillBad.ok);
+
+// flatMap — chain fallible operations
+const parsed = flatMap(ok('{"x":1}'), (s) => {
+  try { return ok(JSON.parse(s)); }
+  catch (e) { return err(e); }
+});
+log('flatMap parse:', parsed.value);
+
+const parseFail = flatMap(ok('not json{'), (s) => {
+  try { return ok(JSON.parse(s)); }
+  catch (e) { return err(e); }
+});
+log('flatMap bad parse:', parseFail.ok, '-', parseFail.error.message);
+
+// unwrapOr — extract value with a fallback
+log('unwrapOr(good, 0) =', unwrapOr(good, 0));
+log('unwrapOr(bad, 0) =', unwrapOr(bad, 0));
+</code></pre>
+<div class="example-toolbar">
+  <button class="run-btn" onclick="runExample('ex-result')">Run</button>
+  <span class="example-label">ok / err / map / flatMap / unwrapOr</span>
+</div>
+<div class="output" id="ex-result-output"></div>
+</div>
+
+<div class="callout">
+  <p>
+    <strong>Why not throw?</strong> The existing codebase has scattered try/catch blocks
+    around JSON parsing, WebSocket ops, and encoding. Result types make failure handling
+    explicit and composable. A failed parse looks the same as a successful one &mdash;
+    no invisible control flow jumps.
+  </p>
+</div>
+
+<!-- ============================================================ -->
+<h2>3. Transports</h2>
+
+<p>
+  A <code>Transport</code> is an abstract bidirectional message pipe. The library ships
+  three implementations: WebSocket, HTTP poll, and in-memory. They all implement the same
+  interface, so you can swap transports without changing application code.
+</p>
+
+<p>
+  The <strong>memory transport</strong> creates two linked ends &mdash; anything sent by the
+  client arrives at the server, and vice versa. This is what makes the examples on this page
+  work without a real server.
+</p>
+
+<div class="example">
+<pre><code id="ex-transport-code">// Create a linked client/server pair
+const { client, server } = createMemoryTransport();
+
+// Register handlers before opening
+const serverMessages = [];
+server.onMessage((data) => {
+  serverMessages.push(data);
+  log('Server received:', data);
+  // Echo back with a prefix
+  server.send('echo: ' + data);
+});
+
+const clientMessages = [];
+client.onMessage((data) => {
+  clientMessages.push(data);
+  log('Client received:', data);
+});
+
+// Open both ends
+await client.open();
+await server.open();
+
+log('Client state:', client.state);
+log('Server state:', server.state);
+
+// Client sends to server
+client.send('hello from client');
+client.send('another message');
+
+log('---');
+log('Server got', serverMessages.length, 'messages');
+log('Client got', clientMessages.length, 'echo replies');
+
+// Close
+client.close();
+log('Client state after close:', client.state);
+</code></pre>
+<div class="example-toolbar">
+  <button class="run-btn" onclick="runExample('ex-transport')">Run</button>
+  <span class="example-label">createMemoryTransport — client/server pair</span>
+</div>
+<div class="output" id="ex-transport-output"></div>
+</div>
+
+<h3>Binary data over transport</h3>
+
+<p>
+  Transports handle both strings and <code>Uint8Array</code> binary data.
+  Audio frames, for example, travel as binary.
+</p>
+
+<div class="example">
+<pre><code id="ex-transport-binary-code">const { client, server } = createMemoryTransport();
+
+server.onMessage((data) => {
+  if (data instanceof Uint8Array) {
+    log('Server received binary:', data.length, 'bytes →', Array.from(data));
+  } else {
+    log('Server received string:', data);
+  }
+});
+
+await client.open();
+await server.open();
+
+// Send a JSON control message
+client.send('{"type":"speech_start"}');
+
+// Send binary audio frames
+client.send(new Uint8Array([0x01, 0x02, 0x03, 0x04]));
+client.send(new Uint8Array([0x05, 0x06, 0x07, 0x08]));
+
+// Send another JSON control message
+client.send('{"type":"speech_end"}');
+</code></pre>
+<div class="example-toolbar">
+  <button class="run-btn" onclick="runExample('ex-transport-binary')">Run</button>
+  <span class="example-label">Mixed string + binary on one transport</span>
+</div>
+<div class="output" id="ex-transport-binary-output"></div>
+</div>
+
+<!-- ============================================================ -->
+<h2>4. Streams and subscriptions</h2>
+
+<p>
+  A <code>Stream</code> wraps a ring buffer with pub/sub. Every message appended
+  gets a monotonic sequence number and timestamp, then is delivered to all subscribers
+  and stored in the buffer for replay.
+</p>
+
+<div class="example">
+<pre><code id="ex-stream-code">const stream = createStream({ name: 'events', bufferCapacity: 100 });
+
+// Subscribe to live messages
+const received = [];
+stream.on((env) => received.push(env));
+
+// Append several messages
+for (let i = 0; i < 5; i++) {
+  stream.append({ type: 'tick', value: i });
+}
+
+log('Received', received.length, 'live messages');
+log('Sequence numbers:', received.map(e => e.seq).join(', '));
+
+// Query the buffer: latest(n)
+const last3 = stream.latest(3);
+log('---');
+log('latest(3):');
+last3.forEach(e => log('  seq=' + e.seq, JSON.stringify(e.payload)));
+
+// Query the buffer: since(seq) — everything after seq 2
+const afterSeq2 = stream.since(createSequenceNumber(2));
+log('---');
+log('since(seq=2):');
+afterSeq2.forEach(e => log('  seq=' + e.seq, JSON.stringify(e.payload)));
+</code></pre>
+<div class="example-toolbar">
+  <button class="run-btn" onclick="runExample('ex-stream')">Run</button>
+  <span class="example-label">subscribe, query with latest() and since()</span>
+</div>
+<div class="output" id="ex-stream-output"></div>
+</div>
+
+<h3>Ring buffer overflow</h3>
+
+<p>
+  When the buffer is full, oldest messages are silently evicted.
+  This is the expected behavior for bounded streams.
+</p>
+
+<div class="example">
+<pre><code id="ex-overflow-code">// Tiny buffer: capacity 5
+const stream = createStream({ name: 'tiny', bufferCapacity: 5 });
+
+// Append 10 messages
+for (let i = 0; i < 10; i++) {
+  stream.append({ n: i });
+}
+
+// Buffer only holds the last 5
+const all = stream.latest(100);
+log('Buffer size:', all.length, '(capacity 5)');
+log('Kept messages:');
+all.forEach(e => log('  seq=' + e.seq, '→ n=' + e.payload.n));
+log('---');
+log('Messages 0-4 were evicted to make room for 5-9.');
+</code></pre>
+<div class="example-toolbar">
+  <button class="run-btn" onclick="runExample('ex-overflow')">Run</button>
+  <span class="example-label">Ring buffer eviction</span>
+</div>
+<div class="output" id="ex-overflow-output"></div>
+</div>
+
+<!-- ============================================================ -->
+<h2>5. Dedup (compositional)</h2>
+
+<p>
+  Deduplication is not built into streams. Instead, <code>createDeduplicatedStream</code>
+  wraps any stream with a dedup filter. You provide a key function that extracts the
+  dedup key from each message.
+</p>
+
+<p>
+  This compositional approach means you choose: plain stream (no overhead) or
+  deduplicated stream (when duplicates are possible, e.g. chat messages re-sent on reconnect).
+</p>
+
+<div class="example">
+<pre><code id="ex-dedup-code">// Plain stream — no dedup
+const inner = createStream({ name: 'chat', bufferCapacity: 100 });
+
+// Wrap with dedup — key function extracts message ID
+const dedup = createDedup();
+const stream = createDeduplicatedStream(
+  inner,
+  dedup,
+  (msg) => msg.id,  // deduplicate by message ID
+);
+
+const received = [];
+stream.on((env) => received.push(env.payload));
+
+// Send three messages, two with the same ID
+stream.append({ id: 'msg-1', text: 'hello' });
+stream.append({ id: 'msg-2', text: 'world' });
+stream.append({ id: 'msg-1', text: 'hello (duplicate)' });  // duplicate!
+stream.append({ id: 'msg-3', text: 'third' });
+
+log('Sent 4 messages, received', received.length, '(1 duplicate filtered)');
+received.forEach(m => log('  ' + m.id + ': ' + m.text));
+</code></pre>
+<div class="example-toolbar">
+  <button class="run-btn" onclick="runExample('ex-dedup')">Run</button>
+  <span class="example-label">createDeduplicatedStream — compositional dedup</span>
+</div>
+<div class="output" id="ex-dedup-output"></div>
+</div>
+
+<h3>Timed cache for TTL-based dedup</h3>
+
+<p>
+  By default, dedup remembers keys forever. Use <code>createTimedCache</code> as the
+  backing store to expire keys after a TTL. This is useful for chat dedup where
+  a message re-sent after 5 seconds is probably intentional.
+</p>
+
+<div class="example">
+<pre><code id="ex-timed-dedup-code">// Create a timed cache with controllable clock
+let now = 0;
+const cache = createTimedCache({
+  ttlMs: 5000,
+  now: () => now,
+});
+const dedup = createDedup(cache);
+
+// First check — not a duplicate
+log('msg-1 duplicate?', dedup.isDuplicate('msg-1'));
+
+// Same key immediately — duplicate
+log('msg-1 duplicate?', dedup.isDuplicate('msg-1'));
+
+// Advance time past TTL
+now = 6000;
+log('(time advances 6 seconds)');
+
+// Same key after TTL — no longer duplicate
+log('msg-1 duplicate?', dedup.isDuplicate('msg-1'));
+</code></pre>
+<div class="example-toolbar">
+  <button class="run-btn" onclick="runExample('ex-timed-dedup')">Run</button>
+  <span class="example-label">createTimedCache — TTL-expiring key store</span>
+</div>
+<div class="output" id="ex-timed-dedup-output"></div>
+</div>
+
+<!-- ============================================================ -->
+<h2>6. Channels &mdash; routing and identity</h2>
+
+<p>
+  A <code>Channel</code> adds sender/receiver addressing on top of a stream.
+  Each channel has an identity (the sender name). Messages can be
+  <strong>targeted</strong> (to a specific recipient) or <strong>broadcast</strong>
+  (to everyone).
+</p>
+
+<h3>6.1 Peer-to-peer messaging</h3>
+
+<div class="example">
+<pre><code id="ex-channel-p2p-code">// Shared stream for the "work" channel
+const stream = createStream({ name: 'work', bufferCapacity: 200 });
+
+// Two participants with different identities
+const supervisor = createChannel('work', stream, 'supervisor');
+const porter = createChannel('work', stream, 'porter');
+
+// Each participant logs messages addressed to them
+porter.on('porter', (env) => {
+  log('[porter received]', JSON.stringify(env.payload.payload));
+});
+supervisor.on('supervisor', (env) => {
+  log('[supervisor received]', JSON.stringify(env.payload.payload));
+});
+
+// Supervisor sends a task to porter
+supervisor.send('porter', { task: 'build the widget' });
+
+// Porter replies to supervisor
+porter.send('supervisor', { reply: 'widget complete' });
+</code></pre>
+<div class="example-toolbar">
+  <button class="run-btn" onclick="runExample('ex-channel-p2p')">Run</button>
+  <span class="example-label">Targeted peer-to-peer messaging between two participants</span>
+</div>
+<div class="output" id="ex-channel-p2p-output"></div>
+</div>
+
+<h3>6.2 Broadcast to multiple participants</h3>
+
+<div class="example">
+<pre><code id="ex-channel-broadcast-code">// Three participants on the same stream
+const stream = createStream({ name: 'announcements', bufferCapacity: 200 });
+
+const supervisor = createChannel('announcements', stream, 'supervisor');
+const porter = createChannel('announcements', stream, 'porter');
+const atlas = createChannel('announcements', stream, 'atlas');
+
+// All three listen for broadcasts
+supervisor.onBroadcast((env) => {
+  log('[supervisor heard]', JSON.stringify(env.payload.payload));
+});
+porter.onBroadcast((env) => {
+  log('[porter heard]', JSON.stringify(env.payload.payload));
+});
+atlas.onBroadcast((env) => {
+  log('[atlas heard]', JSON.stringify(env.payload.payload));
+});
+
+// Supervisor broadcasts — porter and atlas both receive it
+supervisor.broadcast({ alert: 'deploy starting in 5 minutes' });
+
+// Porter broadcasts — supervisor and atlas both receive it
+porter.broadcast({ status: 'build complete' });
+</code></pre>
+<div class="example-toolbar">
+  <button class="run-btn" onclick="runExample('ex-channel-broadcast')">Run</button>
+  <span class="example-label">Broadcast messages reach all three participants</span>
+</div>
+<div class="output" id="ex-channel-broadcast-output"></div>
+</div>
+
+<h3>6.3 Filter by sender</h3>
+
+<div class="example">
+<pre><code id="ex-channel-filter-code">// Supervisor monitors what porter says, ignoring others
+const stream = createStream({ name: 'chatter', bufferCapacity: 200 });
+
+const supervisor = createChannel('chatter', stream, 'supervisor');
+const porter = createChannel('chatter', stream, 'porter');
+const atlas = createChannel('chatter', stream, 'atlas');
+
+// Supervisor only listens to porter's messages
+supervisor.from('porter', (env) => {
+  log('[from porter]', JSON.stringify(env.payload.payload));
+});
+
+// Porter sends — supervisor sees this
+porter.broadcast({ note: 'widget deployed' });
+
+// Atlas sends — supervisor does NOT see this
+atlas.broadcast({ note: 'index rebuilt' });
+
+// Porter sends again — supervisor sees this too
+porter.send('supervisor', { note: 'all clear' });
+</code></pre>
+<div class="example-toolbar">
+  <button class="run-btn" onclick="runExample('ex-channel-filter')">Run</button>
+  <span class="example-label">Filter to only see messages from a specific sender</span>
+</div>
+<div class="output" id="ex-channel-filter-output"></div>
+</div>
+
+<!-- ============================================================ -->
+<h2>7. Codecs</h2>
+
+<p>
+  Codecs handle serialization with typed errors. <code>createJsonCodec</code> returns
+  <code>Result</code> values instead of throwing on malformed input. The optional
+  <code>validator</code> parameter adds schema checking.
+</p>
+
+<div class="example">
+<pre><code id="ex-codec-json-code">// Basic JSON codec — no schema validation
+const codec = createJsonCodec();
+
+// Encode an object to a JSON string
+const input = { type: 'chat.message', text: 'hello' };
+const encoded = codec.encode(input);
+log('encode(', JSON.stringify(input), ') →', encoded.ok ? encoded.value : 'ERROR');
+
+// Decode valid JSON back to an object
+const validJson = '{"type":"chat.message","text":"hello"}';
+const decoded = codec.decode(validJson);
+log('decode(', validJson, ') → ok?', decoded.ok, '→', JSON.stringify(decoded.value));
+
+// Decode invalid JSON — returns err, never throws
+const malformed = 'not valid json{{{';
+const bad = codec.decode(malformed);
+log('decode(', malformed, ') → ok?', bad.ok, '— error:', bad.error.message);
+</code></pre>
+<div class="example-toolbar">
+  <button class="run-btn" onclick="runExample('ex-codec-json')">Run</button>
+  <span class="example-label">createJsonCodec — safe encode/decode</span>
+</div>
+<div class="output" id="ex-codec-json-output"></div>
+</div>
+
+<h3>Validator integration</h3>
+
+<p>
+  Pass a validator function to <code>createJsonCodec</code> to reject
+  structurally valid JSON that doesn't match your schema.
+</p>
+
+<div class="example">
+<pre><code id="ex-codec-validator-code">// Validator: must have "type" and "text" string fields
+function isChatMessage(v) {
+  return v !== null
+    && typeof v === 'object'
+    && typeof v.type === 'string'
+    && typeof v.text === 'string';
+}
+
+const codec = createJsonCodec(isChatMessage);
+
+// 1. Valid message — passes both JSON parse and validator
+const validInput = '{"type":"chat.message","text":"hi"}';
+const good = codec.decode(validInput);
+log('decode(', validInput, ')');
+log('  → ok?', good.ok, '— value:', JSON.stringify(good.value));
+
+// 2. Valid JSON, wrong schema — parsed fine, but validator rejects it
+const wrongInput = '{"count":42}';
+const wrong = codec.decode(wrongInput);
+log('decode(', wrongInput, ')');
+log('  → ok?', wrong.ok, '— error type:', wrong.error.constructor.name, '— SchemaError, not DecodeError');
+
+// 3. Invalid JSON — can't even parse
+const brokenInput = '{{{';
+const broken = codec.decode(brokenInput);
+log('decode(', brokenInput, ')');
+log('  → ok?', broken.ok, '— error type:', broken.error.constructor.name, '— DecodeError, not SchemaError');
+</code></pre>
+<div class="example-toolbar">
+  <button class="run-btn" onclick="runExample('ex-codec-validator')">Run</button>
+  <span class="example-label">JSON codec with schema validator</span>
+</div>
+<div class="output" id="ex-codec-validator-output"></div>
+</div>
+
+<h3>Binary codec</h3>
+
+<p>
+  The binary codec uses 4-byte big-endian length-prefixed frames. Useful for audio data
+  where JSON overhead is wasteful.
+</p>
+
+<div class="example">
+<pre><code id="ex-codec-binary-code">// Encode binary data — 4-byte length header + payload
+const payload = new Uint8Array([0xDE, 0xAD, 0xBE, 0xEF]);
+const hex = (arr) => Array.from(arr).map(b => '0x' + b.toString(16).toUpperCase()).join(' ');
+
+log('encode([', hex(payload), '])');
+const encoded = binaryCodec.encode(payload);
+log('  → ok?', encoded.ok, '—', encoded.value.length, 'bytes (4 header + 4 payload)');
+
+// Decode it back — should match original
+log('decode( encoded frame )');
+const decoded = binaryCodec.decode(encoded.value);
+log('  → ok?', decoded.ok, '— payload: [', hex(decoded.value), ']');
+
+// Truncated frame — header says 10 bytes but only 2 present
+const truncated = new Uint8Array([0, 0, 0, 10, 1, 2]);
+log('decode([ header says 10 bytes, only 2 present ])');
+const bad = binaryCodec.decode(truncated);
+log('  → ok?', bad.ok, '— error:', bad.error.message);
+</code></pre>
+<div class="example-toolbar">
+  <button class="run-btn" onclick="runExample('ex-codec-binary')">Run</button>
+  <span class="example-label">binaryCodec — length-prefixed frames</span>
+</div>
+<div class="output" id="ex-codec-binary-output"></div>
+</div>
+
+<!-- ============================================================ -->
+<h2>8. Full scenario: Chat replay</h2>
+
+<p>
+  This scenario demonstrates the primary use case for the stream library's buffer:
+  a subscriber joins late and replays missed messages, then receives live messages going forward.
+  This is how chat history works after a page reload or reconnect.
+</p>
+
+<div class="example">
+<pre><code id="ex-chat-replay-code">// Create a persistent chat stream with dedup
+const inner = createStream({ name: 'chat:porter', bufferCapacity: 2000 });
+const stream = createDeduplicatedStream(
+  inner,
+  createDedup(createTimedCache({ ttlMs: 5000 })),
+  (msg) => String(msg.id),
+);
+
+// Simulate 10 messages arriving while the user is away
+for (let i = 1; i <= 10; i++) {
+  stream.append({ id: i, text: 'message ' + i });
+}
+log('10 messages arrived while user was away');
+log('---');
+
+// User reconnects — their cursor was at seq 5 (they saw messages 1-6)
+const cursor = createSequenceNumber(5);
+const missed = stream.since(cursor);
+log('Replay from seq 5 (' + missed.length + ' missed messages):');
+missed.forEach(e => log('  seq=' + e.seq + ' → ' + e.payload.text));
+
+// Now subscribe for live messages
+log('---');
+const live = [];
+stream.on((env) => live.push(env.payload));
+
+// New messages arrive
+stream.append({ id: 11, text: 'message 11' });
+stream.append({ id: 12, text: 'message 12' });
+
+// Duplicate re-sent on reconnect — dedup catches it
+stream.append({ id: 11, text: 'message 11 (resent)' });
+
+log('Live messages received: ' + live.length);
+live.forEach(m => log('  ' + m.text));
+log('Duplicate "message 11 (resent)" was filtered by dedup.');
+
+// latest(n) for initial page load
+log('---');
+const recent = stream.latest(3);
+log('latest(3) for initial load:');
+recent.forEach(e => log('  ' + e.payload.text));
+</code></pre>
+<div class="example-toolbar">
+  <button class="run-btn" onclick="runExample('ex-chat-replay')">Run</button>
+  <span class="example-label">Reconnect, replay missed messages, dedup re-sends</span>
+</div>
+<div class="output" id="ex-chat-replay-output"></div>
+</div>
+
+<!-- ============================================================ -->
+<h2>9. Full scenario: Voice round-trip</h2>
+
+<p>
+  Voice uses two separate streams: one for binary audio frames (small buffer, high throughput)
+  and one for JSON control events (speech start/end, transcription, TTS). This demonstrates
+  how the library handles both data types with the same API.
+</p>
+
+<div class="example">
+<pre><code id="ex-voice-roundtrip-code">// Audio stream — small buffer, binary payloads
+const audioStream = createStream({ name: 'voice-audio', bufferCapacity: 50 });
+
+// Event stream — JSON voice protocol events
+const eventStream = createStream({ name: 'voice-events', bufferCapacity: 200 });
+
+const audioFrames = [];
+const voiceEvents = [];
+
+audioStream.on((env) => audioFrames.push(env.payload));
+eventStream.on((env) => voiceEvents.push(env.payload));
+
+// Simulate a voice round-trip: user speaks, system responds
+log('=== User speaking ===');
+eventStream.append({ type: 'speech_start' });
+
+// Audio frames arrive during speech
+audioStream.append(new Uint8Array([0x01, 0x02, 0x03, 0x04]));
+audioStream.append(new Uint8Array([0x05, 0x06, 0x07, 0x08]));
+audioStream.append(new Uint8Array([0x09, 0x0A, 0x0B, 0x0C]));
+
+eventStream.append({ type: 'speech_end' });
+
+log('=== Processing ===');
+eventStream.append({
+  type: 'transcription',
+  id: 'tx-1',
+  text: 'what is the build status',
+});
+
+log('=== System responding ===');
+eventStream.append({ type: 'tts_start' });
+// (TTS audio frames would go on audioStream here)
+eventStream.append({ type: 'tts_end' });
+
+log('Audio frames received:', audioFrames.length);
+audioFrames.forEach((f, i) =>
+  log('  frame ' + i + ':', f.length, 'bytes')
+);
+
+log('---');
+log('Voice events received:', voiceEvents.length);
+voiceEvents.forEach(e => {
+  let detail = e.type;
+  if (e.text) detail += ' → "' + e.text + '"';
+  log('  ' + detail);
+});
+
+// Verify sequence numbers are monotonic
+const audioSeqs = audioStream.latest(10).map(e => e.seq);
+const eventSeqs = eventStream.latest(10).map(e => e.seq);
+log('---');
+log('Audio seqs:', audioSeqs.join(', '));
+log('Event seqs:', eventSeqs.join(', '));
+</code></pre>
+<div class="example-toolbar">
+  <button class="run-btn" onclick="runExample('ex-voice-roundtrip')">Run</button>
+  <span class="example-label">Binary audio + JSON events on separate streams</span>
+</div>
+<div class="output" id="ex-voice-roundtrip-output"></div>
+</div>
+
+<!-- ============================================================ -->
+<h2>10. Full scenario: Transport + Stream together</h2>
+
+<p>
+  This ties it all together: a memory transport simulating a WebSocket connection,
+  with a stream on each side. The server-side stream buffers messages; a "reconnecting"
+  client replays what it missed.
+</p>
+
+<div class="example">
+<pre><code id="ex-full-scenario-code">// Server-side stream with buffer
+const serverStream = createStream({ name: 'server-events', bufferCapacity: 1000 });
+
+// Memory transport simulating a WebSocket
+const { client, server } = createMemoryTransport();
+const codec = createJsonCodec();
+
+// Server: when it appends to its stream, send over transport
+serverStream.on((env) => {
+  const encoded = codec.encode(env.payload);
+  if (encoded.ok) {
+    server.send(encoded.value);
+  }
+});
+
+// Client: decode incoming messages
+const clientReceived = [];
+client.onMessage((data) => {
+  const decoded = codec.decode(data);
+  if (decoded.ok) {
+    clientReceived.push(decoded.value);
+  }
+});
+
+await client.open();
+await server.open();
+
+// Server publishes events
+serverStream.append({ type: 'status', message: 'build starting' });
+serverStream.append({ type: 'status', message: 'build 50%' });
+serverStream.append({ type: 'status', message: 'build complete' });
+
+log('Client received', clientReceived.length, 'messages via transport:');
+clientReceived.forEach(m => log('  ' + m.type + ': ' + m.message));
+
+// Simulate disconnect
+log('---');
+log('Client disconnects...');
+client.close();
+
+// Server keeps publishing while client is away
+serverStream.append({ type: 'deploy', message: 'deploying v2.1' });
+serverStream.append({ type: 'deploy', message: 'deploy complete' });
+log('Server published 2 more while client was away');
+
+// Client reconnects — replay from seq 2 (last message it saw)
+log('---');
+log('Client reconnects, replays from seq 2:');
+const missed = serverStream.since(createSequenceNumber(2));
+missed.forEach(e => log('  seq=' + e.seq + ' → ' + JSON.stringify(e.payload)));
+log('(' + missed.length + ' missed messages recovered from buffer)');
+</code></pre>
+<div class="example-toolbar">
+  <button class="run-btn" onclick="runExample('ex-full-scenario')">Run</button>
+  <span class="example-label">Transport + stream + codec + reconnect replay</span>
+</div>
+<div class="output" id="ex-full-scenario-output"></div>
+</div>
+
+<hr>
+
+<h2>API reference</h2>
+
+<p>Quick reference for the functions used in the examples above.</p>
+
+<table style="width:100%; border-collapse:collapse; font-size:0.88rem; margin-top:1rem;">
+<thead>
+<tr>
+  <th style="text-align:left; padding:0.5rem 0.8rem; background:var(--surface2); color:#fff; border-bottom:2px solid var(--border);">Function</th>
+  <th style="text-align:left; padding:0.5rem 0.8rem; background:var(--surface2); color:#fff; border-bottom:2px solid var(--border);">Returns</th>
+  <th style="text-align:left; padding:0.5rem 0.8rem; background:var(--surface2); color:#fff; border-bottom:2px solid var(--border);">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>createStream(config)</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>Stream&lt;T&gt;</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);">Typed pub/sub stream with ring buffer</td></tr>
+<tr><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>createChannel(name, stream, identity)</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>Channel&lt;T&gt;</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);">Named routing over a stream</td></tr>
+<tr><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>createDeduplicatedStream(stream, dedup, keyFn)</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>Stream&lt;T&gt;</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);">Dedup wrapper around any stream</td></tr>
+<tr><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>createDedup(store?)</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>Dedup</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);">Key-based dedup filter</td></tr>
+<tr><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>createTimedCache(config)</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>KeyStore</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);">TTL-expiring key store for dedup</td></tr>
+<tr><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>createMemoryTransport()</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>{client, server}</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);">Linked in-memory transport pair</td></tr>
+<tr><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>createJsonCodec(validator?)</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>Codec&lt;T&gt;</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);">JSON encode/decode with Result</td></tr>
+<tr><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>binaryCodec</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>Codec&lt;Uint8Array&gt;</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);">Length-prefixed binary frames</td></tr>
+<tr><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>ok(value)</code> / <code>err(error)</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>Result&lt;T,E&gt;</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);">Create success/failure values</td></tr>
+<tr><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>map(result, fn)</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>Result&lt;U,E&gt;</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);">Transform success value</td></tr>
+<tr><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>flatMap(result, fn)</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>Result&lt;U,E&gt;</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);">Chain fallible operations</td></tr>
+<tr><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>unwrapOr(result, fallback)</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>T</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);">Extract value or use fallback</td></tr>
+<tr><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>createSequenceNumber(n)</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>SequenceNumber</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);">Branded sequence number</td></tr>
+<tr><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>createRingBuffer(capacity)</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);"><code>RingBuffer&lt;T&gt;</code></td><td style="padding:0.4rem 0.8rem; border-bottom:1px solid var(--border);">Fixed-capacity circular buffer</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<p style="color:var(--text-muted); font-size:0.85rem; margin-top:2rem;">
+  Source: <code>shared/lib/stream/</code> &mdash;
+  These examples mirror the test scenarios in <code>__tests__/</code> and <code>__tests__/scenarios/</code>.
+</p>
+
+<!-- ============================================================ -->
+<!-- Runtime: load bundled library, wire up interactive examples   -->
+<!-- ============================================================ -->
+<script type="module">
+import {
+  ok,
+  err,
+  isOk,
+  isErr,
+  map,
+  flatMap,
+  unwrap,
+  unwrapOr,
+  createStream,
+  createDeduplicatedStream,
+  createChannel,
+  createRingBuffer,
+  createDedup,
+  createTimedCache,
+  createSequenceNumber,
+  createStreamId,
+  createJsonCodec,
+  binaryCodec,
+  createMemoryTransport,
+} from './stream-lib-bundle.js';
+
+// Expose all library functions to example code
+const LIB = {
+  ok,
+  err,
+  isOk,
+  isErr,
+  map,
+  flatMap,
+  unwrap,
+  unwrapOr,
+  createStream,
+  createDeduplicatedStream,
+  createChannel,
+  createRingBuffer,
+  createDedup,
+  createTimedCache,
+  createSequenceNumber,
+  createStreamId,
+  createJsonCodec,
+  binaryCodec,
+  createMemoryTransport,
+};
+
+// Make library available globally for examples
+Object.assign(window, LIB);
+
+// Suppress library debug logging during example runs
+const origDebug = console.debug;
+
+window.runExample = async function runExample(id) {
+  const codeEl = document.getElementById(id + '-code');
+  const outputEl = document.getElementById(id + '-output');
+  if (!codeEl || !outputEl) return;
+
+  outputEl.textContent = '';
+  outputEl.classList.add('visible');
+
+  const lines = [];
+  function log(...args) {
+    lines.push(args.map(a => {
+      if (a instanceof Uint8Array) return 'Uint8Array(' + a.length + ')';
+      if (a === undefined) return 'undefined';
+      if (a === null) return 'null';
+      if (typeof a === 'object') {
+        try { return JSON.stringify(a); } catch { return String(a); }
+      }
+      return String(a);
+    }).join(' '));
+  }
+
+  // Suppress console.debug from library internals
+  console.debug = function() {};
+
+  try {
+    const code = codeEl.textContent;
+    // Wrap in async function with library in scope
+    const fn = new Function(
+      ...Object.keys(LIB),
+      'log',
+      '"use strict";\nreturn (async () => {\n' + code + '\n})();'
+    );
+    await fn(...Object.values(LIB), log);
+    outputEl.innerHTML = lines.map(l => escapeHtml(l)).join('\n');
+  } catch (e) {
+    outputEl.innerHTML = lines.map(l => escapeHtml(l)).join('\n')
+      + (lines.length ? '\n' : '')
+      + '<span class="err">Error: ' + escapeHtml(e.message) + '</span>';
+  } finally {
+    console.debug = origDebug;
+  }
+};
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+</script>
+
+</body>
+</html>

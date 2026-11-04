@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Message Mechanics</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --text: #e0e0e0;
+    --text-muted: #a0a0b0;
+    --accent: #e94560;
+    --accent2: #0f9b8e;
+    --link: #5dade2;
+    --code-bg: #0d1b2a;
+    --border: #2a2a4a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #fff;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+  .reading-list {
+    background: var(--surface);
+    border-left: 3px solid var(--accent2);
+    padding: 1rem 1.25rem;
+    margin-bottom: 2.5rem;
+    border-radius: 0 6px 6px 0;
+  }
+  .reading-list p { margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+  .reading-list ul { list-style: none; padding: 0; }
+  .reading-list li { margin-bottom: 0.4rem; }
+  .reading-list li::before { content: ""; }
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    color: #fff;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-top: 1.8rem;
+    margin-bottom: 0.8rem;
+    color: var(--accent2);
+  }
+  p { margin-bottom: 1rem; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: #fff; }
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    background: var(--code-bg);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+    font-size: 0.88em;
+    color: var(--accent);
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: var(--text);
+    font-size: 0.85rem;
+  }
+  ul, ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+  li { margin-bottom: 0.4rem; }
+  .strategy {
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .strategy .label {
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 0.3rem;
+  }
+  .strategy .detail { color: var(--text-muted); font-size: 0.95rem; }
+  .pro { color: var(--accent2); }
+  .con { color: var(--accent); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.25rem;
+    font-size: 0.92rem;
+  }
+  th {
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    background: var(--surface2);
+    color: #fff;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border);
+  }
+  td {
+    padding: 0.5rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .callout {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.25rem;
+    margin: 1.25rem 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  .diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin: 1.25rem 0;
+    font-family: 'SF Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--text-muted);
+  }
+  .question {
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.8rem;
+  }
+  .question .q {
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 0.3rem;
+  }
+  .question .a { color: var(--text-muted); font-size: 0.95rem; }
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+  .section-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem;
+  }
+  .series-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    background: var(--surface);
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+  }
+  .series-nav .series-label {
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-right: 0.25rem;
+  }
+  .series-nav a {
+    color: var(--link);
+    text-decoration: none;
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+  }
+  .series-nav a:hover { background: var(--surface2); }
+  .series-nav a.current {
+    color: #fff;
+    background: var(--surface2);
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<div class="series-nav">
+  <span class="series-label">Series:</span>
+  <a href="message-mechanics.html" class="current">Fundamentals</a>
+  <a href="message-flow-visual.html">Scenarios</a>
+  <a href="message-mechanics-decisions.html">Decisions</a>
+  <a href="stream-library.html">Stream Library</a>
+  <a href="stream-library-research.html">Library Survey</a>
+</div>
+
+<h1>Message Mechanics</h1>
+<p class="subtitle">
+  A walk through the fundamentals of messaging &mdash; what messages are, how they move,
+  what can go wrong &mdash; and how our system maps against these concepts.
+  Written as a reference for making design decisions, not a spec.
+</p>
+
+<div class="reading-list">
+  <p>For deeper reading:</p>
+  <ul>
+    <li><a href="https://s2.dev/">S2.dev</a> &mdash; a streaming platform that nails the "ordered durable log" model</li>
+    <li><a href="https://dataintensive.net/">Designing Data-Intensive Applications</a> (Kleppmann, Ch. 11) &mdash; the best single chapter on stream processing</li>
+    <li><a href="https://bravenewgeek.com/you-cannot-have-exactly-once-delivery/">You Cannot Have Exactly-Once Delivery</a> &mdash; why "exactly once" is about semantics, not physics</li>
+    <li><a href="https://web.archive.org/web/2023/https://engineering.linkedin.com/distributed-systems/log-what-every-software-engineer-should-know-about-real-time-datas-unifying">The Log</a> (Jay Kreps) &mdash; the foundational essay on log-based architectures (<a href="https://www.oreilly.com/content/i-heart-logs-realtime-stream-processing/">O'Reilly excerpt</a>, <a href="https://www.parse.ly/kreps-logs/">summary</a>)</li>
+  </ul>
+</div>
+
+<h2>What is a message?</h2>
+<p>
+  A message is a unit of data that moves from one place to another. That's it.
+  Everything else &mdash; IDs, ordering, delivery guarantees &mdash; is machinery we add
+  on top to deal with the fact that networks are unreliable and time is hard.
+</p>
+<p>A message has:</p>
+<ul>
+  <li><strong>Payload</strong> &mdash; the content (text, JSON, binary audio frames)</li>
+  <li><strong>Metadata</strong> &mdash; who sent it, when, where it's going</li>
+  <li><strong>Identity</strong> &mdash; some way to tell this message apart from every other message</li>
+</ul>
+<p>The identity part is where things get interesting.</p>
+
+<h2>Message IDs: why they matter</h2>
+<p>
+  A message without an ID is a message you can't talk about. You can't deduplicate it,
+  you can't acknowledge it, you can't replay it without risking duplicates.
+</p>
+
+<h3>ID generation strategies</h3>
+
+<div class="strategy">
+  <div class="label">Client-generated IDs</div>
+  <div class="detail">The sender creates the ID before sending.</div>
+  <ul>
+    <li><span class="pro">Pro:</span> the sender knows the ID immediately, can retry idempotently</li>
+    <li><span class="con">Con:</span> clients can generate collisions (bad randomness, clock skew)</li>
+    <li>Example: <code>chat_1729043255000_a7x3</code> &mdash; our chat messages use timestamp + random suffix</li>
+  </ul>
+</div>
+
+<div class="strategy">
+  <div class="label">Server-generated IDs</div>
+  <div class="detail">The receiver assigns the ID on receipt.</div>
+  <ul>
+    <li><span class="pro">Pro:</span> guaranteed unique within the server's namespace</li>
+    <li><span class="con">Con:</span> the sender doesn't know the ID until the server responds &mdash; creates a window where the message exists but can't be referenced</li>
+    <li>Example: Kafka offsets &mdash; the broker assigns a sequence number on append</li>
+  </ul>
+</div>
+
+<div class="strategy">
+  <div class="label">Content-derived IDs</div>
+  <div class="detail">Hash the payload to get the ID.</div>
+  <ul>
+    <li><span class="pro">Pro:</span> naturally idempotent &mdash; same content = same ID</li>
+    <li><span class="con">Con:</span> intentionally identical messages (retries with different intent) become indistinguishable</li>
+    <li>Example: our chatbus dedup uses <code>hash:&lt;agent&gt;:&lt;from&gt;:&lt;text_first_200&gt;</code> as a fallback when no ID is provided</li>
+  </ul>
+</div>
+
+<div class="strategy">
+  <div class="label">Sequence numbers</div>
+  <div class="detail">A monotonically increasing counter.</div>
+  <ul>
+    <li><span class="pro">Pro:</span> gives you ordering for free &mdash; if ID 42 &lt; ID 43, message 42 came first</li>
+    <li><span class="con">Con:</span> requires a single point of coordination (whoever hands out numbers)</li>
+    <li>Example: S2's model &mdash; records are identified by sequence number, ordered and durable before acknowledgment</li>
+  </ul>
+</div>
+
+<h3>What we do</h3>
+<p>We use client-generated IDs with prefixes that encode the message type:</p>
+
+<table>
+  <thead><tr><th>Prefix</th><th>Source</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td><code>chat_</code></td><td>User typed in web UI</td><td><code>chat_1729043255000_a7x3</code></td></tr>
+    <tr><td><code>reply_</code></td><td>Agent response broadcast</td><td><code>reply_1729043256000_b2k9</code></td></tr>
+    <tr><td><code>hist_</code></td><td>History replay (fallback)</td><td><code>hist_1729043255000</code></td></tr>
+    <tr><td><code>msg_</code></td><td>Voice flow message</td><td><code>msg_1729043257000_c4m1</code></td></tr>
+    <tr><td><code>env_</code></td><td>Bus envelope (internal)</td><td><code>env_a1b2c3d4e5f6g7h8</code></td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <p>
+    The <code>hist_</code> prefix is a known problem. When the server replays history,
+    it generates new IDs instead of preserving the original <code>reply_</code> IDs.
+    The client sees the same message arrive twice with different IDs and can't deduplicate.
+    This was <a href="https://github.com/underscorenygren/claude-by-voice/issues/222">issue #222</a>.
+  </p>
+  <p>
+    <strong>Lesson:</strong> if you generate IDs at one layer and replay at another, the IDs
+    must survive the round trip. Otherwise your dedup breaks at exactly the moment it matters
+    most &mdash; reconnection.
+  </p>
+</div>
+
+<hr>
+
+<h2>Ordering</h2>
+<p>
+  Messages have a natural order &mdash; the order they were sent. But networks don't preserve
+  order. A message sent second can arrive first. A message can arrive twice. A message can
+  never arrive at all.
+</p>
+
+<h3>Ordering models</h3>
+
+<div class="strategy">
+  <div class="label">Total order</div>
+  <div class="detail">
+    Every consumer sees every message in the same order. This is what a single Kafka partition
+    gives you, and what S2 gives you per-stream. It requires a single writer (or coordination
+    between writers).
+  </div>
+</div>
+
+<div class="strategy">
+  <div class="label">Partial order</div>
+  <div class="detail">
+    Messages within a scope are ordered, but across scopes they're not. Kafka achieves this
+    with partitions &mdash; messages in partition 0 are ordered relative to each other,
+    but not relative to partition 1.
+  </div>
+</div>
+
+<div class="strategy">
+  <div class="label">No order</div>
+  <div class="detail">
+    Messages arrive whenever. UDP, email, most HTTP-based pub/sub without sequence numbers.
+  </div>
+</div>
+
+<h3>What we do</h3>
+<p>
+  We have <strong>per-agent ordering</strong> &mdash; messages to/from a single agent are stored
+  sequentially in that agent's JSONL log file. But across agents, there's no ordering guarantee.
+</p>
+<p>
+  Within the chatbus, the in-memory ring buffer preserves insertion order, but the ring drops
+  old entries when full. A client that reconnects after the ring has wrapped may miss messages
+  &mdash; the fallback is timestamp-based replay from the JSONL file on disk.
+</p>
+<p>
+  <strong>How S2 differs:</strong> S2 assigns sequence numbers on append, so consumers can ask
+  for "everything after sequence 47" and get a gapless, ordered response. We use timestamps
+  instead, which means our "everything after T" query can miss messages written at the same
+  millisecond or with clock skew.
+</p>
+
+<hr>
+
+<h2>Delivery guarantees</h2>
+<p>This is the taxonomy everyone learns:</p>
+
+<div class="strategy">
+  <div class="label">At-most-once</div>
+  <div class="detail">Send and forget. The message might not arrive. You don't retry. Fast and simple.</div>
+</div>
+<div class="strategy">
+  <div class="label">At-least-once</div>
+  <div class="detail">Retry until acknowledged. The message will arrive, but possibly more than once. Requires idempotency or dedup on the receiver side.</div>
+</div>
+<div class="strategy">
+  <div class="label">Exactly-once</div>
+  <div class="detail">
+    Each message is processed exactly once. This is the holy grail and
+    <a href="https://bravenewgeek.com/you-cannot-have-exactly-once-delivery/">it doesn't exist at the network level</a>.
+    What systems call "exactly-once" is really "at-least-once delivery + idempotent processing"
+    &mdash; the message may arrive multiple times, but the side effect only happens once.
+  </div>
+</div>
+
+<h3>What we do</h3>
+<p>Our system is <strong>at-most-once with client-side dedup as a safety net</strong>.</p>
+<p>
+  The chatbus has a dedup cache with a 5-minute TTL. If the same message ID (or content hash)
+  arrives within 5 minutes, the duplicate is suppressed. After 5 minutes, the cache entry
+  expires and a true duplicate would be processed again.
+</p>
+<p>
+  The client (ChatStore) maintains a <code>seenIds</code> Set. Every message that arrives
+  &mdash; live or replayed &mdash; is checked against this set. Duplicates are silently dropped.
+</p>
+
+<div class="diagram">Publisher &rarr; Chatbus (TTL dedup) &rarr; Bridge (broadcast) &rarr; Client (seenIds dedup)
+                                                       &searr; JSONL log (replay source)</div>
+
+<p>
+  This is not Kafka. We give you a best-effort fan-out with two layers of dedup. The tradeoff:
+  much simpler, much lower latency, but no guarantee that a message won't be lost if the server
+  crashes between receiving it and writing to disk (no fsync).
+</p>
+<p>
+  For chat messages, this is fine. For financial transactions, it would not be.
+</p>
+
+<hr>
+
+<h2>Connections and reconnection</h2>
+<p>A WebSocket connection is a stateful pipe. When it breaks, you lose:</p>
+<ol>
+  <li>Any in-flight messages (sent but not yet received)</li>
+  <li>Any messages the server would have sent while you were disconnected</li>
+  <li>The server's knowledge of where you left off (unless you told it)</li>
+</ol>
+
+<h3>Reconnection strategies</h3>
+
+<div class="strategy">
+  <div class="label">Dumb reconnect</div>
+  <div class="detail">Connect fresh, get whatever the server gives you. Simple but you either miss messages or get duplicates.</div>
+</div>
+<div class="strategy">
+  <div class="label">Cursor-based reconnect</div>
+  <div class="detail">The client tracks a cursor (sequence number, timestamp, offset) and tells the server "I last saw X, send me everything after X."</div>
+</div>
+<div class="strategy">
+  <div class="label">Session resumption</div>
+  <div class="detail">The server tracks per-client state. On reconnect, the server knows what it already sent and picks up where it left off. More complex server-side but simpler for the client.</div>
+</div>
+
+<h3>What we do</h3>
+<p>We use <strong>cursor-based reconnect with a timestamp cursor</strong>:</p>
+<ol>
+  <li>Client receives a message &rarr; stores its timestamp in <code>localStorage</code> as <code>voice-last-msg-ts</code></li>
+  <li>Connection drops &rarr; client detects WebSocket close</li>
+  <li>Client reconnects &rarr; sends <code>{ type: "subscribe", since: "&lt;stored_timestamp&gt;", last: 10 }</code></li>
+  <li>Server queries JSONL log for messages after that timestamp</li>
+  <li>If the timestamp query returns fewer than 10 results &rarr; fall back to "last 10 messages"</li>
+  <li>Client receives replayed messages &rarr; dedup via <code>seenIds</code></li>
+</ol>
+<p>
+  The <code>last: 10</code> fallback handles page reloads where <code>localStorage</code>
+  has a stale timestamp or none at all. Rather than showing nothing, we show the last N messages
+  so the user has context.
+</p>
+
+<hr>
+
+<h2>Protocols and layers</h2>
+<p>
+  "Protocol" just means "the rules two sides agree on for talking to each other."
+  Our system has several layers:
+</p>
+
+<h3>Transport &mdash; WebSocket</h3>
+<p>
+  The pipe. Bidirectional, persistent, message-framed (unlike raw TCP which is a byte stream).
+  We use WebSocket because the browser supports it natively, we need server-initiated messages,
+  and HTTP polling wastes bandwidth for real-time chat.
+</p>
+
+<h3>Wire format &mdash; JSON messages</h3>
+<p>Every WebSocket frame contains a JSON object with a <code>type</code> field:</p>
+<pre><code>{ "type": "agent_message", "text": "hello", "id": "reply_123", "from": "supervisor" }
+{ "type": "history_agent", "text": "hello", "id": "reply_123", "ts": "2026-10-16T00:00:00Z" }
+{ "type": "subscribe", "since": "2026-10-15T23:00:00Z", "last": 10 }
+{ "type": "ping" }
+{ "type": "pong" }</code></pre>
+<p>
+  The <code>type</code> field is the discriminator &mdash; it tells the receiver how to interpret
+  the rest of the payload. This is a <em>tagged union</em> pattern, common in WebSocket protocols.
+</p>
+
+<h3>Application &mdash; message semantics</h3>
+<p>
+  Above the wire format, there's the semantic layer. <code>history_agent</code> and
+  <code>agent_message</code> contain the same data (text from an agent), but:
+</p>
+<ul>
+  <li><code>agent_message</code> = live, just happened, display immediately</li>
+  <li><code>history_agent</code> = replay, already happened, display but mark as historical</li>
+</ul>
+<p>
+  The client must handle both. The server must send the right one. This is where bugs live
+  &mdash; the boundary between "this is new" and "you already saw this."
+</p>
+
+<h3>Bus &mdash; routing and fan-out</h3>
+<div class="diagram">User sends "hello" to agent A
+  &rarr; HTTP POST /agent/A/send
+    &rarr; Chatbus receives, assigns envelope, persists
+      &rarr; Forward to agent A's channel server
+      &rarr; Agent A processes, responds
+        &rarr; Chatbus receives response, persists
+          &rarr; Broadcast to all connected WebSocket clients</div>
+<p>
+  The bus is a mediator &mdash; no client talks directly to an agent. Publishers (users, agents)
+  don't know about subscribers (connected clients). The bus handles routing.
+</p>
+
+<hr>
+
+<h2>Two buses: chat and events</h2>
+
+<p>
+  We have two separate bus services, and understanding which signals flow where is
+  critical for designing acks, lag detection, and voice integration.
+</p>
+
+<h3>The split</h3>
+
+<table>
+  <thead><tr><th></th><th>Chatbus (port 9095)</th><th>Sysbus (port 9097)</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Purpose</strong></td>
+      <td>Message routing &mdash; user-to-agent, agent-to-user, agent-to-agent</td>
+      <td>Activity feed &mdash; what's happening in the system right now</td>
+    </tr>
+    <tr>
+      <td><strong>Carries</strong></td>
+      <td>Chat messages, work dispatch, agent responses</td>
+      <td>Tool calls, build/deploy status, session lifecycle, errors</td>
+    </tr>
+    <tr>
+      <td><strong>Persistence</strong></td>
+      <td>JSONL per agent, ring buffer, queryable history</td>
+      <td>50-event ring buffer, ephemeral</td>
+    </tr>
+    <tr>
+      <td><strong>Consumers</strong></td>
+      <td>Agents, workers, bridge (for WebSocket broadcast)</td>
+      <td>Web UI (activity timeline, status tiles)</td>
+    </tr>
+    <tr>
+      <td><strong>Protocol</strong></td>
+      <td>HTTP POST to publish, HTTP GET/long-poll to subscribe</td>
+      <td>HTTP POST to publish, WebSocket for live stream</td>
+    </tr>
+    <tr>
+      <td><strong>Dedup</strong></td>
+      <td>5-minute TTL cache by ID or content hash</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td><strong>Ordering</strong></td>
+      <td>Per-agent (JSONL insertion order)</td>
+      <td>Global (single ring buffer)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Why two?</h3>
+<p>
+  The chatbus carries <strong>primary content</strong> &mdash; the actual messages users and agents
+  exchange. These need persistence, dedup, and replay. The sysbus carries
+  <strong>secondary signals</strong> &mdash; operational telemetry that the UI uses for status
+  display. These are ephemeral; losing a tool_use event doesn't break anything.
+</p>
+<p>
+  Mixing them would overload the chat bus. A single agent tool call generates dozens of
+  sysbus events (tool_use, file_change, git_op, etc.). If those flowed through the chatbus,
+  they'd drown out actual messages and bloat the JSONL logs.
+</p>
+
+<h3>Where acks should live</h3>
+
+<div class="callout">
+  <p>
+    <strong>Acks are secondary signals, not primary content.</strong> An ack ("I received seq 5")
+    is metadata about a message, not a message itself. It belongs on the sysbus, not the chatbus.
+  </p>
+</div>
+
+<p>The proposed ack flow:</p>
+
+<div class="diagram">User sends message
+  &rarr; Chatbus assigns seq=5, routes to agent channel
+  &rarr; Channel receives message
+  &rarr; Channel emits to <strong>sysbus</strong>: {type: "message_ack", agent: "porter", status: "delivered", seq: 5}
+  &rarr; Agent (Claude) picks up message
+  &rarr; Agent emits to <strong>sysbus</strong>: {type: "message_ack", agent: "porter", status: "processing", seq: 5}
+  &rarr; Agent responds
+  &rarr; Response goes through <strong>chatbus</strong> (primary content)
+  &rarr; Chatbus broadcasts response with ref_seq: 5</div>
+
+<p>
+  Primary content (messages, responses) flows through the chatbus. Secondary signals (acks,
+  status, lag) flow through the sysbus. The UI combines both streams: chatbus for the chat
+  panel, sysbus for the checkmarks and status indicators.
+</p>
+
+<h3>What we have, what's missing, what's superfluous</h3>
+
+<table>
+  <thead><tr><th>Signal</th><th>Bus</th><th>Status</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Chat messages</td><td>Chatbus</td>
+      <td style="color: var(--accent2);">Have</td>
+      <td>Working. Needs sequence numbers added.</td>
+    </tr>
+    <tr>
+      <td>Agent responses</td><td>Chatbus</td>
+      <td style="color: var(--accent2);">Have</td>
+      <td>Working. Needs <code>ref_seq</code> to link response to original message.</td>
+    </tr>
+    <tr>
+      <td>Work dispatch</td><td>Chatbus</td>
+      <td style="color: var(--accent2);">Have</td>
+      <td>Working. Could benefit from delivery acks.</td>
+    </tr>
+    <tr>
+      <td>Tool calls</td><td>Sysbus</td>
+      <td style="color: var(--accent2);">Have</td>
+      <td>Working. Drives the activity timeline.</td>
+    </tr>
+    <tr>
+      <td>Build/deploy lifecycle</td><td>Sysbus</td>
+      <td style="color: var(--accent2);">Have</td>
+      <td>Working. Signals from supervisor, builder.</td>
+    </tr>
+    <tr>
+      <td>Channel lifecycle</td><td>Sysbus</td>
+      <td style="color: var(--accent2);">Have</td>
+      <td>Working. MCP init, HTTP ready, stopping.</td>
+    </tr>
+    <tr>
+      <td><strong>Message delivery ack</strong></td><td>Sysbus</td>
+      <td style="color: var(--stalled);">Missing</td>
+      <td>Channel received message but doesn't signal it.</td>
+    </tr>
+    <tr>
+      <td><strong>Message processing ack</strong></td><td>Sysbus</td>
+      <td style="color: var(--stalled);">Missing</td>
+      <td>Agent started working on message but doesn't signal it.</td>
+    </tr>
+    <tr>
+      <td><strong>Consumer lag metric</strong></td><td>Sysbus</td>
+      <td style="color: var(--stalled);">Missing</td>
+      <td>No sequence numbers = no lag calculation possible.</td>
+    </tr>
+    <tr>
+      <td><strong>Escalation signals</strong></td><td>Sysbus</td>
+      <td style="color: var(--stalled);">Missing</td>
+      <td>Nudge, fast-respond, circuit breaker &mdash; none exist yet.</td>
+    </tr>
+    <tr>
+      <td><strong>Voice state signals</strong></td><td>Sysbus</td>
+      <td style="color: var(--stalled);">Missing</td>
+      <td>STT start/end, TTS start/end, VAD state. Currently local to orchestrator.</td>
+    </tr>
+    <tr>
+      <td>Filtered sysbus events</td><td>Sysbus</td>
+      <td style="color: var(--processing);">Superfluous?</td>
+      <td><code>file_change</code>, <code>tool_result</code>, <code>status</code> are stored but filtered from WS broadcast. Are they useful at all?</td>
+    </tr>
+    <tr>
+      <td>Heartbeat events</td><td>Sysbus</td>
+      <td style="color: var(--processing);">Superfluous</td>
+      <td>Filtered from WS. Could be replaced by WebSocket ping/pong.</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>The agent blocking problem</h2>
+
+<p>
+  The biggest issue isn't message delivery &mdash; it's that <strong>agents can't read new messages
+  while they're working</strong>. This is an MCP/Claude Code constraint: when Claude is executing
+  a tool call, the MCP transport queues incoming notifications. Claude doesn't see them until
+  the current turn completes.
+</p>
+
+<div class="diagram">Message arrives &rarr; Channel server receives &rarr; MCP notification sent to stdin
+                                                                       &darr;
+                                                            Claude is mid-tool-call
+                                                            stdin buffer holds notification
+                                                            ...tool runs for 30s...
+                                                            tool returns
+                                                            Claude reads stdin
+                                                            NOW it sees the message</div>
+
+<p>
+  This is fundamentally different from a chat app where the server can interrupt the client.
+  Our "agent" is a single-threaded reasoning loop. It can't multitask.
+</p>
+
+<h3>Options to reduce blocking</h3>
+
+<div class="strategy">
+  <div class="label">1. Shorter tool calls (preventive)</div>
+  <div class="detail">
+    <p>
+      If tool calls are shorter, the gap between "message delivered" and "message read" shrinks.
+      This means: break large operations into smaller steps, avoid long-running bash commands,
+      use <code>run_in_background</code> for builds. The agent checks its inbox between each step.
+    </p>
+    <p><strong>Tradeoff:</strong> more tool-call overhead, but more responsive to new messages.</p>
+  </div>
+</div>
+
+<div class="strategy">
+  <div class="label">2. Polling between tool calls (cooperative)</div>
+  <div class="detail">
+    <p>
+      Instruct the agent (via CLAUDE.md or system prompt) to check for pending messages
+      between tool calls. The channel server exposes <code>GET /pending</code> &mdash; the agent
+      calls it as a lightweight tool between heavier operations.
+    </p>
+    <p><strong>Tradeoff:</strong> depends on agent cooperation. Can't enforce it &mdash; the agent
+    might not check if it's deep in a reasoning chain.</p>
+  </div>
+</div>
+
+<div class="strategy">
+  <div class="label">3. Out-of-band interrupt (SIGINT)</div>
+  <div class="detail">
+    <p>
+      Send SIGINT to the running tool call, forcing it to abort. Claude Code handles SIGINT
+      by cancelling the current tool and returning to the prompt loop, where it will see
+      queued MCP notifications. The channel server (or a monitor process) sends SIGINT when
+      high-priority messages arrive.
+    </p>
+    <p><strong>Tradeoff:</strong> destructive &mdash; current work is lost. Only appropriate for
+    urgent interrupts, not routine messages.</p>
+  </div>
+</div>
+
+<div class="strategy">
+  <div class="label">4. Sidecar process (architectural)</div>
+  <div class="detail">
+    <p>
+      Run a lightweight sidecar alongside the Claude session that monitors the message queue
+      independently. The sidecar can: emit ack events to sysbus ("message received, agent busy"),
+      summarize queued messages, trigger fast-respond fallbacks, and SIGINT the agent if
+      escalation thresholds are hit.
+    </p>
+    <p>
+      The sidecar doesn't need Claude &mdash; it's a simple Go/Node process watching the
+      channel's message queue and the agent's tool-call state (from sysbus events).
+    </p>
+    <p><strong>Tradeoff:</strong> most robust but adds a component. However, the channel server
+    is already positioned to do this &mdash; it knows both the message queue and the MCP state.</p>
+  </div>
+</div>
+
+<div class="strategy">
+  <div class="label">5. Parallel context (future)</div>
+  <div class="detail">
+    <p>
+      Run a second, lightweight Claude session (or a different model) that handles incoming
+      messages while the primary agent is busy. It can triage: "this is urgent, interrupting"
+      vs "this can wait, I'll queue it." Effectively a receptionist in front of the worker.
+    </p>
+    <p><strong>Tradeoff:</strong> cost (two sessions), complexity, context synchronization between
+    the receptionist and the worker. But it's the clean solution for agents that do long-running work.</p>
+  </div>
+</div>
+
+<div class="callout">
+  <p>
+    <strong>Recommendation:</strong> the channel server sidecar (option 4) is the pragmatic path.
+    It already sits between the bus and MCP. Adding ack emission, lag monitoring, and escalation
+    logic there keeps the agent itself unchanged. The agent doesn't need to know about acks &mdash;
+    the channel server handles that layer.
+  </p>
+  <p>
+    For voice specifically, combine with fast-respond (option 5 from the escalation ladder): if
+    the agent is busy and a voice message arrives, the channel server emits "delivered but stalled"
+    to sysbus, the UI shows progress, and a fast-respond fills the silence after 15 seconds.
+  </p>
+</div>
+
+<hr>
+
+<h2>The message session manager</h2>
+
+<p>
+  The channel server already sits between the bus and the agent. Today it's a dumb pipe &mdash;
+  message in, forward to MCP, response out. The idea is to promote it into a <strong>stateful
+  session manager</strong> that takes custody of the message chain and becomes the authoritative
+  connection to the agent.
+</p>
+
+<h3>The concept</h3>
+
+<div class="diagram">
+                         Message Session Manager
+                        (lives in channel server)
+                        ┌─────────────────────────────┐
+                        &boxv;                             &boxv;
+  Chatbus ─── seq 1 ──&rarr; &boxv;  Message Chain State        &boxv;
+  Chatbus ─── seq 2 ──&rarr; &boxv;  ┌────┬───────────┬──────┐ &boxv;
+                        &boxv;  &boxv; seq&boxv; status    &boxv; acked&boxv; &boxv;
+                        &boxv;  &boxv; 1  &boxv; responded &boxv; yes  &boxv; &boxv;
+                        &boxv;  &boxv; 2  &boxv; processing&boxv; yes  &boxv; &boxv; ──&rarr; Sysbus (ack events)
+                        &boxv;  &boxv; 3  &boxv; delivered &boxv; no   &boxv; &boxv;
+                        &boxv;  └────┴───────────┴──────┘ &boxv;
+                        &boxv;                             &boxv;
+                        &boxv;  Agent Cursor: seq 2       &boxv;
+                        &boxv;  Head:         seq 3       &boxv;
+                        &boxv;  Lag:          1           &boxv;
+                        &boxv;                             &boxv;
+                        └──────────┬──────────────────┘
+                                   &boxv;
+                              MCP (stdin/stdout)
+                                   &boxv;
+                              ┌────┴────┐
+                              &boxv;  Agent  &boxv;
+                              &boxv; (Claude)&boxv;
+                              └─────────┘
+                                   &boxv;
+                          ack, progress, reply
+                          (via tool calls or
+                           MCP notifications)
+</div>
+
+<p>
+  The session manager is the <strong>single source of truth</strong> for where every message
+  is in its lifecycle. It doesn't just forward &mdash; it tracks.
+</p>
+
+<h3>What the session manager owns</h3>
+
+<table>
+  <thead><tr><th>Responsibility</th><th>How</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Message chain</strong></td>
+      <td>Ordered list of all messages for this agent instance, with sequence numbers and state</td>
+    </tr>
+    <tr>
+      <td><strong>Agent cursor</strong></td>
+      <td>The last sequence number the agent acknowledged. Lag = head &minus; cursor.</td>
+    </tr>
+    <tr>
+      <td><strong>State per message</strong></td>
+      <td>sent &rarr; delivered &rarr; processing &rarr; responded (or stalled)</td>
+    </tr>
+    <tr>
+      <td><strong>Ack emission</strong></td>
+      <td>Publishes state transitions to sysbus as they happen</td>
+    </tr>
+    <tr>
+      <td><strong>Escalation</strong></td>
+      <td>Monitors lag, triggers nudges, fast-respond, circuit breaker</td>
+    </tr>
+    <tr>
+      <td><strong>Delivery policy</strong></td>
+      <td>Decides how to present queued messages: one at a time, batched, or summarized</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>How the agent talks back</h3>
+
+<p>
+  The agent needs a way to signal "I'm working on seq N" and "I'm done with seq N."
+  Three options, from simplest to most integrated:
+</p>
+
+<div class="strategy">
+  <div class="label">A. Implicit ack via reply</div>
+  <div class="detail">
+    <p>
+      The agent's <code>reply()</code> tool call already goes through the channel server.
+      The session manager intercepts it, extracts which message it's responding to
+      (via <code>ref_seq</code> or conversation position), and marks that seq as responded.
+      No agent changes needed.
+    </p>
+    <p><strong>Covers:</strong> responded state. <strong>Doesn't cover:</strong> processing state
+    (the gap between delivery and first reply).</p>
+  </div>
+</div>
+
+<div class="strategy">
+  <div class="label">B. Explicit ack tool</div>
+  <div class="detail">
+    <p>
+      Give the agent an MCP tool: <code>ack(seq: number, status: "processing" | "done")</code>.
+      The agent calls <code>ack(seq=3, status="processing")</code> when it starts working on
+      a message, and the session manager updates state + emits to sysbus.
+    </p>
+    <p>
+      This requires agent cooperation (calling the tool) but gives the richest signal.
+      The agent's CLAUDE.md would instruct: "always ack messages before starting work."
+    </p>
+  </div>
+</div>
+
+<div class="strategy">
+  <div class="label">C. Inferred from tool activity</div>
+  <div class="detail">
+    <p>
+      The session manager watches sysbus for tool_use events from this agent. If the agent
+      starts calling tools after a message was delivered, infer that it's processing that
+      message. No explicit ack needed &mdash; tool activity is the signal.
+    </p>
+    <p><strong>Covers:</strong> processing state (probabilistically). <strong>Doesn't cover:</strong>
+    which specific message the agent is working on if multiple are queued.</p>
+  </div>
+</div>
+
+<div class="callout">
+  <p>
+    <strong>Pragmatic approach:</strong> start with A (implicit ack from reply) + C (inferred
+    from tool activity). These require zero agent changes. Add B (explicit ack tool) later
+    when we need precise per-message tracking with multiple queued messages.
+  </p>
+</div>
+
+<h3>The state reflection</h3>
+
+<p>
+  The session manager exposes the message chain state via HTTP, so any component can query it:
+</p>
+
+<pre><code>GET /agent/porter/chain
+
+{
+  "agent": "porter",
+  "head_seq": 5,
+  "agent_cursor": 3,
+  "lag": 2,
+  "messages": [
+    { "seq": 1, "status": "responded", "text": "Hello", "delivered_at": "...", "responded_at": "..." },
+    { "seq": 2, "status": "responded", "text": "Write me a poem", "delivered_at": "...", "responded_at": "..." },
+    { "seq": 3, "status": "processing", "text": "that rhymes", "delivered_at": "...", "processing_at": "..." },
+    { "seq": 4, "status": "delivered", "text": "make it about cats", "delivered_at": "..." },
+    { "seq": 5, "status": "delivered", "text": "actually, dogs", "delivered_at": "..." }
+  ]
+}
+</code></pre>
+
+<p>
+  This is the <strong>state reflection</strong> &mdash; a live mirror of the agent's message
+  processing state. The UI reads it to show checkmarks. The escalation logic reads it to
+  detect stalls. The fast-respond system reads it to know when to intervene.
+</p>
+
+<h3>Why it lives in the channel server</h3>
+
+<p>
+  The channel server is the only component that has both sides of the connection:
+</p>
+<ul>
+  <li>It receives messages from the chatbus (inbound)</li>
+  <li>It delivers them to Claude via MCP (outbound to agent)</li>
+  <li>It receives replies from Claude via MCP tool calls (inbound from agent)</li>
+  <li>It publishes replies back to the chatbus (outbound)</li>
+</ul>
+<p>
+  No other component sees the full picture. The chatbus doesn't know if MCP delivered the message.
+  The agent doesn't know its own lag. The sysbus sees events but can't correlate them to specific
+  messages. The channel server is the natural custody point.
+</p>
+
+<div class="diagram">
+  Today:    Chatbus &rarr; Channel (pipe) &rarr; MCP &rarr; Agent
+  Proposed: Chatbus &rarr; Channel (session manager) &rarr; MCP &rarr; Agent
+                              &boxv;
+                              &boxv;&mdash;&mdash; state reflection (HTTP)
+                              &boxv;&mdash;&mdash; ack events (sysbus)
+                              &boxv;&mdash;&mdash; escalation logic (timers)
+                              &boxv;&mdash;&mdash; delivery policy (summarize/batch)
+</div>
+
+<h3>What changes</h3>
+
+<table>
+  <thead><tr><th>Component</th><th>Change</th></tr></thead>
+  <tbody>
+    <tr><td>Channel server</td><td>Add message chain state, ack emission, <code>/chain</code> endpoint, escalation timers</td></tr>
+    <tr><td>Chatbus</td><td>Add sequence numbers to envelopes (the upstream prerequisite)</td></tr>
+    <tr><td>Sysbus</td><td>New event type: <code>message_ack</code> with seq, status, agent</td></tr>
+    <tr><td>Web UI</td><td>Consume <code>message_ack</code> events to show checkmarks, lag indicator</td></tr>
+    <tr><td>Agent (Claude)</td><td>Nothing initially. Optional <code>ack()</code> tool later.</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h3>Voice signals that should flow through sysbus</h3>
+
+<p>
+  Today, voice state (VAD, STT, TTS) lives entirely inside the browser orchestrator.
+  No other component knows when the user is speaking, when transcription is running, or
+  when audio is playing. For the ack model to work end-to-end with voice, these signals
+  need to be visible:
+</p>
+
+<table>
+  <thead><tr><th>Signal</th><th>Emitted by</th><th>Consumers</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>voice.speech_start</code></td>
+      <td>Browser (orchestrator)</td>
+      <td>Sysbus &rarr; UI status</td>
+      <td>Show "user is speaking" in other views (supervisor dashboard)</td>
+    </tr>
+    <tr>
+      <td><code>voice.speech_end</code></td>
+      <td>Browser (orchestrator)</td>
+      <td>Sysbus &rarr; UI status</td>
+      <td>Trigger "transcribing..." state</td>
+    </tr>
+    <tr>
+      <td><code>voice.stt_complete</code></td>
+      <td>Bridge (STT service)</td>
+      <td>Sysbus &rarr; UI, chatbus &rarr; agent</td>
+      <td>Transcription done, message entering chat pipeline</td>
+    </tr>
+    <tr>
+      <td><code>voice.tts_start</code></td>
+      <td>Bridge (TTS service)</td>
+      <td>Sysbus &rarr; UI</td>
+      <td>Response is being spoken &mdash; show "speaking" indicator</td>
+    </tr>
+    <tr>
+      <td><code>voice.tts_end</code></td>
+      <td>Bridge / browser</td>
+      <td>Sysbus &rarr; UI</td>
+      <td>Playback done, ready for next input</td>
+    </tr>
+    <tr>
+      <td><code>voice.barge_in</code></td>
+      <td>Browser (orchestrator)</td>
+      <td>Sysbus &rarr; bridge, agent</td>
+      <td>User interrupted &mdash; cancel TTS, potentially cancel agent work</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+  These are all secondary signals &mdash; they describe state, not content. They belong on
+  the sysbus. The actual transcribed text goes through the chatbus as a normal message.
+</p>
+
+<hr>
+
+<h2>What we're not</h2>
+<p>
+  It's useful to be explicit about what our system is not, to avoid accidentally building
+  toward a model that doesn't fit.
+</p>
+
+<div class="strategy">
+  <div class="label">Not Kafka</div>
+  <div class="detail">
+    Kafka is a distributed commit log with partitioned, replicated, exactly-once-semantics streams
+    and consumer groups. Our JSONL files are single-machine, single-writer, no replication.
+    We don't need Kafka's guarantees &mdash; we're doing real-time chat, not event sourcing.
+  </div>
+</div>
+
+<div class="strategy">
+  <div class="label">Not S2</div>
+  <div class="detail">
+    S2 is a managed streaming API with sequence-numbered records, fencing tokens, and durable replay.
+    We could use S2 <em>as</em> our log backend, but the interesting thing is its API design:
+    append-only, sequence-numbered, readable by offset or timestamp. Worth studying.
+  </div>
+</div>
+
+<div class="strategy">
+  <div class="label">Not a message queue</div>
+  <div class="detail">
+    Queues (RabbitMQ, SQS) dequeue on consume &mdash; once consumed, the message is gone.
+    Our messages persist and can be replayed. Closer to the log model than the queue model.
+  </div>
+</div>
+
+<div class="callout">
+  <p>
+    <strong>What we are:</strong> a lightweight pub/sub fan-out with append-only file persistence,
+    client-side dedup, and timestamp-based replay. Simple enough to reason about, good enough
+    for real-time chat, extensible if we need stronger guarantees later.
+  </p>
+</div>
+
+<hr>
+
+<h2>Acknowledgment and consumer lag</h2>
+
+<p>
+  So far we've talked about messages going <em>to</em> a consumer. But there's a second question:
+  does the consumer tell you it got the message? And if so, what can you do with that information?
+</p>
+
+<h3>The ack</h3>
+<p>
+  An <strong>acknowledgment</strong> (ack) is a message back from the consumer saying
+  "I received message N" or "I've processed up to sequence N." It's the consumer's cursor
+  position, reported back to the server.
+</p>
+<p>
+  Without acks, the server is flying blind. It sent the message, but has no idea if the
+  consumer received it, is processing it, or dropped it on the floor. The server can't
+  distinguish "working on it" from "never got it" from "crashed mid-processing."
+</p>
+
+<div class="strategy">
+  <div class="label">Implicit ack (cursor advance)</div>
+  <div class="detail">
+    The consumer reports its position: "I've seen up to seq 47." The server infers that
+    everything &le; 47 was received. This is how Kafka consumer offsets work, and how
+    S2 checkpoints work. Simple, low overhead.
+  </div>
+</div>
+
+<div class="strategy">
+  <div class="label">Explicit per-message ack</div>
+  <div class="detail">
+    The consumer acks each message individually: "I processed message with ID X."
+    More granular &mdash; handles out-of-order processing &mdash; but more traffic.
+    AMQP (RabbitMQ) does this.
+  </div>
+</div>
+
+<div class="strategy">
+  <div class="label">No ack (fire and forget)</div>
+  <div class="detail">
+    The server publishes and moves on. This is what we do now. Fast, but the server
+    (and the user) has no visibility into whether the consumer is keeping up.
+  </div>
+</div>
+
+<h3>Consumer lag</h3>
+<p>
+  Once you have acks, you get <strong>consumer lag</strong> for free. Lag is the distance
+  between the latest message produced and the last message acknowledged by a consumer:
+</p>
+
+<div class="diagram">Server:  seq 1  seq 2  seq 3  seq 4  seq 5  seq 6
+                                            &uarr;                    &uarr;
+                                     consumer acked         server head
+
+                                     lag = 6 - 4 = 2 messages behind</div>
+
+<p>
+  This is the same concept as Kafka's consumer group lag, and it's how monitoring tools
+  know when a consumer is falling behind. The sequence number makes lag a simple subtraction.
+</p>
+
+<h3>Why this matters for us</h3>
+<p>
+  When you send a message to an agent and it doesn't respond for a while, the question is:
+  <em>where is the message?</em> Today we can't answer that. With sequence-based acks,
+  we can show exactly where the message is in the pipeline:
+</p>
+
+<table>
+  <thead><tr><th>State</th><th>What it means</th><th>How we know</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Sent</strong></td><td>Message accepted by chatbus, assigned seq N</td><td>Chatbus returns seq in response</td></tr>
+    <tr><td><strong>Delivered</strong></td><td>Agent channel received the message</td><td>Channel acks seq N back to bus</td></tr>
+    <tr><td><strong>Processing</strong></td><td>Agent (Claude) has picked up the message</td><td>Agent emits "processing seq N" event</td></tr>
+    <tr><td><strong>Responded</strong></td><td>Agent has replied</td><td>Reply message references seq N</td></tr>
+  </tbody>
+</table>
+
+<p>
+  This is exactly the WhatsApp checkmark model &mdash; single check (sent), double check (delivered),
+  blue check (read/processing). The sequence number is the anchor that ties these states together.
+</p>
+
+<div class="callout">
+  <p>
+    <strong>Key insight:</strong> acks are optional per consumer. The protocol supports them
+    but doesn't require them. A chat UI consumer might never ack (it just displays messages).
+    An agent consumer should ack so we can track lag and detect stalls. The bus stores
+    each consumer's last-acked seq, and lag = head_seq - acked_seq.
+  </p>
+</div>
+
+<hr>
+
+<h2>Layering voice on top of chat</h2>
+
+<p>
+  Voice adds latency at every stage. A text chat message is: type &rarr; send &rarr; deliver &rarr;
+  process &rarr; respond. Voice wraps each end with additional steps, each with its own delay budget:
+</p>
+
+<h3>The voice delay stack</h3>
+
+<table>
+  <thead><tr><th>Stage</th><th>What happens</th><th>Typical latency</th></tr></thead>
+  <tbody>
+    <tr><td><strong>1. Capture</strong></td><td>Microphone captures audio, VAD detects speech boundaries</td><td>200&ndash;500ms (VAD endpoint delay)</td></tr>
+    <tr><td><strong>2. Transcribe (STT)</strong></td><td>Audio &rarr; text via Whisper</td><td>500&ndash;2000ms</td></tr>
+    <tr><td><strong>3. Send</strong></td><td>Text message enters the chat pipeline (same as typed)</td><td>~50ms</td></tr>
+    <tr><td><strong>4. Deliver</strong></td><td>Chatbus &rarr; agent channel &rarr; MCP</td><td>50&ndash;200ms</td></tr>
+    <tr><td><strong>5. Process</strong></td><td>Agent (Claude) thinks and generates response text</td><td>1&ndash;30s (depends on task)</td></tr>
+    <tr><td><strong>6. Synthesize (TTS)</strong></td><td>Text &rarr; audio via TTS</td><td>200&ndash;500ms (first chunk)</td></tr>
+    <tr><td><strong>7. Play</strong></td><td>Audio streams to browser, starts playback</td><td>~100ms</td></tr>
+  </tbody>
+</table>
+
+<p>
+  The <strong>minimum round trip</strong> for voice-to-voice is ~1.5s even with instant agent processing
+  (VAD + STT + TTS + playback). The agent processing time (step 5) is additive on top of that.
+</p>
+
+<h3>Where acks help with voice</h3>
+<p>
+  Without acks, the voice UI can only show two states: "listening" and "waiting."
+  The user speaks, the UI goes to "waiting," and then... silence until the response arrives.
+  That silence could be 2 seconds or 30 seconds, and the user can't tell if the system is
+  working or broken.
+</p>
+<p>
+  With sequence-based acks, the voice UI can show granular progress:
+</p>
+<ul>
+  <li><strong>Transcribing...</strong> &mdash; STT is running (local state, before seq is assigned)</li>
+  <li><strong>Sent</strong> &mdash; seq assigned, message in the pipeline</li>
+  <li><strong>Delivered</strong> &mdash; agent has the message (channel acked)</li>
+  <li><strong>Thinking...</strong> &mdash; agent is processing (processing event received)</li>
+  <li><strong>Speaking...</strong> &mdash; TTS streaming back</li>
+</ul>
+<p>
+  Each transition is driven by an event, not a timer. The user sees progress instead of silence.
+</p>
+
+<h3>The MCP reliability problem</h3>
+<p>
+  There's a practical wrinkle in our system: the agent's connection to Claude runs over MCP
+  (Model Context Protocol), which uses stdio as its transport. MCP has no built-in ack mechanism
+  &mdash; you write a JSON-RPC notification to stdin and hope the other side processes it.
+  There's no delivery receipt, no backpressure signal, no way to know if the message was consumed.
+</p>
+<p>
+  We've hit this repeatedly: messages delivered to the channel server, forwarded over MCP,
+  but Claude doesn't respond &mdash; it's mid-tool-call, or the notification was queued behind
+  other MCP traffic, or the stdio buffer backed up. From the bus's perspective, the message
+  was delivered (the channel server accepted it). From the user's perspective, the agent is
+  ignoring them.
+</p>
+<p>
+  This is exactly where acks would help. If the channel server acked "received" but the agent
+  never acked "processing," the bus (and the UI) could show that the message is stuck in the
+  channel &mdash; delivered but not picked up. Today that gap is invisible.
+</p>
+
+<div class="callout">
+  <p>
+    <strong>MCP limitation:</strong> MCP notifications are fire-and-forget by design. To get
+    ack semantics, we'd need the agent to explicitly emit a "processing seq N" event via a
+    tool call or sysbus signal &mdash; the ack lives at the application layer, not the transport.
+    This is workable but means ack support depends on agent cooperation, not protocol guarantees.
+  </p>
+</div>
+
+<h3>Perturbing a lagging consumer</h3>
+<p>
+  Once you can see lag, the next question is: what do you <em>do</em> about it?
+  The agent is behind &mdash; messages are piling up. You have several options, each with
+  different tradeoffs:
+</p>
+
+<div class="strategy">
+  <div class="label">1. Nudge (re-notify)</div>
+  <div class="detail">
+    <p>
+      Send another MCP notification: "you have N unprocessed messages." This is the gentlest
+      option. It doesn't interrupt the agent's current work, just adds a signal to its
+      attention queue. If the agent is mid-tool-call, the nudge waits in line &mdash;
+      but at least when the current turn ends, the agent sees both the original message
+      and the nudge.
+    </p>
+    <p>
+      <strong>When to use:</strong> lag is 1&ndash;3 messages, agent is probably just busy.
+    </p>
+  </div>
+</div>
+
+<div class="strategy">
+  <div class="label">2. Summarize and collapse</div>
+  <div class="detail">
+    <p>
+      If the queue has grown (e.g., 5+ unprocessed messages), don't deliver them all &mdash;
+      summarize. "You have 5 pending messages. Most recent: [last message]. Summary: [LLM summary
+      of the batch]." This prevents the agent from burning context on stale intermediate messages.
+    </p>
+    <p>
+      <strong>When to use:</strong> lag is large, older messages may be superseded by newer ones.
+    </p>
+  </div>
+</div>
+
+<div class="strategy">
+  <div class="label">3. Priority interrupt</div>
+  <div class="detail">
+    <p>
+      Inject a high-priority signal that breaks the agent's current turn. In Claude Code,
+      this could be a SIGINT to the current tool call, or a special MCP notification type that
+      the agent is instructed to check between steps. The agent abandons its current work and
+      processes the new message.
+    </p>
+    <p>
+      <strong>When to use:</strong> user explicitly wants attention now (barge-in, urgent command).
+      Destructive &mdash; current work may be lost.
+    </p>
+  </div>
+</div>
+
+<div class="strategy">
+  <div class="label">4. Timeout and escalate</div>
+  <div class="detail">
+    <p>
+      If lag exceeds a threshold (e.g., 60 seconds with no ack), the bus marks the consumer
+      as stalled and takes action: restart the agent session, route to a different agent,
+      or notify the user that the agent is unresponsive. This is the circuit breaker pattern
+      applied to consumers.
+    </p>
+    <p>
+      <strong>When to use:</strong> agent is genuinely stuck (crashed, infinite loop, MCP deadlock).
+    </p>
+  </div>
+</div>
+
+<div class="strategy">
+  <div class="label">5. Drop and fast-respond</div>
+  <div class="detail">
+    <p>
+      Skip the lagging agent entirely. Route the message to a fast-respond path (lightweight
+      model, cached response, or acknowledgment-only) so the user gets <em>something</em> back
+      immediately. The original message stays in the queue for the agent to process later,
+      but the user isn't left in silence.
+    </p>
+    <p>
+      <strong>When to use:</strong> voice context where any silence >2&ndash;3 seconds feels broken.
+      The fast-respond is a bridge, not a replacement.
+    </p>
+  </div>
+</div>
+
+<div class="callout">
+  <p>
+    <strong>The escalation ladder:</strong> these options aren't mutually exclusive &mdash;
+    they form an escalation sequence based on lag duration:
+  </p>
+  <ul>
+    <li><strong>0&ndash;5s:</strong> Normal. Show "thinking..." in UI.</li>
+    <li><strong>5&ndash;15s:</strong> Nudge. Re-notify the agent.</li>
+    <li><strong>15&ndash;30s:</strong> Fast-respond. Give the user a holding response.</li>
+    <li><strong>30&ndash;60s:</strong> Summarize. Collapse the queue if multiple messages pending.</li>
+    <li><strong>&gt;60s:</strong> Escalate. Circuit breaker &mdash; restart or reroute.</li>
+  </ul>
+  <p>
+    The sequence number makes all of this possible. Without it, you don't know
+    how far behind the agent is, and every option above is a guess.
+  </p>
+</div>
+
+<h3>The barge-in problem</h3>
+<p>
+  Voice has an additional complication: the user can interrupt mid-response (barge-in).
+  This means the consumer lag model has to handle <em>cancellation</em> &mdash; "stop processing
+  seq N, I'm sending a new message." The sequence number makes this clean: "cancel everything
+  after seq N, here's seq N+1."
+</p>
+
+<hr>
+
+<h2>Open questions</h2>
+
+<div class="question">
+  <div class="q">Ring buffer vs. unbounded log?</div>
+  <div class="a">The ring drops old messages. Should we keep everything on disk and only use the ring for fast lookups? Or is the bounded ring the right tradeoff for our scale?</div>
+</div>
+
+<div class="question">
+  <div class="q">Stronger delivery guarantee for work dispatch?</div>
+  <div class="a">Chat is fine at-most-once, but a lost work message means a task silently doesn't happen. Should the bus have a separate "confirmed delivery" path for work items (at-least-once with retry until acked)?</div>
+</div>
+
+<div class="question">
+  <div class="q">What's the right replay window?</div>
+  <div class="a">We currently fall back to "last 10 messages." Is 10 right? Time-based (last 5 minutes)? Different per context (mobile vs desktop)? Should the client choose?</div>
+</div>
+
+<div class="question">
+  <div class="q">Consumer groups / fan-out?</div>
+  <div class="a">Every connected client gets every message for its agent. If we add notification services, logging services, or other consumers that each need to process once, we need fan-out routing.</div>
+</div>
+
+<div class="question">
+  <div class="q">S2 as a backend?</div>
+  <div class="a">Replace JSONL with S2 streams &mdash; we'd get sequence numbers, durable replay, and a clean API for free. But it's a dependency and a cost. Is the JSONL approach hitting limits?</div>
+</div>
+
+<hr>
+
+<p class="subtitle" style="margin-top: 2rem; margin-bottom: 0;">
+  Companion docs:
+  <a href="message-flow-visual.html">Scenarios</a> &middot;
+  <a href="message-mechanics-decisions.html">Decisions</a> &middot;
+  <a href="stream-library.html">Stream Library</a>
+</p>
+<p class="subtitle" style="margin-top: 0.5rem; margin-bottom: 0;">
+  Further reading:
+  <a href="https://s2.dev/docs">S2 docs</a> &middot;
+  <a href="https://web.archive.org/web/2023/https://engineering.linkedin.com/distributed-systems/log-what-every-software-engineer-should-know-about-real-time-datas-unifying">The Log (Jay Kreps)</a> &middot;
+  <a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2017/09/Kafka.pdf">Kafka paper</a> &middot;
+  <a href="https://dataintensive.net/">DDIA Ch. 11</a>
+</p>
+
+</body>
+</html>

@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scene Playground — Parallax Editor</title>
+<style>
+  :root {
+    --bg: #0a0a1a;
+    --surface: #111128;
+    --surface2: #1a1a3e;
+    --text: #c8c8e0;
+    --text-muted: #7878a0;
+    --accent: #6a4c93;
+    --accent2: #1b998b;
+    --link: #4da8da;
+    --border: #252548;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 1rem;
+  }
+  h1 { font-size: 1.4rem; font-weight: 700; color: #d8d8f0; margin-bottom: 0.3rem; }
+  .subtitle { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem; }
+
+  nav {
+    padding: 0.6rem 1rem;
+    background: var(--surface);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  nav a { color: var(--link); text-decoration: none; }
+
+  /* Layout: two panes, stacks on mobile */
+  .editor {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  @media (max-width: 600px) {
+    .editor { flex-direction: column; }
+    .tile-list { width: 100% !important; flex-direction: row; flex-wrap: wrap; }
+    .tile-item { flex: 0 0 auto; }
+  }
+
+  /* Tile list — left pane */
+  .tile-list {
+    width: 180px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .tile-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.5rem;
+    background: var(--surface);
+    border-radius: 4px;
+    border-left: 3px solid var(--border);
+    font-size: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .tile-item:hover { background: var(--surface2); }
+  .tile-item.selected { border-left-color: var(--accent2); background: var(--surface2); }
+  .tile-item.disabled { opacity: 0.4; }
+  .tile-item .tname { flex: 1; font-weight: 600; color: #d8d8f0; }
+  .tile-item input[type="checkbox"] { margin: 0; }
+  .tile-item.all-btn {
+    border-left-color: var(--accent);
+    font-weight: 700;
+    color: #d8d8f0;
+    justify-content: center;
+    margin-bottom: 4px;
+  }
+  .tile-item.all-btn.selected { border-left-color: var(--accent2); }
+
+  /* Viewport — right pane */
+  .viewport-wrap { flex: 1; min-width: 0; }
+  #viewport {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3/2;
+    overflow: hidden;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #050510;
+    cursor: default;
+  }
+  #viewport.dragging { cursor: grabbing; }
+  #viewport img, #viewport div.css-layer, #viewport div.sprite-layer {
+    position: absolute;
+    image-rendering: pixelated;
+    pointer-events: none;
+  }
+  .sprite-layer {
+    overflow: hidden;
+  }
+  /* Selection outline in viewport */
+  .vp-selection {
+    position: absolute;
+    border: 2px dashed var(--accent2);
+    pointer-events: none;
+    z-index: 100;
+  }
+  /* Resize handle */
+  .vp-resize {
+    position: absolute;
+    width: 10px; height: 10px;
+    background: var(--accent2);
+    border-radius: 2px;
+    cursor: nwse-resize;
+    z-index: 101;
+    pointer-events: auto;
+  }
+  /* Drag overlay (invisible, captures mouse) */
+  .vp-drag-overlay {
+    position: absolute;
+    z-index: 99;
+    cursor: grab;
+    pointer-events: auto;
+  }
+  .vp-drag-overlay:active { cursor: grabbing; }
+
+  /* Controls below viewport */
+  .layer-controls {
+    margin-top: 0.5rem;
+    background: var(--surface);
+    border-radius: 4px;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.75rem;
+  }
+  .layer-controls .ctrl-title {
+    font-weight: 700;
+    color: #d8d8f0;
+    margin-bottom: 0.3rem;
+  }
+  .ctrl-grid {
+    display: grid;
+    grid-template-columns: 35px 1fr 35px;
+    gap: 0.15rem 0.4rem;
+    align-items: center;
+  }
+  label { color: var(--text-muted); white-space: nowrap; font-size: 0.7rem; }
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent2);
+    height: 3px;
+  }
+  .val {
+    font-family: monospace;
+    font-size: 0.65rem;
+    color: var(--accent2);
+    text-align: right;
+  }
+
+  /* Transport */
+  .transport {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .transport button, .tbtn {
+    font-family: sans-serif;
+    font-size: 0.8rem;
+    padding: 0.35em 0.8em;
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .transport button:hover, .tbtn:hover { border-color: var(--accent2); }
+  .transport button.active { background: var(--accent2); color: #fff; border-color: var(--accent2); }
+</style>
+</head>
+<body>
+
+<h1>Scene Playground</h1>
+<p class="subtitle">Click a tile to isolate and edit. Drag in viewport to position. Drag corner to resize.</p>
+
+<nav>
+  <a href="intro.html">Intro</a> · <a href="lighthouse.html">Sprites</a> · <a href="scene.html">Scene</a> · <strong style="color:#d8d8f0">Playground</strong> · <a href="../../index.html">All docs</a>
+</nav>
+
+<div class="transport">
+  <button id="btn-play" onclick="togglePlay()">Play</button>
+  <button onclick="resetPositions()">Reset pos</button>
+  <button onclick="resetAll()">Reset all</button>
+  <button onclick="saveState()">Save</button>
+  <span class="val" id="save-status" style="opacity:0;transition:opacity 0.3s"></span>
+  <label style="font-size:0.8rem;color:var(--text-muted)">Speed</label>
+  <input type="range" id="global-speed" min="0" max="200" value="100" style="width:100px" oninput="updateGlobalSpeed(this.value)">
+  <span class="val" id="global-speed-val">1.0x</span>
+</div>
+
+<div class="editor">
+  <div class="tile-list" id="tile-list"></div>
+  <div class="viewport-wrap">
+    <div id="viewport"></div>
+    <div id="layer-controls"></div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_LAYERS = [
+  { id: 'sky-gradient', name: 'Sky gradient', type: 'css',
+    css: 'background:linear-gradient(to bottom, #050510, #111138)',
+    y: 0, h: 50, x: 0, w: 100, speed: 0, depth: 0, on: true },
+  { id: 'ocean-color', name: 'Ocean color', type: 'css',
+    css: 'background:#0a0a1a',
+    y: 50, h: 50, x: 0, w: 100, speed: 0, depth: 1, on: true },
+  { id: 'clouds-far', name: 'Clouds far', type: 'img',
+    src: 'results/layer-clouds-far.png',
+    y: 0, h: 50, x: 0, w: 100, speed: 5, depth: 2, on: true, blend: 'lighten',
+    tile: true, tileSize: 30 },
+  { id: 'clouds-mid', name: 'Clouds mid', type: 'img',
+    src: 'results/layer-clouds-mid-v3.png',
+    y: 5, h: 40, x: 0, w: 100, speed: 10, depth: 3, on: true, blend: 'normal',
+    tile: true, tileSize: 15 },
+  { id: 'clouds-storm', name: 'Stormhead', type: 'img',
+    src: 'results/layer-clouds-near.png',
+    y: 0, h: 50, x: 0, w: 100, speed: 2, depth: 2, on: true, blend: 'normal',
+    tile: true, tileSize: 40 },
+  { id: 'eye-sprite', name: 'Eye cloud', type: 'sprite',
+    sheets: ['results/eye-look.png', 'results/eye-anim.png'],
+    frameW: 101, frameH: 64, frames: 16,
+    // Sequence: look(0-15), blink(0-15), look(15-0) = 48 frames total
+    sequence: 'look-blink-look-reverse',
+    fps: 6,
+    y: 10, h: 10, x: 25, w: 12, speed: 8, depth: 5, on: true, blend: 'normal' },
+  { id: 'ocean-texture', name: 'Ocean texture', type: 'img',
+    src: 'results/layer-ocean.png',
+    y: 50, h: 30, x: 0, w: 100, speed: 15, depth: 6, on: true, blend: 'lighten' },
+  { id: 'sea-rocks', name: 'Sea rocks', type: 'img',
+    src: 'results/layer-rocks-v3.png',
+    y: 60, h: 20, x: 0, w: 60, speed: 12, depth: 7, on: true, blend: 'normal' },
+  { id: 'cliff', name: 'Cliff', type: 'img',
+    src: 'results/cliff-standalone-v4.png',
+    y: 50, h: 50, x: 50, w: 50, speed: 0, depth: 8, on: true, blend: 'normal' },
+  { id: 'lighthouse', name: 'Lighthouse', type: 'img',
+    src: 'results/lighthouse-side.png',
+    y: 38, h: 12, x: 72, w: 6, speed: 0, depth: 9, on: true, blend: 'normal' },
+];
+
+let LAYERS = JSON.parse(JSON.stringify(DEFAULT_LAYERS));
+let playing = false;
+let animFrame = null;
+let globalSpeed = 1.0;
+let offsets = {};
+let selectedLayer = -1; // -1 = show all
+
+const SAVE_FILE = 'scene-tuning.json';
+const UPLOAD_BASE = '/admin/api/uploads';
+
+function initOffsets() {
+  LAYERS.forEach(l => { offsets[l.id] = 0; });
+}
+initOffsets();
+
+// --- Persistence ---
+
+function getLayerState() {
+  return LAYERS.map(l => {
+    const o = { id: l.id, y: l.y, h: l.h, x: l.x, w: l.w, speed: l.speed, depth: l.depth, on: l.on };
+    if (l.blend) o.blend = l.blend;
+    return o;
+  });
+}
+
+function applyLayerState(saved) {
+  saved.forEach(s => {
+    const l = LAYERS.find(x => x.id === s.id);
+    if (!l) return;
+    ['y','h','x','w','speed','depth','on','blend'].forEach(k => {
+      if (s[k] !== undefined) l[k] = s[k];
+    });
+  });
+  const order = saved.map(s => s.id);
+  LAYERS.sort((a, b) => {
+    const ai = order.indexOf(a.id), bi = order.indexOf(b.id);
+    if (ai === -1 && bi === -1) return 0;
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+}
+
+async function saveState() {
+  const state = JSON.stringify({ layers: getLayerState(), savedAt: new Date().toISOString() }, null, 2);
+  try {
+    const res = await fetch(UPLOAD_BASE + '?dest=game-results&filename=' + SAVE_FILE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body: state,
+    });
+    if (res.ok) {
+      console.log('[playground] state saved');
+      showSaveStatus('Saved');
+    } else {
+      console.warn('[playground] save failed:', res.status);
+      showSaveStatus('Save failed');
+    }
+  } catch (e) {
+    console.warn('[playground] save error:', e);
+    showSaveStatus('Save error');
+  }
+}
+
+async function loadState() {
+  try {
+    const res = await fetch(UPLOAD_BASE + '/' + SAVE_FILE + '?dest=game-results');
+    if (!res.ok) { console.log('[playground] no saved state'); return; }
+    const data = await res.json();
+    if (data.layers) {
+      applyLayerState(data.layers);
+      console.log('[playground] loaded state from', data.savedAt);
+    }
+  } catch (e) {
+    console.log('[playground] no saved state:', e);
+  }
+}
+
+function showSaveStatus(msg) {
+  const el = document.getElementById('save-status');
+  el.textContent = msg;
+  el.style.opacity = '1';
+  setTimeout(() => { el.style.opacity = '0'; }, 1500);
+}
+
+// --- Tile list ---
+
+function renderTileList() {
+  const list = document.getElementById('tile-list');
+  list.innerHTML = '';
+
+  // "Show All" button
+  const allBtn = document.createElement('div');
+  allBtn.className = 'tile-item all-btn' + (selectedLayer === -1 ? ' selected' : '');
+  allBtn.textContent = 'Show All';
+  allBtn.onclick = () => { selectedLayer = -1; render(); };
+  list.appendChild(allBtn);
+
+  LAYERS.forEach((l, i) => {
+    const item = document.createElement('div');
+    item.className = 'tile-item' + (i === selectedLayer ? ' selected' : '') + (!l.on ? ' disabled' : '');
+    item.draggable = true;
+    item.innerHTML = `<input type="checkbox" ${l.on ? 'checked' : ''}>
+      <span class="tname">${l.name}</span>`;
+
+    item.querySelector('input').onclick = (e) => { e.stopPropagation(); };
+    item.querySelector('input').onchange = (e) => {
+      LAYERS[i].on = e.target.checked;
+      render();
+    };
+    item.onclick = () => { selectedLayer = (selectedLayer === i) ? -1 : i; render(); };
+
+    // Drag reorder
+    item.addEventListener('dragstart', e => {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', String(i));
+      item.style.opacity = '0.4';
+    });
+    item.addEventListener('dragend', () => { item.style.opacity = '1'; });
+    item.addEventListener('dragover', e => { e.preventDefault(); });
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+      const from = parseInt(e.dataTransfer.getData('text/plain'));
+      if (isNaN(from) || from === i) return;
+      const moved = LAYERS.splice(from, 1)[0];
+      LAYERS.splice(i, 0, moved);
+      if (selectedLayer === from) selectedLayer = i;
+      else if (selectedLayer > from && selectedLayer <= i) selectedLayer--;
+      else if (selectedLayer < from && selectedLayer >= i) selectedLayer++;
+      render();
+    });
+
+    list.appendChild(item);
+  });
+}
+
+// --- Sprite animation ---
+
+let spriteFrameIndex = {}; // per-layer current frame
+let spriteTimer = null;
+
+function buildSequence(l) {
+  // look(0-15) → blink(0-15) → look(15-0)
+  const n = l.frames;
+  const seq = [];
+  for (let i = 0; i < n; i++) seq.push({ sheet: 0, frame: i }); // look forward
+  for (let i = 0; i < n; i++) seq.push({ sheet: 1, frame: i }); // blink
+  for (let i = n - 1; i >= 0; i--) seq.push({ sheet: 0, frame: i }); // look reverse
+  return seq;
+}
+
+function getSpriteFrame(l) {
+  const idx = spriteFrameIndex[l.id] || 0;
+  const seq = buildSequence(l);
+  const entry = seq[idx % seq.length];
+  // Offset as percentage of total sheet width (frames * frameW)
+  const totalW = l.frames * l.frameW;
+  const pct = (entry.frame * l.frameW / totalW) * 100;
+  return {
+    sheet: l.sheets[entry.sheet],
+    offsetPct: pct,
+    frames: l.frames,
+  };
+}
+
+function advanceSpriteFrames() {
+  let hasSprites = false;
+  LAYERS.forEach(l => {
+    if (l.type !== 'sprite' || !l.on) return;
+    hasSprites = true;
+    const seq = buildSequence(l);
+    spriteFrameIndex[l.id] = ((spriteFrameIndex[l.id] || 0) + 1) % seq.length;
+
+    // Update the sprite img position without full re-render
+    const container = document.getElementById('sprite-' + l.id);
+    if (container) {
+      const inner = container.querySelector('img');
+      if (inner) {
+        const frameInfo = getSpriteFrame(l);
+        const totalWidthPct = frameInfo.frames * 100;
+        inner.src = frameInfo.sheet;
+        inner.style.left = '-' + (frameInfo.offsetPct / 100 * totalWidthPct) + '%';
+      }
+    }
+  });
+  return hasSprites;
+}
+
+function startSpriteAnimation() {
+  if (spriteTimer) return;
+  const fps = LAYERS.find(l => l.type === 'sprite')?.fps || 6;
+  spriteTimer = setInterval(() => {
+    if (!advanceSpriteFrames()) {
+      clearInterval(spriteTimer);
+      spriteTimer = null;
+    }
+  }, 1000 / fps);
+}
+
+// --- Viewport ---
+
+// Stable references for drag — survive re-renders
+let vpSelection = null;
+let vpDragOverlay = null;
+let vpResizeHandle = null;
+let vpLayerEl = null; // the img/div for the selected layer
+let isDragging = false;
+
+function layerStyle(l) {
+  const ox = l.tile ? 0 : (offsets[l.id] || 0); // tiled layers scroll via background-position
+  return 'position:absolute;top:' + l.y + '%;left:' + (l.x + ox) + '%;width:' + l.w + '%;height:' + l.h + '%;';
+}
+
+function renderViewport() {
+  const vp = document.getElementById('viewport');
+
+  // During drag, only update positions — don't rebuild DOM
+  if (isDragging && selectedLayer >= 0) {
+    const l = LAYERS[selectedLayer];
+    const ox = offsets[l.id] || 0;
+    const pos = 'top:' + l.y + '%;left:' + (l.x + ox) + '%;width:' + l.w + '%;height:' + l.h + '%;';
+    if (vpLayerEl) {
+      vpLayerEl.style.top = l.y + '%';
+      vpLayerEl.style.left = (l.x + ox) + '%';
+      vpLayerEl.style.width = l.w + '%';
+      vpLayerEl.style.height = l.h + '%';
+    }
+    if (vpSelection) vpSelection.style.cssText = pos;
+    if (vpDragOverlay) vpDragOverlay.style.cssText = pos + 'cursor:grab;pointer-events:auto;z-index:99;';
+    if (vpResizeHandle) vpResizeHandle.style.cssText =
+      'top:calc(' + (l.y + l.h) + '% - 5px);left:calc(' + (l.x + ox + l.w) + '% - 5px);' +
+      'width:10px;height:10px;background:var(--accent2);border-radius:2px;cursor:nwse-resize;z-index:101;pointer-events:auto;position:absolute;';
+    return;
+  }
+
+  // Full rebuild
+  vp.innerHTML = '';
+  vpSelection = null;
+  vpDragOverlay = null;
+  vpResizeHandle = null;
+  vpLayerEl = null;
+
+  const layersToShow = selectedLayer === -1
+    ? [...LAYERS].sort((a, b) => a.depth - b.depth)
+    : [LAYERS[selectedLayer]];
+
+  layersToShow.forEach(l => {
+    if (!l.on && selectedLayer === -1) return;
+
+    if (l.type === 'css') {
+      const div = document.createElement('div');
+      div.className = 'css-layer';
+      div.style.cssText = l.css + ';' + layerStyle(l);
+      vp.appendChild(div);
+      if (selectedLayer >= 0 && l.id === LAYERS[selectedLayer].id) vpLayerEl = div;
+    } else if (l.type === 'sprite') {
+      // Animated sprite: div container with inner img offset by current frame
+      const container = document.createElement('div');
+      container.className = 'sprite-layer';
+      container.id = 'sprite-' + l.id;
+      container.style.cssText = layerStyle(l)
+        + (l.blend && selectedLayer === -1 ? 'mix-blend-mode:' + l.blend + ';' : '');
+      const frameInfo = getSpriteFrame(l);
+      const inner = document.createElement('img');
+      inner.src = frameInfo.sheet;
+      // Width = frames * 100% of container, left offset as % of container
+      const totalWidthPct = frameInfo.frames * 100;
+      inner.style.cssText = 'position:absolute;top:0;left:-' + (frameInfo.offsetPct / 100 * totalWidthPct) + '%;'
+        + 'height:100%;width:' + totalWidthPct + '%;image-rendering:pixelated;pointer-events:none;';
+      container.appendChild(inner);
+      vp.appendChild(container);
+      if (selectedLayer >= 0 && l.id === LAYERS[selectedLayer].id) vpLayerEl = container;
+    } else if (l.tile) {
+      // Tiled layer: div with repeating background, scrolls via background-position
+      const div = document.createElement('div');
+      div.id = 'tile-' + l.id;
+      const tileSize = l.tileSize || 25;
+      const bgOx = offsets[l.id] || 0;
+      div.style.cssText = layerStyle(l)
+        + 'background-image:url(' + l.src + ');'
+        + 'background-repeat:repeat;'
+        + 'background-size:' + tileSize + '% auto;'
+        + 'background-position:' + bgOx + '% center;'
+        + 'image-rendering:pixelated;'
+        + (l.blend && selectedLayer === -1 ? 'mix-blend-mode:' + l.blend + ';' : '');
+      vp.appendChild(div);
+      if (selectedLayer >= 0 && l.id === LAYERS[selectedLayer].id) vpLayerEl = div;
+    } else {
+      const img = document.createElement('img');
+      img.src = l.src;
+      const fit = l.fit || 'contain';
+      img.style.cssText = layerStyle(l) + 'object-fit:' + fit + ';image-rendering:pixelated;'
+        + (l.blend && selectedLayer === -1 ? 'mix-blend-mode:' + l.blend + ';' : '');
+      vp.appendChild(img);
+      if (selectedLayer >= 0 && l.id === LAYERS[selectedLayer].id) vpLayerEl = img;
+    }
+  });
+
+  // Add drag overlay + selection outline for selected layer
+  if (selectedLayer >= 0) {
+    const l = LAYERS[selectedLayer];
+    const ox = offsets[l.id] || 0;
+    const pos = 'top:' + l.y + '%;left:' + (l.x + ox) + '%;width:' + l.w + '%;height:' + l.h + '%;';
+
+    vpSelection = document.createElement('div');
+    vpSelection.className = 'vp-selection';
+    vpSelection.style.cssText = pos;
+    vp.appendChild(vpSelection);
+
+    vpDragOverlay = document.createElement('div');
+    vpDragOverlay.className = 'vp-drag-overlay';
+    vpDragOverlay.style.cssText = pos;
+    setupDrag(vpDragOverlay, l);
+    vp.appendChild(vpDragOverlay);
+
+    vpResizeHandle = document.createElement('div');
+    vpResizeHandle.className = 'vp-resize';
+    vpResizeHandle.style.cssText = 'top:calc(' + (l.y + l.h) + '% - 5px);left:calc(' + (l.x + ox + l.w) + '% - 5px);';
+    setupResize(vpResizeHandle, l);
+    vp.appendChild(vpResizeHandle);
+  }
+}
+
+function setupDrag(el, layer) {
+  let startX, startY, startLX, startLY;
+
+  function onDown(e) {
+    e.preventDefault();
+    const vp = document.getElementById('viewport');
+    const rect = vp.getBoundingClientRect();
+    const pt = e.touches ? e.touches[0] : e;
+    startX = pt.clientX;
+    startY = pt.clientY;
+    startLX = layer.x;
+    startLY = layer.y;
+    isDragging = true;
+    vp.classList.add('dragging');
+
+    function onMove(e2) {
+      const pt2 = e2.touches ? e2.touches[0] : e2;
+      const dx = ((pt2.clientX - startX) / rect.width) * 100;
+      const dy = ((pt2.clientY - startY) / rect.height) * 100;
+      layer.x = Math.round(startLX + dx);
+      layer.y = Math.round(startLY + dy);
+      renderViewport(); // fast path — only updates styles
+      updateControlValues();
+    }
+    function onUp() {
+      isDragging = false;
+      vp.classList.remove('dragging');
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
+  }
+  el.addEventListener('mousedown', onDown);
+  el.addEventListener('touchstart', onDown, { passive: false });
+}
+
+function setupResize(el, layer) {
+  let startX, startY, startW, startH;
+
+  function onDown(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const vp = document.getElementById('viewport');
+    const rect = vp.getBoundingClientRect();
+    const pt = e.touches ? e.touches[0] : e;
+    startX = pt.clientX;
+    startY = pt.clientY;
+    startW = layer.w;
+    startH = layer.h;
+    isDragging = true;
+
+    function onMove(e2) {
+      const pt2 = e2.touches ? e2.touches[0] : e2;
+      const dw = ((pt2.clientX - startX) / rect.width) * 100;
+      const dh = ((pt2.clientY - startY) / rect.height) * 100;
+      layer.w = Math.max(2, Math.round(startW + dw));
+      layer.h = Math.max(2, Math.round(startH + dh));
+      renderViewport(); // fast path — only updates styles
+      updateControlValues();
+    }
+    function onUp() {
+      isDragging = false;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
+  }
+  el.addEventListener('mousedown', onDown);
+  el.addEventListener('touchstart', onDown, { passive: false });
+}
+
+// --- Controls below viewport ---
+
+function renderControls() {
+  const container = document.getElementById('layer-controls');
+  if (selectedLayer < 0) {
+    container.innerHTML = '';
+    return;
+  }
+  const l = LAYERS[selectedLayer];
+  const i = selectedLayer;
+
+  container.innerHTML = `
+    <div class="layer-controls">
+      <div class="ctrl-title">${l.name}</div>
+      <div class="ctrl-grid">
+        <label>X</label>
+        <input type="range" min="-100" max="100" value="${l.x}" id="ctrl-x" oninput="setLayerProp(${i}, 'x', +this.value)">
+        <span class="val" id="val-x">${l.x}%</span>
+
+        <label>Y</label>
+        <input type="range" min="-50" max="100" value="${l.y}" id="ctrl-y" oninput="setLayerProp(${i}, 'y', +this.value)">
+        <span class="val" id="val-y">${l.y}%</span>
+
+        <label>W</label>
+        <input type="range" min="2" max="200" value="${l.w}" id="ctrl-w" oninput="setLayerProp(${i}, 'w', +this.value)">
+        <span class="val" id="val-w">${l.w}%</span>
+
+        <label>H</label>
+        <input type="range" min="2" max="200" value="${l.h}" id="ctrl-h" oninput="setLayerProp(${i}, 'h', +this.value)">
+        <span class="val" id="val-h">${l.h}%</span>
+
+        <label>Spd</label>
+        <input type="range" min="-50" max="50" value="${l.speed}" id="ctrl-speed" oninput="setLayerProp(${i}, 'speed', +this.value)">
+        <span class="val" id="val-speed">${speedLabel(l.speed)}</span>
+        <span></span><span style="display:flex;justify-content:space-between;font-size:0.6rem;color:var(--text-muted)"><span>→ right</span><span>left ←</span></span><span></span>
+
+        <label>Z</label>
+        <input type="range" min="0" max="15" value="${l.depth}" id="ctrl-depth" oninput="setLayerProp(${i}, 'depth', +this.value)">
+        <span class="val" id="val-depth">${l.depth}</span>
+      </div>
+      ${l.type === 'img' ? `
+      <div style="margin-top:0.4rem;display:flex;align-items:center;gap:0.5rem">
+        <label><input type="checkbox" ${l.tile ? 'checked' : ''} onchange="toggleTile(${i}, this.checked)"> Tile</label>
+        ${l.tile ? `<label style="font-size:0.65rem">Size</label>
+        <input type="range" min="5" max="100" value="${l.tileSize || 25}" style="width:80px" id="ctrl-tileSize" oninput="document.getElementById('val-tileSize').textContent=this.value+'%'" onchange="setLayerProp(${i}, 'tileSize', +this.value)">
+        <span class="val" id="val-tileSize">${l.tileSize || 25}%</span>` : ''}
+      </div>` : ''}
+    </div>
+  `;
+}
+
+function speedLabel(v) {
+  if (v === 0) return '0';
+  return (v > 0 ? '← ' : '→ ') + Math.abs(v);
+}
+
+function updateControlValues() {
+  if (selectedLayer < 0) return;
+  const l = LAYERS[selectedLayer];
+  const setVal = (id, v, suffix) => {
+    const el = document.getElementById('val-' + id);
+    const inp = document.getElementById('ctrl-' + id);
+    if (el) el.textContent = v + (suffix || '');
+    if (inp) inp.value = typeof v === 'string' ? parseInt(v) : v;
+  };
+  setVal('x', l.x, '%');
+  setVal('y', l.y, '%');
+  setVal('w', l.w, '%');
+  setVal('h', l.h, '%');
+  const sEl = document.getElementById('val-speed');
+  const sInp = document.getElementById('ctrl-speed');
+  if (sEl) sEl.textContent = speedLabel(l.speed);
+  if (sInp) sInp.value = l.speed;
+  setVal('depth', l.depth, '');
+}
+
+function toggleTile(i, on) {
+  LAYERS[i].tile = on;
+  if (on && !LAYERS[i].tileSize) LAYERS[i].tileSize = 25;
+  render();
+}
+
+function setLayerProp(i, prop, val) {
+  LAYERS[i][prop] = val;
+  if (prop === 'tileSize') {
+    renderControls(); // re-render to update tile size display
+  } else {
+    updateControlValues();
+  }
+  renderViewport();
+}
+
+// --- Transport ---
+
+function updateGlobalSpeed(val) {
+  globalSpeed = val / 100;
+  document.getElementById('global-speed-val').textContent = globalSpeed.toFixed(1) + 'x';
+}
+
+function togglePlay() {
+  playing = !playing;
+  document.getElementById('btn-play').textContent = playing ? 'Pause' : 'Play';
+  document.getElementById('btn-play').classList.toggle('active', playing);
+  if (playing) { lastTime = 0; animate(); }
+  else if (animFrame) cancelAnimationFrame(animFrame);
+}
+
+function resetPositions() {
+  initOffsets();
+  renderViewport();
+}
+
+function resetAll() {
+  LAYERS = JSON.parse(JSON.stringify(DEFAULT_LAYERS));
+  selectedLayer = -1;
+  initOffsets();
+  render();
+}
+
+let lastTime = 0;
+function animate(ts) {
+  if (!playing) return;
+  if (!lastTime) lastTime = ts;
+  const dt = (ts - lastTime) / 1000;
+  lastTime = ts;
+
+  let needsFullRender = false;
+  LAYERS.forEach(l => {
+    if (l.speed !== 0 && l.on) {
+      offsets[l.id] = (offsets[l.id] || 0) - l.speed * globalSpeed * dt;
+      if (l.tile) {
+        // Tiled: update background-position directly, no wrap needed
+        const el = document.getElementById('tile-' + l.id);
+        if (el) el.style.backgroundPositionX = offsets[l.id] + '%';
+      } else {
+        // Non-tiled: wrap around
+        const totalX = l.x + offsets[l.id];
+        if (totalX + l.w < 0) offsets[l.id] += (l.w + 100);
+        if (totalX > 100) offsets[l.id] -= (l.w + 100);
+        needsFullRender = true;
+      }
+    }
+  });
+
+  if (needsFullRender) renderViewport();
+  animFrame = requestAnimationFrame(animate);
+}
+
+// --- Main render ---
+
+function render() {
+  renderTileList();
+  renderViewport();
+  renderControls();
+}
+
+// Init
+loadState().then(() => {
+  render();
+  startSpriteAnimation();
+  console.log('[playground] loaded', LAYERS.length, 'layers');
+});
+</script>
+
+</body>
+</html>

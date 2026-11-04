@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blog & Doc Conventions</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface2: #334155;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --accent: #8b5cf6;
+    --accent2: #0f9b8e;
+    --link: #5dade2;
+    --border: #334155;
+    --code-bg: #0d1117;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 { font-size: 2rem; font-weight: 700; color: #fff; margin-bottom: 0.3rem; }
+  .subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; }
+  h2 {
+    font-size: 1.3rem; font-weight: 600; color: #fff;
+    margin-top: 2.5rem; margin-bottom: 0.8rem;
+    border-bottom: 1px solid var(--border); padding-bottom: 0.4rem;
+  }
+  h3 { font-size: 1.05rem; font-weight: 600; color: var(--accent2); margin-top: 1.5rem; margin-bottom: 0.5rem; }
+  p { margin-bottom: 1rem; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: #fff; }
+  code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    background: var(--code-bg); padding: 0.15em 0.4em;
+    border-radius: 3px; font-size: 0.88em; color: var(--accent);
+  }
+  pre {
+    background: var(--code-bg); border-radius: 6px;
+    padding: 1rem 1.25rem; margin-bottom: 1rem;
+    overflow-x: auto; font-size: 0.85em; line-height: 1.6;
+  }
+  pre code { background: none; padding: 0; color: var(--text); }
+  ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+  li { margin-bottom: 0.4rem; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+  .rule {
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    border-left: 3px solid var(--border);
+  }
+  .rule.must { border-left-color: var(--accent); }
+  .rule.should { border-left-color: var(--accent2); }
+  .rule .label {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;
+    font-weight: 700; margin-bottom: 0.3rem;
+  }
+  .rule.must .label { color: var(--accent); }
+  .rule.should .label { color: var(--accent2); }
+  .rule .body { color: var(--text-muted); font-size: 0.9rem; }
+  .rule .body strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<h1>Blog & Doc Conventions</h1>
+<p class="subtitle">
+  Internal guide for generating docs and blog-style pages. These rules ensure
+  consistency, navigability, and a good reading experience.
+</p>
+
+<h2>File structure</h2>
+
+<div class="rule must">
+  <div class="label">Must</div>
+  <div class="body">
+    All docs live in <code>docs/</code>. Standalone docs go in <code>docs/</code> directly.
+    Project-scoped docs go in <code>docs/projects/&lt;name&gt;/</code>.
+  </div>
+</div>
+
+<div class="rule must">
+  <div class="label">Must</div>
+  <div class="body">
+    HTML for rich content (styled pages, interactive demos, pixel art). Markdown for
+    simple references and conventions. Prefer HTML for anything a reader will browse.
+  </div>
+</div>
+
+<div class="rule must">
+  <div class="label">Must</div>
+  <div class="body">
+    Every new doc must be added to <code>docs/index.html</code> (the landing page)
+    so it's discoverable.
+  </div>
+</div>
+
+<h2>Navigation</h2>
+
+<div class="rule must">
+  <div class="label">Must</div>
+  <div class="body">
+    <strong>Sibling nav at the top.</strong> Every doc in a folder with peers gets a nav block
+    immediately after the title/subtitle. Lists all siblings in the same folder, highlights
+    the current page, and links back to the docs index. This is how readers move between
+    related pages — like a blog series.
+  </div>
+</div>
+
+<pre><code>&lt;nav style="padding: 0.8rem 1.25rem; background: var(--surface); ..."&gt;
+  &lt;div style="..."&gt;Series / Project name&lt;/div&gt;
+  &lt;div&gt;&lt;a href="intro.html"&gt;Introduction&lt;/a&gt; — short description&lt;/div&gt;
+  &lt;div&gt;&lt;strong&gt;Current Page&lt;/strong&gt; (this page)&lt;/div&gt;
+  &lt;div&gt;&lt;a href="../../index.html"&gt;All docs&lt;/a&gt;&lt;/div&gt;
+&lt;/nav&gt;</code></pre>
+
+<div class="rule must">
+  <div class="label">Must</div>
+  <div class="body">
+    <strong>Nav goes at the top, not the bottom.</strong> Readers need orientation before
+    they start reading. A nav at the bottom means they have to scroll past the entire
+    page to find related content.
+  </div>
+</div>
+
+<div class="rule should">
+  <div class="label">Should</div>
+  <div class="body">
+    When linking to a new doc in chat, link to an existing page the user can refresh
+    (like the intro or index), not directly to the new page. The user navigates from
+    the parent — this confirms the nav works and the page is reachable.
+  </div>
+</div>
+
+<h2>Styling</h2>
+
+<div class="rule must">
+  <div class="label">Must</div>
+  <div class="body">
+    Self-contained — all CSS inline in the <code>&lt;style&gt;</code> tag. No external
+    stylesheets, no shared CSS files. Each page stands alone.
+  </div>
+</div>
+
+<div class="rule should">
+  <div class="label">Should</div>
+  <div class="body">
+    Dark theme consistent with the project aesthetic. Use the standard palette:
+    <code>#0f172a</code> bg, <code>#1e293b</code> surface, <code>#e2e8f0</code> text,
+    <code>#94a3b8</code> muted, <code>#5dade2</code> links. Project-specific pages
+    (like the game docs) can define their own palette.
+  </div>
+</div>
+
+<div class="rule should">
+  <div class="label">Should</div>
+  <div class="body">
+    Max width 700-860px, centered. Comfortable reading width. Wider for pages with
+    visual demos or code-heavy content.
+  </div>
+</div>
+
+<h2>Content patterns</h2>
+
+<h3>Title block</h3>
+<p>Every page starts with: <code>h1</code> title, <code>.subtitle</code> one-liner,
+  optional <code>.meta</code> with date/status. Then the nav. Then the content.</p>
+
+<h3>Series progression</h3>
+<p>When a topic has multiple docs, follow a natural progression:</p>
+<ol>
+  <li><strong>Fundamentals</strong> — what exists, how it works today</li>
+  <li><strong>Scenarios</strong> — concrete examples, walkthroughs, edge cases</li>
+  <li><strong>Decisions</strong> — what to keep, change, explore</li>
+  <li><strong>Design</strong> — the resulting spec or architecture</li>
+</ol>
+<p>Not every series needs all four. A topic can start as one page and grow.</p>
+
+<h3>Interactive / visual demos</h3>
+<p>CSS-only where possible (no JS, no external images). Pixel art grids, animated scenes,
+  and diagrams all work as pure CSS. This keeps pages self-contained and fast.</p>
+
+<h2>Serving</h2>
+
+<div class="rule must">
+  <div class="label">Must</div>
+  <div class="body">
+    Docs are served at <code>/docs/</code> via nginx. The <code>docs/</code> directory
+    is bind-mounted into the nginx container. No build step — edit the file and it's live.
+  </div>
+</div>
+
+<div class="rule must">
+  <div class="label">Must</div>
+  <div class="body">
+    <strong>Verify URLs before sharing.</strong> After creating or moving a doc, curl the
+    URL to confirm it returns 200 before posting the link in chat. 404s erode trust.
+  </div>
+</div>
+
+<h2>When to use the series convention</h2>
+
+<p>The series pattern (shared nav, progression, cross-references) is <strong>optional</strong>.
+  Use it when:</p>
+<ul>
+  <li>A topic has 2+ documents and is growing</li>
+  <li>You want to drive toward decisions with artifacts left behind</li>
+  <li>Multiple angles (text, diagrams, interactive) would help understanding</li>
+</ul>
+
+<p>Don't use it for standalone references, one-off research, or simple docs that
+  won't be revisited. When in doubt, ask.</p>
+
+<hr>
+
+<p style="color: var(--text-muted); font-size: 0.85rem;">
+  <a href="index.html">All docs</a>
+</p>
+
+</body>
+</html>

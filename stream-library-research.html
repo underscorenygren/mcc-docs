@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stream &amp; Messaging Library Survey</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --text: #e0e0e0;
+    --text-muted: #a0a0b0;
+    --accent: #e94560;
+    --accent2: #0f9b8e;
+    --link: #5dade2;
+    --code-bg: #0d1b2a;
+    --border: #2a2a4a;
+    --top-pick: #2d6a4f;
+    --good: #5c5caa;
+    --skip: #6b3a3a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #fff;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+  }
+  .meta {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 2rem;
+  }
+  .meta a { color: var(--link); text-decoration: none; }
+  .meta a:hover { text-decoration: underline; }
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    color: #fff;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-top: 1.8rem;
+    margin-bottom: 0.8rem;
+    color: var(--accent2);
+  }
+  p { margin-bottom: 1rem; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: #fff; }
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    background: var(--code-bg);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+    font-size: 0.88em;
+    color: var(--accent);
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: var(--text);
+    font-size: 0.85rem;
+  }
+  ul, ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+  li { margin-bottom: 0.4rem; }
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.25rem;
+    font-size: 0.88rem;
+  }
+  th {
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    background: var(--surface2);
+    color: #fff;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border);
+  }
+  td {
+    padding: 0.5rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .callout {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.25rem;
+    margin: 1.25rem 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  .tldr {
+    background: var(--surface);
+    border-left: 3px solid var(--accent2);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2.5rem;
+    border-radius: 0 6px 6px 0;
+  }
+  .tldr h3 {
+    margin-top: 0;
+    color: var(--accent2);
+    font-size: 1.1rem;
+  }
+  .tldr p:last-child { margin-bottom: 0; }
+
+  /* Library cards */
+  .lib-card {
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    border-left: 3px solid var(--border);
+  }
+  .lib-card.top-pick { border-left-color: var(--top-pick); }
+  .lib-card.good { border-left-color: var(--good); }
+  .lib-card.skip { border-left-color: var(--skip); }
+  .lib-card .lib-name {
+    font-weight: 600;
+    color: #fff;
+    font-size: 1.05rem;
+    margin-bottom: 0.3rem;
+  }
+  .lib-card .lib-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 0.6rem;
+  }
+  .lib-card .lib-body { color: var(--text-muted); font-size: 0.95rem; }
+  .lib-card .lib-body p:last-child { margin-bottom: 0; }
+
+  .badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+    margin-right: 0.3rem;
+  }
+  .badge.top-pick { background: var(--top-pick); color: #fff; }
+  .badge.good { background: var(--good); color: #fff; }
+  .badge.skip { background: var(--skip); color: #fff; }
+
+  .series-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    background: var(--surface);
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+  }
+  .series-nav .series-label {
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-right: 0.25rem;
+  }
+  .series-nav a {
+    color: var(--link);
+    text-decoration: none;
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+  }
+  .series-nav a:hover { background: var(--surface2); }
+  .series-nav a.current {
+    color: #fff;
+    background: var(--surface2);
+    font-weight: 600;
+  }
+  .diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin: 1.25rem 0;
+    font-family: 'SF Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--text-muted);
+  }
+</style>
+</head>
+<body>
+
+<div class="series-nav">
+  <span class="series-label">Series:</span>
+  <a href="message-mechanics.html">Fundamentals</a>
+  <a href="message-flow-visual.html">Scenarios</a>
+  <a href="message-mechanics-decisions.html">Decisions</a>
+  <a href="stream-library.html">Stream Library</a>
+  <a href="stream-library-research.html" class="current">Library Survey</a>
+</div>
+
+<h1>Stream &amp; Messaging Library Survey</h1>
+<p class="subtitle">
+  Evaluating TypeScript stream and messaging libraries as alternatives to the custom chatbus.
+  Context: low-volume multi-agent system, ~10 agents, self-hosted, Redis already in the stack plan.
+</p>
+<p class="meta">Last updated: 2026-10-17 &mdash; Part of <a href="message-mechanics-decisions.html">Message Mechanics</a> series &mdash; GitHub <a href="https://github.com/underscorenygren/claude-by-voice/issues/238">#238</a>, <a href="https://github.com/underscorenygren/claude-by-voice/issues/239">#239</a></p>
+
+<div class="tldr">
+  <h3>TL;DR Recommendation</h3>
+  <p>
+    <strong>Use Redis Streams via <code>ioredis</code>.</strong>
+    It delivers ordered, persistent, replayable messaging with consumer groups out of the box.
+    Redis is already the planned infrastructure layer. <code>ioredis</code> has first-class TypeScript types,
+    11M+ weekly downloads, and active maintenance. The chatbus HTTP pub/sub can be replaced with
+    direct <code>XADD</code>/<code>XREADGROUP</code> calls &mdash; fewer moving parts, built-in durability, trivial self-hosting.
+  </p>
+  <p>
+    <strong>Second choice: BullMQ</strong> (also Redis-backed) if we later need job scheduling, retries, or rate
+    limiting on top of messaging. It builds on <code>ioredis</code> and adds a job-queue abstraction.
+  </p>
+  <p>
+    <strong>Skip:</strong> Kafka/Redpanda (operational overhead for low volume), NATS (another server to run
+    with no persistence by default), RxJS (in-process only, no durability).
+  </p>
+</div>
+
+<hr>
+
+<h2>Evaluation Criteria</h2>
+
+<p>Each library is evaluated on seven dimensions relevant to this project:</p>
+
+<table>
+  <tr>
+    <th>Criterion</th>
+    <th>Why it matters</th>
+  </tr>
+  <tr>
+    <td><strong>Ordering</strong></td>
+    <td>Agents process messages sequentially. Out-of-order delivery breaks conversation flow.</td>
+  </tr>
+  <tr>
+    <td><strong>Persistence</strong></td>
+    <td>Messages must survive restarts. The current chatbus loses everything on process death.</td>
+  </tr>
+  <tr>
+    <td><strong>Consumer groups</strong></td>
+    <td>Multiple workers need to process different message types without duplication.</td>
+  </tr>
+  <tr>
+    <td><strong>TS SDK quality</strong></td>
+    <td>First-class types, active maintenance, large user base reduce integration risk.</td>
+  </tr>
+  <tr>
+    <td><strong>Self-hosting</strong></td>
+    <td>Everything runs on one machine. Complex clustering or JVM dependencies are disqualifying.</td>
+  </tr>
+  <tr>
+    <td><strong>Message replay</strong></td>
+    <td>Agents need to catch up on missed messages after restart or crash.</td>
+  </tr>
+  <tr>
+    <td><strong>Low-volume fit</strong></td>
+    <td>~100 messages/minute peak. Solutions designed for millions/sec add unnecessary complexity.</td>
+  </tr>
+</table>
+
+<hr>
+
+<h2>1. Redis Streams (Top Candidate)</h2>
+
+<p>
+  Redis Streams (<code>XADD</code>/<code>XREAD</code>/<code>XREADGROUP</code>) is a log-based data structure
+  built into Redis since 5.0. It provides ordered, persistent, replayable message streams with consumer groups
+  as a first-class primitive. This is the top candidate because Redis is already the planned infrastructure for
+  this project.
+</p>
+
+<h3>ioredis</h3>
+
+<div class="lib-card top-pick">
+  <div class="lib-name"><span class="badge top-pick">Top Pick</span> <a href="https://github.com/redis/ioredis">ioredis</a></div>
+  <div class="lib-meta"><a href="https://www.npmjs.com/package/ioredis">npm</a>: ~13M weekly downloads &bull; TypeScript: built-in types &bull; License: MIT &bull; <a href="https://redis.io/docs/latest/develop/data-types/streams/">Redis Streams docs</a></div>
+  <div class="lib-body">
+    <p>
+      The dominant Redis client for Node.js. Full Redis Streams support via raw commands:
+      <code>xadd</code>, <code>xread</code>, <code>xreadgroup</code>, <code>xack</code>, <code>xlen</code>,
+      <code>xrange</code>, <code>xinfo</code>.
+    </p>
+    <p>
+      Types are comprehensive &mdash; command return types are correctly typed, pipeline and cluster modes
+      work out of the box. The API mirrors Redis commands directly, so Redis documentation applies 1:1.
+    </p>
+  </div>
+</div>
+
+<pre><code>import Redis from 'ioredis';
+const redis = new Redis();
+
+// Publish
+await redis.xadd('chat:supervisor', '*', 'from', 'user', 'text', 'deploy bridge');
+
+// Consumer group setup (once)
+await redis.xgroup('CREATE', 'chat:supervisor', 'workers', '0', 'MKSTREAM');
+
+// Consume
+const messages = await redis.xreadgroup(
+  'GROUP', 'workers', 'worker-1',
+  'COUNT', 10, 'BLOCK', 5000,
+  'STREAMS', 'chat:supervisor', '>'
+);
+
+// Acknowledge
+await redis.xack('chat:supervisor', 'workers', messageId);</code></pre>
+
+<h3>node-redis (official)</h3>
+
+<div class="lib-card good">
+  <div class="lib-name"><span class="badge good">Good</span> <a href="https://github.com/redis/node-redis">@redis/client (node-redis v4)</a></div>
+  <div class="lib-meta"><a href="https://www.npmjs.com/package/redis">npm</a>: ~5M weekly downloads &bull; TypeScript: built-in &bull; License: MIT &bull; Maintained: Redis Inc.</div>
+  <div class="lib-body">
+    <p>
+      The official Redis client, rewritten in v4 with TypeScript from the ground up.
+      Streams API is available but uses a more abstracted interface than ioredis. Commands return
+      parsed objects rather than raw arrays, which is convenient but occasionally surprising.
+    </p>
+    <p>
+      Downsides: smaller ecosystem than ioredis, some rough edges in the streams API typing.
+      Auto-pipelining is a nice feature but irrelevant at our volume.
+    </p>
+  </div>
+</div>
+
+<h3>Redis Streams evaluation</h3>
+
+<table>
+  <tr><th>Criterion</th><th>Rating</th><th>Notes</th></tr>
+  <tr><td>Ordering</td><td>Strong</td><td>Append-only log with server-generated monotonic IDs. Strict per-stream ordering.</td></tr>
+  <tr><td>Persistence</td><td>Strong</td><td>Survives Redis restarts (RDB/AOF). Configurable max length with <code>MAXLEN</code>.</td></tr>
+  <tr><td>Consumer groups</td><td>Strong</td><td>Native: <code>XREADGROUP</code> with acknowledgment, pending entry list, claim/autoclaim for stuck messages.</td></tr>
+  <tr><td>TS SDK (ioredis)</td><td>Strong</td><td>13M downloads/week, built-in types, battle-tested.</td></tr>
+  <tr><td>Self-hosting</td><td>Trivial</td><td>Single <code>redis-server</code> process or Docker container. Already planned for the stack.</td></tr>
+  <tr><td>Message replay</td><td>Strong</td><td><code>XRANGE</code> reads any range. <code>XREADGROUP</code> with ID <code>0</code> re-delivers unacked messages.</td></tr>
+  <tr><td>Low-volume fit</td><td>Ideal</td><td>Zero overhead at low volume. No background threads, no compaction, no partitioning.</td></tr>
+</table>
+
+<div class="callout">
+  <p>
+    <strong>Migration path from chatbus:</strong> Each chatbus channel becomes a Redis Stream key
+    (e.g., <code>chat:supervisor</code>, <code>work:auto</code>). The HTTP publish endpoint becomes
+    an <code>XADD</code> call. The polling/subscribe loop becomes <code>XREADGROUP ... BLOCK</code>.
+    The bus-follower and builder already use channel names that map directly to stream keys.
+  </p>
+</div>
+
+<hr>
+
+<h2>2. Message Queue Libraries</h2>
+
+<h3>BullMQ</h3>
+
+<div class="lib-card good">
+  <div class="lib-name"><span class="badge good">Good</span> <a href="https://github.com/taskforcesh/bullmq">BullMQ</a></div>
+  <div class="lib-meta"><a href="https://www.npmjs.com/package/bullmq">npm</a>: ~700K weekly downloads &bull; TypeScript: built-in &bull; License: MIT &bull; <a href="https://docs.bullmq.io/">Docs</a></div>
+  <div class="lib-body">
+    <p>
+      Redis-backed job queue with TypeScript-first design. Built on <code>ioredis</code> internally.
+      Provides named queues, workers, job scheduling (cron, delay, repeat), rate limiting, retries with
+      backoff, job priorities, and flow dependencies (parent/child jobs).
+    </p>
+    <p>
+      Stronger than raw Redis Streams when you need job semantics: retry policies, completion callbacks,
+      progress tracking, job deduplication. Weaker when you need pub/sub fan-out &mdash; BullMQ is
+      competing-consumer by default, not broadcast.
+    </p>
+    <p>
+      <strong>Fit for this project:</strong> The auto-worker dispatch pattern maps naturally to BullMQ.
+      A <code>Queue</code> per work type, <code>Worker</code> instances per agent. But for chat routing
+      (fan-out to UI + agents), raw Redis Streams or Redis pub/sub is simpler.
+    </p>
+  </div>
+</div>
+
+<pre><code>import { Queue, Worker } from 'bullmq';
+
+const workQueue = new Queue('auto-worker', { connection: { host: 'localhost' } });
+
+// Dispatch
+await workQueue.add('fix', {
+  repo: 'underscorenygren/claude-by-voice',
+  branch: 'auto/fix-login',
+  prompt: 'Fix login refresh...'
+});
+
+// Process
+const worker = new Worker('auto-worker', async (job) => {
+  // job.data has the payload
+  await runClaude(job.data.prompt);
+}, { connection: { host: 'localhost' } });</code></pre>
+
+<table>
+  <tr><th>Criterion</th><th>Rating</th><th>Notes</th></tr>
+  <tr><td>Ordering</td><td>Good</td><td>FIFO within a queue. Priorities available but add complexity.</td></tr>
+  <tr><td>Persistence</td><td>Strong</td><td>Redis-backed. Jobs survive restarts. Configurable retention.</td></tr>
+  <tr><td>Consumer groups</td><td>Strong</td><td>Built-in competing consumers. Concurrency controls per worker.</td></tr>
+  <tr><td>TS SDK</td><td>Strong</td><td>TypeScript-first. Excellent types. Well-documented API.</td></tr>
+  <tr><td>Self-hosting</td><td>Trivial</td><td>Just needs Redis (same as above).</td></tr>
+  <tr><td>Message replay</td><td>Limited</td><td>Completed jobs can be queried, but no stream-style replay. Job data is cleaned up by default.</td></tr>
+  <tr><td>Low-volume fit</td><td>Good</td><td>Minimal overhead. Slightly heavier than raw Streams due to Lua scripts and metadata.</td></tr>
+</table>
+
+<h3>Bee-Queue</h3>
+
+<div class="lib-card skip">
+  <div class="lib-name"><span class="badge skip">Skip</span> <a href="https://github.com/bee-queue/bee-queue">Bee-Queue</a></div>
+  <div class="lib-meta"><a href="https://www.npmjs.com/package/bee-queue">npm</a>: ~100K weekly downloads &bull; TypeScript: @types/bee-queue &bull; License: MIT &bull; Maintained: minimal</div>
+  <div class="lib-body">
+    <p>
+      Simpler Redis-backed queue. Lighter than BullMQ but with fewer features (no repeatable jobs,
+      no flows, no rate limiting). TypeScript support is via DefinitelyTyped, not built-in.
+      Maintenance has slowed significantly. No reason to choose this over BullMQ.
+    </p>
+  </div>
+</div>
+
+<hr>
+
+<h2>3. Event Streaming Platforms</h2>
+
+<h3>NATS (nats.js)</h3>
+
+<div class="lib-card good">
+  <div class="lib-name"><span class="badge good">Situational</span> <a href="https://github.com/nats-io/nats.js">nats.js</a> / NATS JetStream</div>
+  <div class="lib-meta"><a href="https://www.npmjs.com/package/nats">npm</a>: ~250K weekly downloads &bull; TypeScript: built-in &bull; License: Apache 2.0 &bull; <a href="https://docs.nats.io/nats-concepts/jetstream">JetStream docs</a></div>
+  <div class="lib-body">
+    <p>
+      NATS is a lightweight messaging server. Core NATS is fire-and-forget pub/sub with
+      no persistence. JetStream adds persistence, consumer groups, replay, and exactly-once
+      delivery &mdash; but it is a separate subsystem that must be enabled and configured.
+    </p>
+    <p>
+      The TypeScript SDK (<code>nats.js</code>) is well-typed and actively maintained by the NATS team.
+      The API is clean. Subject-based routing (<code>chat.supervisor.&gt;</code>) maps well to our
+      channel model.
+    </p>
+    <p>
+      <strong>Downside:</strong> Running a NATS server is another process to manage. JetStream
+      persistence requires storage configuration. At our scale, Redis already covers everything
+      NATS JetStream provides, without the additional server.
+    </p>
+  </div>
+</div>
+
+<table>
+  <tr><th>Criterion</th><th>Rating</th><th>Notes</th></tr>
+  <tr><td>Ordering</td><td>Strong (JetStream)</td><td>Per-stream ordering guaranteed. Core NATS: no ordering guarantees.</td></tr>
+  <tr><td>Persistence</td><td>Strong (JetStream)</td><td>File-backed or memory-backed streams. Core NATS: none.</td></tr>
+  <tr><td>Consumer groups</td><td>Strong (JetStream)</td><td>Durable consumers with ack/nack, redelivery policies.</td></tr>
+  <tr><td>TS SDK</td><td>Strong</td><td>Official SDK, good types, Deno-compatible.</td></tr>
+  <tr><td>Self-hosting</td><td>Easy</td><td>Single Go binary, ~20MB. But it is another server process beyond Redis.</td></tr>
+  <tr><td>Message replay</td><td>Strong (JetStream)</td><td>Replay by sequence, time, or from last acked.</td></tr>
+  <tr><td>Low-volume fit</td><td>Overkill</td><td>Designed for high-throughput microservice mesh. Full capabilities unused at our scale.</td></tr>
+</table>
+
+<h3>Apache Kafka (kafkajs)</h3>
+
+<div class="lib-card skip">
+  <div class="lib-name"><span class="badge skip">Skip</span> <a href="https://github.com/tulios/kafkajs">kafkajs</a></div>
+  <div class="lib-meta"><a href="https://www.npmjs.com/package/kafkajs">npm</a>: ~1.5M weekly downloads &bull; TypeScript: built-in &bull; License: MIT &bull; <a href="https://kafka.js.org/">Docs</a></div>
+  <div class="lib-body">
+    <p>
+      KafkaJS is the standard Node.js client for Apache Kafka. The TypeScript types are solid
+      and the API covers all Kafka operations (produce, consume, admin, transactions).
+    </p>
+    <p>
+      <strong>Disqualifying factor:</strong> Kafka requires a JVM-based broker (or at minimum ZooKeeper/KRaft).
+      Even with KRaft mode eliminating ZooKeeper, running a Kafka broker for ~100 messages/minute
+      is extreme over-engineering. Memory footprint alone (1-2 GB minimum) is unreasonable for a
+      single-machine deployment.
+    </p>
+  </div>
+</div>
+
+<h3>Redpanda</h3>
+
+<div class="lib-card skip">
+  <div class="lib-name"><span class="badge skip">Skip</span> <a href="https://github.com/redpanda-data/redpanda">Redpanda</a> (Kafka-compatible)</div>
+  <div class="lib-meta">Kafka wire-compatible &bull; Uses kafkajs client &bull; License: BSL &bull; <a href="https://docs.redpanda.com/">Docs</a></div>
+  <div class="lib-body">
+    <p>
+      Redpanda is a C++ Kafka-compatible broker that eliminates the JVM dependency. Single binary,
+      lower resource usage than Kafka. Uses the same <code>kafkajs</code> client library.
+    </p>
+    <p>
+      Better than Kafka for self-hosting, but still a dedicated streaming platform designed for
+      high-throughput workloads. Partitioned log model, tiered storage, rack awareness &mdash;
+      none of which we need. Redis Streams covers the same use cases at our scale with zero
+      additional infrastructure.
+    </p>
+  </div>
+</div>
+
+<hr>
+
+<h2>4. Pub/Sub Libraries</h2>
+
+<h3>Redis Pub/Sub</h3>
+
+<div class="lib-card good">
+  <div class="lib-name"><span class="badge good">Complementary</span> Redis Pub/Sub</div>
+  <div class="lib-meta">Built into Redis &bull; Available via ioredis or node-redis &bull; No additional dependencies</div>
+  <div class="lib-body">
+    <p>
+      Redis has a built-in pub/sub system (<code>PUBLISH</code>/<code>SUBSCRIBE</code>) that is
+      separate from Redis Streams. It is fire-and-forget: messages are delivered to all currently
+      connected subscribers and then discarded. No persistence, no replay, no consumer groups.
+    </p>
+    <p>
+      <strong>Useful as a complement to Streams</strong> for real-time notifications. Pattern: write
+      durable messages to a Stream (<code>XADD</code>), then <code>PUBLISH</code> a notification on a
+      channel so listeners wake up immediately instead of polling. This is how the bustail/UI activity
+      feed could work &mdash; the UI subscribes to a pub/sub channel for instant push, but the
+      canonical data lives in the Stream.
+    </p>
+  </div>
+</div>
+
+<table>
+  <tr><th>Criterion</th><th>Rating</th><th>Notes</th></tr>
+  <tr><td>Ordering</td><td>Per-publisher</td><td>Messages from one publisher arrive in order. No global ordering.</td></tr>
+  <tr><td>Persistence</td><td>None</td><td>Fire-and-forget. Missed messages are gone.</td></tr>
+  <tr><td>Consumer groups</td><td>None</td><td>All subscribers get all messages (fan-out only).</td></tr>
+  <tr><td>TS SDK</td><td>Strong</td><td>Same ioredis/node-redis clients.</td></tr>
+  <tr><td>Self-hosting</td><td>Trivial</td><td>Already running Redis.</td></tr>
+  <tr><td>Message replay</td><td>None</td><td>No history.</td></tr>
+  <tr><td>Low-volume fit</td><td>Ideal</td><td>Zero overhead, instant delivery.</td></tr>
+</table>
+
+<h3>MQTT (mqtt.js)</h3>
+
+<div class="lib-card skip">
+  <div class="lib-name"><span class="badge skip">Skip</span> <a href="https://github.com/mqttjs/MQTT.js">mqtt.js</a></div>
+  <div class="lib-meta"><a href="https://www.npmjs.com/package/mqtt">npm</a>: ~1.8M weekly downloads &bull; TypeScript: built-in (v5+) &bull; License: MIT &bull; <a href="https://github.com/mqttjs/MQTT.js#readme">Docs</a></div>
+  <div class="lib-body">
+    <p>
+      MQTT is a lightweight pub/sub protocol designed for IoT. <code>mqtt.js</code> is the standard
+      Node.js client. Supports QoS levels (0=fire-and-forget, 1=at-least-once, 2=exactly-once),
+      retained messages, will messages, and topic wildcards.
+    </p>
+    <p>
+      Requires a broker (Mosquitto, EMQX, Aedes for Node.js). The protocol is elegant for
+      device-to-cloud messaging but does not provide consumer groups, message replay, or stream
+      semantics. Persistence depends entirely on the broker implementation. Adding another broker
+      process is not justified when Redis Streams covers all these needs natively.
+    </p>
+  </div>
+</div>
+
+<hr>
+
+<h2>5. In-Process Alternatives</h2>
+
+<h3>RxJS</h3>
+
+<div class="lib-card skip">
+  <div class="lib-name"><span class="badge skip">Wrong layer</span> <a href="https://github.com/ReactiveX/rxjs">RxJS</a></div>
+  <div class="lib-meta"><a href="https://www.npmjs.com/package/rxjs">npm</a>: ~30M weekly downloads &bull; TypeScript: built-in &bull; License: Apache 2.0 &bull; <a href="https://rxjs.dev/">Docs</a></div>
+  <div class="lib-body">
+    <p>
+      RxJS is the reactive extensions library for JavaScript. Excellent for in-process event stream
+      composition: operators for filtering, mapping, debouncing, merging, error handling.
+      TypeScript types are first-class.
+    </p>
+    <p>
+      <strong>Not a messaging solution.</strong> RxJS Observables live in a single process. No
+      persistence, no cross-process communication, no replay after restart. Could be useful
+      <em>within</em> an agent for composing event handlers (e.g., debouncing bus messages),
+      but it does not replace the chatbus.
+    </p>
+  </div>
+</div>
+
+<h3>Highland.js</h3>
+
+<div class="lib-card skip">
+  <div class="lib-name"><span class="badge skip">Skip</span> <a href="https://github.com/caolan/highland">Highland.js</a></div>
+  <div class="lib-meta"><a href="https://www.npmjs.com/package/highland">npm</a>: ~50K weekly downloads &bull; TypeScript: @types/highland &bull; License: Apache 2.0 &bull; <a href="https://highlandjs.org/">Docs</a></div>
+  <div class="lib-body">
+    <p>
+      Utility library for managing Node.js Streams with a higher-level API. Wraps Node streams
+      into a lazy, composable pipeline. Types are community-maintained (DefinitelyTyped), not
+      built-in. Development has slowed. Same limitation as RxJS: in-process only, no durability.
+    </p>
+  </div>
+</div>
+
+<h3>most.js</h3>
+
+<div class="lib-card skip">
+  <div class="lib-name"><span class="badge skip">Skip</span> <a href="https://github.com/cujojs/most">most.js</a></div>
+  <div class="lib-meta"><a href="https://www.npmjs.com/package/most">npm</a>: ~100K weekly downloads &bull; TypeScript: built-in &bull; License: MIT &bull; <a href="https://github.com/cujojs/most/wiki">Docs</a></div>
+  <div class="lib-body">
+    <p>
+      High-performance reactive programming library. Faster than RxJS in synthetic benchmarks.
+      Clean TypeScript types. Same limitation: in-process only, no cross-process messaging or
+      persistence. Performance advantage is meaningless at our message volume.
+    </p>
+  </div>
+</div>
+
+<hr>
+
+<h2>Comparison Matrix</h2>
+
+<table>
+  <tr>
+    <th>Library</th>
+    <th>Ordering</th>
+    <th>Persistence</th>
+    <th>Consumer Groups</th>
+    <th>TS Types</th>
+    <th>Self-Host</th>
+    <th>Replay</th>
+    <th>Verdict</th>
+  </tr>
+  <tr>
+    <td><strong>Redis Streams + ioredis</strong></td>
+    <td>Strict</td>
+    <td>RDB/AOF</td>
+    <td>Native</td>
+    <td>Built-in</td>
+    <td>Already planned</td>
+    <td>XRANGE</td>
+    <td><span class="badge top-pick">Use this</span></td>
+  </tr>
+  <tr>
+    <td><strong>BullMQ</strong></td>
+    <td>FIFO</td>
+    <td>Redis</td>
+    <td>Built-in</td>
+    <td>Built-in</td>
+    <td>Redis only</td>
+    <td>Limited</td>
+    <td><span class="badge good">For job queues</span></td>
+  </tr>
+  <tr>
+    <td><strong>Redis Pub/Sub</strong></td>
+    <td>Publisher</td>
+    <td>None</td>
+    <td>None</td>
+    <td>Built-in</td>
+    <td>Already planned</td>
+    <td>None</td>
+    <td><span class="badge good">Complement</span></td>
+  </tr>
+  <tr>
+    <td><strong>NATS JetStream</strong></td>
+    <td>Strict</td>
+    <td>File/Mem</td>
+    <td>Durable</td>
+    <td>Built-in</td>
+    <td>Extra server</td>
+    <td>Full</td>
+    <td><span class="badge skip">Overkill</span></td>
+  </tr>
+  <tr>
+    <td><strong>Kafka (kafkajs)</strong></td>
+    <td>Partition</td>
+    <td>Disk</td>
+    <td>Native</td>
+    <td>Built-in</td>
+    <td>JVM broker</td>
+    <td>Full</td>
+    <td><span class="badge skip">Too heavy</span></td>
+  </tr>
+  <tr>
+    <td><strong>Redpanda</strong></td>
+    <td>Partition</td>
+    <td>Disk</td>
+    <td>Native</td>
+    <td>kafkajs</td>
+    <td>Extra server</td>
+    <td>Full</td>
+    <td><span class="badge skip">Too heavy</span></td>
+  </tr>
+  <tr>
+    <td><strong>MQTT (mqtt.js)</strong></td>
+    <td>Publisher</td>
+    <td>Broker-dep.</td>
+    <td>None</td>
+    <td>Built-in</td>
+    <td>Extra broker</td>
+    <td>Retained only</td>
+    <td><span class="badge skip">Wrong model</span></td>
+  </tr>
+  <tr>
+    <td><strong>RxJS</strong></td>
+    <td>In-process</td>
+    <td>None</td>
+    <td>N/A</td>
+    <td>Built-in</td>
+    <td>N/A</td>
+    <td>ReplaySubject</td>
+    <td><span class="badge skip">Wrong layer</span></td>
+  </tr>
+  <tr>
+    <td><strong>Bee-Queue</strong></td>
+    <td>FIFO</td>
+    <td>Redis</td>
+    <td>Competing</td>
+    <td>DT</td>
+    <td>Redis only</td>
+    <td>None</td>
+    <td><span class="badge skip">Unmaintained</span></td>
+  </tr>
+</table>
+
+<hr>
+
+<h2>Recommended Architecture</h2>
+
+<p>
+  The chatbus replacement uses three Redis primitives, all accessed via <code>ioredis</code>:
+</p>
+
+<div class="diagram">
+Producer (agent/supervisor)                    Consumer (agent/worker)
+        |                                              |
+        |  XADD chat:supervisor * ...                  |
+        |-----&gt; [Redis Stream: chat:supervisor] ------&gt;|  XREADGROUP GROUP workers agent-1 BLOCK ...
+        |                                              |
+        |  PUBLISH notify:supervisor "new"             |  (wakes up immediately)
+        |-----&gt; [Redis Pub/Sub] ----------------------&gt;|  SUBSCRIBE notify:supervisor
+        |                                              |
+                                                       |  XACK chat:supervisor workers &lt;id&gt;
+</div>
+
+<ul>
+  <li><strong>Redis Streams</strong> for durable, ordered message storage with consumer group semantics.</li>
+  <li><strong>Redis Pub/Sub</strong> for instant wake-up notifications (optional optimization; <code>XREADGROUP BLOCK</code> already polls efficiently).</li>
+  <li><strong>BullMQ</strong> (later, if needed) for scheduled/retryable jobs like the auto-worker dispatch.</li>
+</ul>
+
+<h3>Stream key naming</h3>
+
+<pre><code>chat:{agent}         # Chat messages routed to an agent
+work:{agent}         # Work dispatch (structured JSON payloads)
+events:{source}      # System events (tool calls, lifecycle signals)
+build:requests       # Builder work queue</code></pre>
+
+<h3>Consumer group per service</h3>
+
+<pre><code># Each service type gets its own consumer group:
+XGROUP CREATE chat:supervisor  ui-readers    0 MKSTREAM   # UI reads all messages
+XGROUP CREATE chat:supervisor  agent-workers 0 MKSTREAM   # Agents process messages
+XGROUP CREATE work:auto        auto-workers  0 MKSTREAM   # Auto-worker processes jobs
+
+# Fan-out: multiple groups on the same stream each get all messages
+# Competing consumers: multiple consumers in one group split the load</code></pre>
+
+<h3>Migration from chatbus</h3>
+
+<p>The current chatbus HTTP API maps directly to Redis Streams operations:</p>
+
+<table>
+  <tr><th>Current chatbus</th><th>Redis Streams equivalent</th></tr>
+  <tr><td><code>POST /publish</code></td><td><code>XADD stream * field value ...</code></td></tr>
+  <tr><td><code>GET /subscribe?channel=X</code></td><td><code>XREADGROUP GROUP g consumer BLOCK 5000 STREAMS X &gt;</code></td></tr>
+  <tr><td><code>GET /messages?channel=X</code></td><td><code>XRANGE X - +</code></td></tr>
+  <tr><td><code>GET /messages?channel=X&amp;since=ID</code></td><td><code>XRANGE X ID +</code></td></tr>
+  <tr><td>Bus store file persistence</td><td>Redis RDB/AOF (automatic)</td></tr>
+</table>
+
+<div class="callout">
+  <p>
+    <strong>What we lose:</strong> The chatbus HTTP interface is convenient for <code>docker exec wget</code>
+    dispatches. A thin HTTP wrapper around Redis Streams (a few Express routes) preserves this for
+    cron jobs and shell scripts that cannot use a Redis client directly.
+  </p>
+</div>
+
+<hr>
+
+<h2>Open Questions</h2>
+
+<ul>
+  <li><strong>Stream trimming policy.</strong> <code>XADD ... MAXLEN ~ 10000</code> caps each stream at ~10K messages.
+    Acceptable for chat; may need higher for events. Or use <code>MINID</code> to trim by age.</li>
+  <li><strong>Serialization format.</strong> Redis Stream entries are flat key-value pairs. Nested JSON payloads
+    (like work requests) would be stored as a single <code>data</code> field containing JSON. Alternatively,
+    flatten top-level fields for queryability.</li>
+  <li><strong>HTTP bridge.</strong> Keep a lightweight HTTP adapter for shell/cron callers, or require all
+    producers to use the ioredis client directly?</li>
+  <li><strong>BullMQ for auto-worker.</strong> The auto-worker dispatch has job-queue semantics (retry, timeout,
+    progress reporting). Worth using BullMQ for that specific queue even if chat uses raw Streams?</li>
+</ul>
+
+<hr>
+
+<h2>MCP Implications</h2>
+
+<h3>What we have now</h3>
+<p>
+  The current message flow for agents uses MCP (Model Context Protocol) over stdio as the
+  last-mile transport. The path is:
+</p>
+<div class="diagram">User message
+  &rarr; HTTP POST to chatbus
+    &rarr; Chatbus persists + routes to channel server
+      &rarr; Channel server sends MCP notification via stdin
+        &rarr; Claude agent processes, calls reply() tool
+          &rarr; Channel server receives MCP tool call
+            &rarr; Publishes response back to chatbus
+              &rarr; Chatbus broadcasts to WebSocket clients</div>
+
+<p>
+  MCP is a <strong>fire-and-forget</strong> transport. There are no delivery receipts,
+  no backpressure, no way to know if Claude consumed a notification. This is the source of
+  the "supervisor goes silent" bug &mdash; messages get queued behind tool calls and the
+  user sees nothing.
+</p>
+
+<h3>What changes with Redis Streams</h3>
+<p>
+  <strong>The MCP layer does not change.</strong> Redis Streams replaces the chatbus (the routing
+  and persistence layer), not the channel server or MCP transport. The channel server still
+  bridges between the bus and MCP stdio.
+</p>
+
+<div class="diagram">Before: Chatbus (Go HTTP) &rarr; Channel server &rarr; MCP &rarr; Agent
+After:  Redis Streams       &rarr; Channel server &rarr; MCP &rarr; Agent</div>
+
+<p>What improves:</p>
+<ul>
+  <li><strong>Acknowledgment at the bus layer.</strong> The channel server can XACK a message
+    after receiving it from the stream, and separately track whether Claude actually processed it.
+    Today the chatbus has no ack mechanism &mdash; once the HTTP POST returns, the message is
+    "delivered" even if the channel server dropped it.</li>
+  <li><strong>Replay without custom code.</strong> Reconnection replay is currently hand-built
+    in the chatbus. With Redis Streams, <code>XRANGE</code> from the last-seen ID gives you
+    replay for free.</li>
+  <li><strong>Consumer groups for competing workers.</strong> Multiple instances of a service
+    can share a stream without duplicating work. Today each chatbus subscriber gets all messages.</li>
+  <li><strong>Pending entry list (PEL).</strong> Redis tracks unacknowledged messages per consumer.
+    A monitor can detect stuck consumers &mdash; "the channel server consumed this 60s ago but
+    hasn't acked it" &mdash; and escalate. This is the missing piece for the MCP reliability problem.</li>
+</ul>
+
+<p>What stays the same:</p>
+<ul>
+  <li><strong>MCP stdio transport</strong> &mdash; still fire-and-forget between channel server and Claude.
+    Agent-level acks still need explicit tool calls (<code>ack(seq, status)</code>).</li>
+  <li><strong>Channel server role</strong> &mdash; still the bridge between bus and MCP. It subscribes
+    to the Redis Stream instead of HTTP long-polling the chatbus.</li>
+  <li><strong>WebSocket to browser</strong> &mdash; the bridge still fans out to connected clients
+    via WebSocket. The stream library doesn't replace this &mdash; the bridge reads from Redis
+    Streams and writes to WebSocket.</li>
+</ul>
+
+<div class="callout">
+  <p>
+    <strong>Key insight:</strong> Redis Streams solves the bus reliability problem (ordering,
+    persistence, replay, ack tracking). It does not solve the MCP reliability problem (Claude
+    ignoring notifications mid-tool-call). Those are different layers. But having ack tracking
+    at the bus layer makes the MCP problem <em>visible</em> &mdash; you can see where a message
+    stalled, which today is invisible.
+  </p>
+</div>
+
+<hr>
+
+<h2>Project Links</h2>
+
+<table>
+  <tr><th>Project</th><th>Link</th><th>Notes</th></tr>
+  <tr><td><strong>ioredis</strong></td><td><a href="https://github.com/redis/ioredis">github.com/redis/ioredis</a></td><td>Top pick. 13M weekly downloads, built-in TS types.</td></tr>
+  <tr><td><strong>node-redis</strong></td><td><a href="https://github.com/redis/node-redis">github.com/redis/node-redis</a></td><td>Official Redis client. Good alternative.</td></tr>
+  <tr><td><strong>Redis Streams docs</strong></td><td><a href="https://redis.io/docs/latest/develop/data-types/streams/">redis.io/docs/.../streams</a></td><td>The core primitive this library wraps.</td></tr>
+  <tr><td><strong>BullMQ</strong></td><td><a href="https://github.com/taskforcesh/bullmq">github.com/taskforcesh/bullmq</a></td><td>Redis job queue. Good for work dispatch.</td></tr>
+  <tr><td><strong>Bee-Queue</strong></td><td><a href="https://github.com/bee-queue/bee-queue">github.com/bee-queue/bee-queue</a></td><td>Simpler queue, unmaintained.</td></tr>
+  <tr><td><strong>NATS (nats.js)</strong></td><td><a href="https://github.com/nats-io/nats.js">github.com/nats-io/nats.js</a></td><td>Full messaging system. Operational overhead.</td></tr>
+  <tr><td><strong>KafkaJS</strong></td><td><a href="https://github.com/tulios/kafkajs">github.com/tulios/kafkajs</a></td><td>Kafka client. Overkill for low volume.</td></tr>
+  <tr><td><strong>RxJS</strong></td><td><a href="https://github.com/ReactiveX/rxjs">github.com/ReactiveX/rxjs</a></td><td>In-process only, no persistence.</td></tr>
+  <tr><td><strong>MQTT.js</strong></td><td><a href="https://github.com/mqttjs/MQTT.js">github.com/mqttjs/MQTT.js</a></td><td>IoT protocol. Requires separate broker.</td></tr>
+</table>
+
+<hr>
+
+<p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3rem;">
+  Research for <a href="https://github.com/underscorenygren/claude-by-voice/issues/238">GitHub #238</a>.
+  Next step: prototype Redis Streams integration per
+  <a href="message-mechanics-decisions.html">decisions doc</a>.
+  Stream library repo: <a href="https://github.com/underscorenygren/stream">github.com/underscorenygren/stream</a>.
+</p>
+
+</body>
+</html>

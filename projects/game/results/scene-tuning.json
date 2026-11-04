@@ -1,0 +1,113 @@
+{
+  "layers": [
+    {
+      "id": "sky-gradient",
+      "y": 0,
+      "h": 50,
+      "x": 0,
+      "w": 100,
+      "speed": 0,
+      "depth": 0,
+      "on": true
+    },
+    {
+      "id": "ocean-color",
+      "y": 50,
+      "h": 50,
+      "x": 0,
+      "w": 100,
+      "speed": 0,
+      "depth": 1,
+      "on": true
+    },
+    {
+      "id": "clouds-far",
+      "y": 0,
+      "h": 50,
+      "x": 0,
+      "w": 100,
+      "speed": 5,
+      "depth": 2,
+      "on": true,
+      "blend": "lighten"
+    },
+    {
+      "id": "clouds-mid",
+      "y": 0,
+      "h": 50,
+      "x": 0,
+      "w": 100,
+      "speed": -20,
+      "depth": 3,
+      "on": true,
+      "blend": "lighten"
+    },
+    {
+      "id": "clouds-near",
+      "y": -1,
+      "h": 30,
+      "x": 63,
+      "w": 40,
+      "speed": 15,
+      "depth": 4,
+      "on": true,
+      "blend": "normal"
+    },
+    {
+      "id": "eye-sprite",
+      "y": 12,
+      "h": 14,
+      "x": 22,
+      "w": 15,
+      "speed": 8,
+      "depth": 5,
+      "on": true,
+      "blend": "normal"
+    },
+    {
+      "id": "ocean-texture",
+      "y": 70,
+      "h": 30,
+      "x": 0,
+      "w": 100,
+      "speed": 15,
+      "depth": 6,
+      "on": true,
+      "blend": "lighten"
+    },
+    {
+      "id": "sea-rocks",
+      "y": 60,
+      "h": 40,
+      "x": 0,
+      "w": 72,
+      "speed": 12,
+      "depth": 7,
+      "on": true,
+      "blend": "lighten"
+    },
+    {
+      "id": "cliff",
+      "y": 50,
+      "h": 50,
+      "x": 50,
+      "w": 50,
+      "speed": 0,
+      "depth": 8,
+      "on": true,
+      "blend": "lighten"
+    },
+    {
+      "id": "lighthouse",
+      "y": 38,
+      "h": 26,
+      "x": 68,
+      "w": 15,
+      "speed": 0,
+      "depth": 9,
+      "on": true,
+      "blend": "normal"
+    }
+  ],
+  "savedAt": "2026-10-17T03:09:58.101Z"
+}

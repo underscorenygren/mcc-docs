@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lighthouse Scene — SpriteLab Experiments</title>
+<style>
+  :root {
+    --bg: #0a0a1a;
+    --surface: #111128;
+    --surface2: #1a1a3e;
+    --text: #c8c8e0;
+    --text-muted: #7878a0;
+    --accent: #6a4c93;
+    --accent2: #1b998b;
+    --link: #4da8da;
+    --border: #252548;
+    --code-bg: #080818;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.8;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 2rem; font-weight: 700; color: #d8d8f0;
+    margin-bottom: 0.3rem;
+    text-shadow: 0 0 30px rgba(106, 76, 147, 0.3);
+  }
+  .subtitle { color: var(--text-muted); font-size: 1rem; margin-bottom: 0.3rem; }
+  .meta { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; font-family: sans-serif; }
+  h2 {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 1.5rem; font-weight: 600; color: #d0d0e8;
+    margin-top: 3rem; margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;
+  }
+  h3 {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 1.1rem; font-weight: 600; color: var(--accent2);
+    margin-top: 1.5rem; margin-bottom: 0.5rem;
+  }
+  p { margin-bottom: 1rem; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: #d8d8f0; }
+  code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    background: var(--code-bg); padding: 0.15em 0.4em;
+    border-radius: 3px; font-size: 0.88em; color: var(--accent);
+  }
+  ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+  li { margin-bottom: 0.4rem; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+  nav {
+    padding: 0.8rem 1.25rem;
+    background: var(--surface);
+    border-radius: 6px;
+    font-family: sans-serif;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+  nav .nav-label {
+    color: var(--text-muted); font-size: 0.75rem;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+  }
+  nav .nav-back { margin-top: 0.5rem; font-size: 0.85rem; }
+
+  .prompt-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .prompt-card .card-label {
+    font-family: sans-serif;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .prompt-card.bg .card-label { color: var(--accent); }
+  .prompt-card.anim .card-label { color: #d4a030; }
+  .prompt-card.sprite .card-label { color: var(--accent2); }
+  .prompt-card .card-title {
+    font-family: sans-serif;
+    font-weight: 600;
+    color: #d8d8f0;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
+  .prompt-card .prompt-text {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+    margin: 0.75rem 0;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: #e0d0f0;
+    white-space: pre-wrap;
+    cursor: pointer;
+    position: relative;
+  }
+  .prompt-text:hover::after {
+    content: 'click to copy';
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .prompt-text.suggested-input {
+    border-style: dashed;
+    cursor: text;
+    min-height: 2.5em;
+  }
+  .prompt-text.suggested-input:hover::after {
+    content: 'paste suggested prompt here';
+  }
+  .field-label {
+    font-family: sans-serif;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-top: 0.75rem;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+  }
+  .field-label:first-of-type { margin-top: 0.5rem; }
+  .prompt-card .notes {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    margin-top: 0.5rem;
+  }
+  .prompt-card .settings {
+    margin-top: 0.75rem;
+    font-family: sans-serif;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+  .prompt-card .settings span {
+    display: inline-block;
+    background: var(--surface2);
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+    margin-right: 0.4rem;
+    margin-bottom: 0.3rem;
+    color: var(--text);
+    font-size: 0.8rem;
+  }
+
+  .result-slot {
+    background: var(--surface);
+    border: 2px dashed var(--border);
+    border-radius: 6px;
+    padding: 2rem 1.5rem;
+    margin-top: 0.75rem;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    min-height: 80px;
+    position: relative;
+  }
+  .result-slot:focus {
+    outline: none;
+    border-color: var(--accent2);
+  }
+  .result-slot.has-image {
+    padding: 0.5rem;
+    border-style: solid;
+    border-color: var(--accent2);
+    font-style: normal;
+  }
+  .result-slot img {
+    max-width: 100%;
+    border-radius: 4px;
+    image-rendering: pixelated;
+    display: block;
+    margin: 0 auto;
+  }
+  .result-slot .clear-btn {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    background: var(--surface2);
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: sans-serif;
+  }
+
+  .palette-strip {
+    display: flex;
+    gap: 0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0.75rem 0;
+  }
+  .palette-strip .sw {
+    flex: 1;
+    height: 30px;
+    display: flex;
+    align-items: flex-end;
+    padding: 2px 4px;
+    font-family: monospace;
+    font-size: 0.6rem;
+    color: rgba(255,255,255,0.5);
+  }
+</style>
+</head>
+<body>
+
+<h1>The Lighthouse at Innsmouth Bay</h1>
+<p class="subtitle">SpriteLab prompt experiments for an animated Lovecraftian coastal scene.</p>
+<p class="meta">Started: 2026-10-16 · Status: Experiment</p>
+
+<nav>
+  <div class="nav-label">Game project</div>
+  <div><a href="intro.html">Introduction</a> — palette, toolkit, concepts</div>
+  <div><strong style="color: #d8d8f0;">Sprite Experiments</strong> (this page)</div>
+  <div><a href="scene.html">Scene Iteration</a> — DALL-E backgrounds, composition</div>
+  <div><a href="playground.html">Playground</a> — parallax layer editor</div>
+  <div class="nav-back"><a href="../../index.html">All docs</a></div>
+</nav>
+
+<hr>
+
+<h2>The scene</h2>
+
+<p>
+  A lighthouse on a rocky cape, looking out over an expanse of dark ocean under an eldritch sky.
+  The composition emphasizes vastness — the ocean and sky dominate, the land is just a sliver
+  rising from the bottom-right into a cliff where the lighthouse stands. Scattered craggy rocks
+  break the waterline. We're at the edge of the world.
+</p>
+
+<h3>Composition rules</h3>
+<ul>
+  <li><strong>2/3 ocean + sky, 1/3 land</strong> — the water and sky dominate. Land occupies the right third only.</li>
+  <li><strong>Land enters bottom-right</strong> — continuous coastline rises from bottom-right edge to a cape/cliff where the lighthouse sits</li>
+  <li><strong>Lighthouse centered on the cliff</strong> — the focal point, but not the largest element. The ocean dwarfs it.</li>
+  <li><strong>Rocks in the water</strong> — craggy sea stacks scattered across the left 2/3, waves breaking. We're at a rugged coast edge.</li>
+  <li><strong>Foreshortening</strong> — low camera angle, looking out over the expanse. Horizon about 40% from top.</li>
+  <li><strong>A single eye</strong> — opens and closes in the upper sky, partially hidden by nebula clouds</li>
+</ul>
+
+<h3>Color constraints</h3>
+<p>Strictly limited. No warm colors except star points and the lighthouse lantern.</p>
+
+<div class="palette-strip">
+  <div class="sw" style="background:#050510">#050510</div>
+  <div class="sw" style="background:#0a0a1a">#0a0a1a</div>
+  <div class="sw" style="background:#111138">#111138</div>
+  <div class="sw" style="background:#1a1a50">#1a1a50</div>
+  <div class="sw" style="background:#2d1b69">#2d1b69</div>
+  <div class="sw" style="background:#4a1942">#4a1942</div>
+  <div class="sw" style="background:#6a4c93">#6a4c93</div>
+  <div class="sw" style="background:#0d7377">#0d7377</div>
+  <div class="sw" style="background:#e8d060">#e8d060</div>
+  <div class="sw" style="background:#c8c8e0">#c8c8e0</div>
+</div>
+
+<p class="notes" style="font-size: 0.85rem; color: var(--text-muted);">
+  Blue-to-purple range for sky, water, and land. Eldritch green (<code>#0d7377</code>) for accent
+  glow — the eye, bioluminescence in the water, lighthouse beam tint. Yellow/white only for
+  stars and the lantern.
+</p>
+
+<h3>Prompt color strategy</h3>
+<p style="font-size: 0.9rem;">
+  Use <strong>named colors in the prompt text</strong> for intent — the model understands
+  "deep indigo" and "midnight navy" better than hex codes in prose. Then use
+  <strong>SpriteLab's palette lock tool with hex values</strong> to enforce the actual output.
+  Two layers: language for composition, palette lock for enforcement.
+</p>
+<table style="width:100%;font-family:sans-serif;font-size:0.85rem;border-collapse:collapse;margin:0.75rem 0">
+  <tr style="border-bottom:1px solid var(--border)">
+    <td style="padding:0.4rem 0.8rem;color:var(--text-muted)">Sky (upper)</td>
+    <td style="padding:0.4rem 0.8rem"><strong>void black, midnight navy</strong></td>
+    <td style="padding:0.4rem 0.8rem;font-family:monospace;font-size:0.8rem">#050510, #0a0a1a</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border)">
+    <td style="padding:0.4rem 0.8rem;color:var(--text-muted)">Sky (lower) / nebula</td>
+    <td style="padding:0.4rem 0.8rem"><strong>deep indigo, dark violet, muted purple</strong></td>
+    <td style="padding:0.4rem 0.8rem;font-family:monospace;font-size:0.8rem">#111138, #1a1a50, #2d1b69, #4a1942, #6a4c93</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border)">
+    <td style="padding:0.4rem 0.8rem;color:var(--text-muted)">Water</td>
+    <td style="padding:0.4rem 0.8rem"><strong>dark navy, deep ocean blue</strong></td>
+    <td style="padding:0.4rem 0.8rem;font-family:monospace;font-size:0.8rem">#0a0a1a, #111138, #1a1a50</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border)">
+    <td style="padding:0.4rem 0.8rem;color:var(--text-muted)">Accent glow</td>
+    <td style="padding:0.4rem 0.8rem"><strong>eldritch teal-green</strong></td>
+    <td style="padding:0.4rem 0.8rem;font-family:monospace;font-size:0.8rem">#0d7377</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border)">
+    <td style="padding:0.4rem 0.8rem;color:var(--text-muted)">Stars / lantern</td>
+    <td style="padding:0.4rem 0.8rem"><strong>pale gold, cold white</strong></td>
+    <td style="padding:0.4rem 0.8rem;font-family:monospace;font-size:0.8rem">#e8d060, #c8c8e0</td>
+  </tr>
+  <tr>
+    <td style="padding:0.4rem 0.8rem;color:var(--text-muted)">Land / rocks</td>
+    <td style="padding:0.4rem 0.8rem"><strong>blue-black stone, dark indigo rock</strong></td>
+    <td style="padding:0.4rem 0.8rem;font-family:monospace;font-size:0.8rem">#0a0a1a, #111138, #1a1a50</td>
+  </tr>
+</table>
+
+<h2>Visual target</h2>
+
+<p>CSS mockup of the composition we're aiming for. This is the mood, layout, and color reference
+  for all prompts below — SpriteLab, PixelLab, or manual.</p>
+
+<div style="position:relative;width:100%;max-width:800px;height:400px;background:linear-gradient(180deg,#050510 0%,#0a0a1a 15%,#111138 35%,#1a1a50 55%,#1a1a3e 70%,#101838 85%,#0a1028 100%);border-radius:8px;overflow:hidden;margin:1rem 0 1.5rem;border:1px solid var(--border)">
+
+  <!-- Nebula -->
+  <div style="position:absolute;top:30px;left:0;right:0;height:140px;background:radial-gradient(ellipse 250px 70px at 35% 40%,rgba(45,27,105,0.4) 0%,transparent 70%),radial-gradient(ellipse 180px 50px at 60% 55%,rgba(74,25,66,0.3) 0%,transparent 70%),radial-gradient(ellipse 200px 60px at 45% 30%,rgba(13,115,119,0.15) 0%,transparent 70%);animation:neb 10s ease-in-out infinite alternate"></div>
+
+  <!-- Stars -->
+  <div style="position:absolute;top:8px;left:40px;width:2px;height:2px;background:#c8c8e0;border-radius:50%;animation:tw1 3s ease-in-out infinite"></div>
+  <div style="position:absolute;top:15px;left:120px;width:3px;height:3px;background:#e0e0ff;border-radius:50%;animation:tw2 4.5s ease-in-out infinite"></div>
+  <div style="position:absolute;top:25px;left:220px;width:2px;height:2px;background:#c8c8e0;border-radius:50%;animation:tw1 3.5s ease-in-out infinite;animation-delay:-1s"></div>
+  <div style="position:absolute;top:10px;left:350px;width:2px;height:2px;background:#c8c8e0;border-radius:50%;animation:tw2 4s ease-in-out infinite;animation-delay:-2s"></div>
+  <div style="position:absolute;top:40px;left:480px;width:3px;height:3px;background:#e0e0ff;border-radius:50%;animation:tw1 3.2s ease-in-out infinite;animation-delay:-0.5s"></div>
+  <div style="position:absolute;top:18px;left:560px;width:2px;height:2px;background:#c8c8e0;border-radius:50%;animation:tw2 5s ease-in-out infinite;animation-delay:-3s"></div>
+  <div style="position:absolute;top:55px;left:80px;width:2px;height:2px;background:#c8c8e0;border-radius:50%;animation:tw1 4s ease-in-out infinite;animation-delay:-1.5s"></div>
+  <div style="position:absolute;top:45px;left:300px;width:2px;height:2px;background:#c8c8e0;border-radius:50%;animation:tw2 3.8s ease-in-out infinite;animation-delay:-2.5s"></div>
+  <div style="position:absolute;top:70px;left:650px;width:2px;height:2px;background:#c8c8e0;border-radius:50%;animation:tw1 4.2s ease-in-out infinite;animation-delay:-0.8s"></div>
+  <div style="position:absolute;top:30px;left:700px;width:3px;height:3px;background:#e0e0ff;border-radius:50%;animation:tw2 3.6s ease-in-out infinite;animation-delay:-1.8s"></div>
+  <div style="position:absolute;top:60px;left:180px;width:2px;height:2px;background:#c8c8e0;border-radius:50%;animation:tw1 5.5s ease-in-out infinite;animation-delay:-4s"></div>
+  <div style="position:absolute;top:80px;left:420px;width:2px;height:2px;background:#c8c8e0;border-radius:50%;animation:tw2 3.3s ease-in-out infinite;animation-delay:-0.3s"></div>
+
+  <!-- THE EYE — opens and closes -->
+  <div style="position:absolute;top:60px;left:280px;width:100px;height:50px;">
+    <!-- Outer eye shape -->
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse 50px 25px at center,rgba(13,115,119,0.4) 0%,rgba(45,27,105,0.2) 50%,transparent 70%);animation:eye-glow 8s ease-in-out infinite"></div>
+    <!-- Iris -->
+    <div style="position:absolute;top:12px;left:30px;width:40px;height:26px;background:radial-gradient(ellipse at center,#0d7377 0%,#094a4d 40%,rgba(45,27,105,0.5) 70%,transparent 100%);border-radius:50%;animation:eye-open 8s ease-in-out infinite"></div>
+    <!-- Pupil slit -->
+    <div style="position:absolute;top:16px;left:46px;width:8px;height:18px;background:#050510;border-radius:40%;animation:eye-open 8s ease-in-out infinite"></div>
+    <!-- Eyelids (close over the eye) -->
+    <div style="position:absolute;top:0;left:20px;width:60px;height:25px;background:linear-gradient(180deg,#0a0a1a,#111138);border-radius:0 0 50% 50%;transform-origin:top center;animation:lid-top 8s ease-in-out infinite"></div>
+    <div style="position:absolute;bottom:0;left:20px;width:60px;height:25px;background:linear-gradient(0deg,#0a0a1a,#111138);border-radius:50% 50% 0 0;transform-origin:bottom center;animation:lid-bot 8s ease-in-out infinite"></div>
+  </div>
+
+  <!-- Horizon line -->
+  <div style="position:absolute;top:260px;left:0;right:0;height:2px;background:linear-gradient(90deg,rgba(13,115,119,0.1),rgba(13,115,119,0.06),rgba(13,115,119,0.08))"></div>
+
+  <!-- Water -->
+  <div style="position:absolute;top:260px;left:0;right:0;bottom:0;background:linear-gradient(180deg,#101838 0%,#0c1230 40%,#0a1028 100%)">
+    <!-- Water shimmer -->
+    <div style="position:absolute;top:15px;left:50px;width:60px;height:1px;background:rgba(13,115,119,0.15);animation:wdrift 10s linear infinite"></div>
+    <div style="position:absolute;top:30px;left:200px;width:40px;height:1px;background:rgba(26,26,80,0.2);animation:wdrift 14s linear infinite;animation-delay:-4s"></div>
+    <div style="position:absolute;top:45px;left:350px;width:55px;height:1px;background:rgba(13,115,119,0.1);animation:wdrift 11s linear infinite;animation-delay:-7s"></div>
+    <div style="position:absolute;top:20px;left:500px;width:45px;height:1px;background:rgba(26,26,80,0.15);animation:wdrift 13s linear infinite;animation-delay:-2s"></div>
+    <div style="position:absolute;top:55px;left:100px;width:50px;height:1px;background:rgba(13,115,119,0.12);animation:wdrift 9s linear infinite;animation-delay:-5s"></div>
+    <div style="position:absolute;top:65px;left:420px;width:35px;height:1px;background:rgba(26,26,80,0.18);animation:wdrift 12s linear infinite;animation-delay:-3s"></div>
+
+    <!-- Bioluminescent glow near rocks -->
+    <div style="position:absolute;top:25px;left:120px;width:30px;height:15px;background:radial-gradient(ellipse at center,rgba(13,115,119,0.2),transparent);animation:bio 5s ease-in-out infinite"></div>
+    <div style="position:absolute;top:35px;left:380px;width:25px;height:12px;background:radial-gradient(ellipse at center,rgba(13,115,119,0.15),transparent);animation:bio 6s ease-in-out infinite;animation-delay:-2s"></div>
+  </div>
+
+  <!-- Craggy rocks in water -->
+  <div style="position:absolute;top:248px;left:110px;width:20px;height:25px;background:#1a1830;clip-path:polygon(20% 100%,0% 40%,30% 0%,60% 10%,100% 50%,80% 100%)"></div>
+  <div style="position:absolute;top:255px;left:130px;width:12px;height:14px;background:#161630;clip-path:polygon(0% 100%,30% 0%,100% 60%,70% 100%)"></div>
+  <div style="position:absolute;top:252px;left:370px;width:25px;height:22px;background:#1a1830;clip-path:polygon(0% 100%,10% 50%,35% 0%,65% 5%,90% 40%,100% 100%)"></div>
+  <div style="position:absolute;top:258px;left:395px;width:10px;height:10px;background:#161630;clip-path:polygon(0% 100%,50% 0%,100% 100%)"></div>
+  <div style="position:absolute;top:255px;left:50px;width:15px;height:16px;background:#141428;clip-path:polygon(0% 100%,40% 0%,80% 20%,100% 100%)"></div>
+  <div style="position:absolute;top:250px;left:530px;width:18px;height:20px;background:#1a1830;clip-path:polygon(10% 100%,0% 30%,40% 0%,70% 15%,100% 60%,90% 100%)"></div>
+
+  <!-- Coastline entering from bottom-right -->
+  <div style="position:absolute;bottom:0;right:0;width:350px;height:140px;background:#1a1830;clip-path:polygon(100% 100%,100% 30%,85% 15%,75% 12%,65% 18%,55% 25%,45% 45%,35% 60%,20% 80%,0% 100%)"></div>
+  <div style="position:absolute;bottom:0;right:0;width:350px;height:140px;background:#222040;clip-path:polygon(100% 100%,100% 40%,88% 22%,78% 18%,70% 22%,60% 35%,50% 50%,40% 68%,25% 85%,0% 100%)"></div>
+
+  <!-- Lighthouse tower -->
+  <div style="position:absolute;bottom:115px;right:150px;width:14px;height:65px;background:linear-gradient(90deg,#2a2848,#3a3860,#4a4878,#3a3860,#2a2848);clip-path:polygon(5% 0%,95% 0%,100% 100%,0% 100%)"></div>
+  <!-- Red stripes -->
+  <div style="position:absolute;bottom:135px;right:150px;width:14px;height:5px;background:linear-gradient(90deg,#6a1828,#8a2838,#6a1828)"></div>
+  <div style="position:absolute;bottom:152px;right:150px;width:14px;height:5px;background:linear-gradient(90deg,#6a1828,#8a2838,#6a1828)"></div>
+  <div style="position:absolute;bottom:168px;right:151px;width:13px;height:5px;background:linear-gradient(90deg,#6a1828,#8a2838,#6a1828)"></div>
+  <!-- Lantern room -->
+  <div style="position:absolute;bottom:178px;right:148px;width:18px;height:10px;background:#2a2848;border:1px solid #4a4878;border-radius:1px"></div>
+  <!-- Lantern glow -->
+  <div style="position:absolute;bottom:180px;right:150px;width:14px;height:7px;background:#e8d060;border-radius:1px;box-shadow:0 0 10px rgba(232,208,96,0.6),0 0 25px rgba(232,208,96,0.3),0 0 50px rgba(232,208,96,0.15);animation:flick 0.3s ease-in-out infinite alternate"></div>
+  <!-- Roof -->
+  <div style="position:absolute;bottom:187px;right:146px;width:22px;height:8px;background:#2a2848;clip-path:polygon(50% 0%,100% 100%,0% 100%)"></div>
+
+  <!-- Lighthouse beam -->
+  <div style="position:absolute;bottom:183px;right:157px;width:0;height:0;animation:beam 8s ease-in-out infinite">
+    <div style="position:absolute;width:300px;height:300px;background:conic-gradient(from -6deg,transparent 0deg,rgba(13,115,119,0.06) 2deg,rgba(13,115,119,0.12) 5deg,rgba(13,115,119,0.06) 8deg,transparent 12deg);transform-origin:0 0"></div>
+  </div>
+
+  <!-- Fog layers -->
+  <div style="position:absolute;top:240px;left:-200px;width:700px;height:25px;background:linear-gradient(90deg,transparent,rgba(45,27,105,0.12),rgba(45,27,105,0.2),rgba(45,27,105,0.12),transparent);animation:fog 22s linear infinite"></div>
+  <div style="position:absolute;top:220px;left:-300px;width:800px;height:15px;background:linear-gradient(90deg,transparent,rgba(26,26,80,0.1),rgba(26,26,80,0.15),rgba(26,26,80,0.1),transparent);animation:fog 30s linear infinite"></div>
+</div>
+
+<style>
+  @keyframes tw1 { 0%,100%{opacity:.3}50%{opacity:1} }
+  @keyframes tw2 { 0%,100%{opacity:.5}50%{opacity:.15} }
+  @keyframes neb { 0%{opacity:.6;transform:translateX(-5px)}100%{opacity:1;transform:translateX(5px)} }
+  @keyframes wdrift { 0%{transform:translateX(0)}100%{transform:translateX(-60px)} }
+  @keyframes bio { 0%,100%{opacity:.3}50%{opacity:.8} }
+  @keyframes flick { 0%{opacity:.85}100%{opacity:1;background:#fff4a0} }
+  @keyframes beam { 0%{transform:rotate(-50deg)}45%{transform:rotate(20deg)}55%{transform:rotate(20deg)}100%{transform:rotate(-50deg)} }
+  @keyframes fog { 0%{transform:translateX(0)}100%{transform:translateX(200px)} }
+  @keyframes eye-glow { 0%,30%{opacity:.2}40%,70%{opacity:.8}80%,100%{opacity:.2} }
+  @keyframes eye-open { 0%,25%{transform:scaleY(0)}35%,65%{transform:scaleY(1)}75%,100%{transform:scaleY(0)} }
+  @keyframes lid-top { 0%,25%{transform:scaleY(1)}35%,65%{transform:scaleY(0.15)}75%,100%{transform:scaleY(1)} }
+  @keyframes lid-bot { 0%,25%{transform:scaleY(1)}35%,65%{transform:scaleY(0.15)}75%,100%{transform:scaleY(1)} }
+</style>
+
+<p style="color:var(--text-muted);font-size:0.85rem;text-align:center;margin-bottom:0.5rem">
+  <strong style="color:#d8d8f0">CSS mockup</strong> — composition and color target. The eye opens/closes in the sky.
+  Coastline enters bottom-right, rocks scatter in the water, ocean dominates.
+</p>
+
+<hr>
+
+<h2>Experiment 1 — Sprites (free tier)</h2>
+
+<p>
+  SpriteLab's text-to-sprite mode is available without subscription. We test the two
+  key elements first: the cosmic eye and the lighthouse. These tell us whether SpriteLab
+  can handle the mood, palette, and subject matter before we invest in backgrounds.
+</p>
+
+<h3>1A. The cosmic eye</h3>
+
+<div class="prompt-card sprite">
+  <div class="card-label">Sprite — open eye</div>
+  <div class="card-title">Cosmic eye, fully open</div>
+  <div class="field-label">Describe</div>
+  <div class="prompt-text">A single enormous cosmic eye, front view, fully open. The iris is eldritch teal-green with a vertical slit pupil in void black. The sclera glows faint muted purple. Dark indigo nebula clouds partially shroud the edges. Tendrils of dark violet cloud curl around the eye.</div>
+  <div class="field-label">Style Notes</div>
+  <div class="prompt-text">Pixel art, transparent background. Unsettling, ancient, Lovecraftian. Colors: deep indigo, dark violet, muted purple sclera, eldritch teal-green iris, void black pupil. No warm colors.</div>
+  <div class="settings">
+    <span>Mode: Text-to-Sprite</span>
+    <span>Size: 64x64</span>
+    <span>Palette lock: #050510 #111138 #2d1b69 #4a1942 #6a4c93 #0d7377</span>
+    <span>Background: Transparent</span>
+  </div>
+  <div class="notes">
+    The base sprite. Must read unmistakably as an eye at 64x64. The teal-green iris is
+    the focal point — everything else is dark framing around it.
+    <br><a href="https://spritelab.dev" target="_blank">Open SpriteLab</a>
+  </div>
+  <div class="field-label">SpriteLab suggested prompt</div>
+  <div class="prompt-text" style="border-color:#2d1b69">Front-view, fully open cosmic eye. Eldritch teal-green iris, void black vertical pupil. Faint muted purple glowing sclera. Shrouded by dark indigo and violet nebula tendrils.</div>
+  <div class="field-label" style="margin-top:1rem">Result</div>
+  <div class="result-slot" data-slot="eye-open-ours">Click, then paste</div>
+</div>
+
+<!-- Half-closed and closed eye prompts deferred to animation phase -->
+
+<h3>1A-v2. The cosmic eye — sky-integrated</h3>
+<p style="font-size:0.88rem;color:var(--text-muted)">
+  Iteration on v1. The eye should not look like a floating monster eye from a dungeon.
+  It needs to blend with the sky — tentacles attenuate into clouds, the shape dissolves
+  into nebula. The eye is part of the atmosphere, not a creature hovering in it.
+</p>
+
+<div class="prompt-card sprite">
+  <div class="card-label">Sprite — open eye v2 (sky-blended)</div>
+  <div class="card-title">Eye in the sky — emerging from nebula</div>
+  <div class="field-label">Describe</div>
+  <div class="prompt-text">An eye in the sky, formed from nebula clouds. Front view, fully open. The iris is eldritch teal-green with a vertical slit pupil — the only sharp element. The eye has no distinct border — its edges are clouds, dissolving into the surrounding sky. Tendrils extend outward from the eye and become ordinary cloud wisps, indistinguishable from natural nebula. The sclera is muted purple cloud. This is a sky phenomenon, like seeing a face in the clouds — an eye in the sky that could be real or could be pareidolia.</div>
+  <div class="field-label">Style Notes</div>
+  <div class="prompt-text">Pixel art, transparent background. Eye in the sky — not a creature, not floating. It IS the sky. Cloud edges dissolve to transparency. Tentacles wrap into clouds, blurring where eye ends and sky begins. Colors attenuate at the edges — unnatural purples and teals near the iris fade to normal deep indigo and dark navy cloud tones at the outer edges. Only the teal-green iris is crisp. No hard outlines.</div>
+  <div class="settings">
+    <span>Mode: Text-to-Sprite</span>
+    <span>Size: 64x64</span>
+    <span>Palette lock: #050510 #111138 #2d1b69 #4a1942 #6a4c93 #0d7377</span>
+    <span>Background: Transparent</span>
+  </div>
+  <div class="notes">
+    Key change from v1: the eye is part of the sky, not floating in it. Tentacles = cloud
+    wisps that fade out. Should look like you're not sure if you're seeing an eye or just
+    clouds — until the iris catches the light.
+  </div>
+  <div class="field-label">SpriteLab suggested prompt</div>
+  <div class="prompt-text" style="border-color:#2d1b69">Front view, fully open sky eye. Muted purple cloud sclera, eldritch teal-green iris with sharp vertical slit pupil. Dissolving cloud edges and wisps.</div>
+  <div class="field-label" style="margin-top:1rem">Results</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+    <div>
+      <div style="font-size:0.72rem;color:var(--text-muted);font-family:sans-serif;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem">Ours</div>
+      <div class="result-slot" data-slot="eye-v2-ours">Click, then paste</div>
+    </div>
+    <div>
+      <div style="font-size:0.72rem;color:var(--text-muted);font-family:sans-serif;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem">Suggested</div>
+      <div class="result-slot" data-slot="eye-v2-suggested">Click, then paste</div>
+    </div>
+  </div>
+</div>
+
+<h3>1A-v3. The cosmic eye — storm cloud with eye</h3>
+<p style="font-size:0.88rem;color:var(--text-muted)">
+  Iteration on v2. Less tentacles, more cloud. The eye is ~half of a wider storm cloud.
+  Creepiness comes from color tone and the fact that a cloud has an eye — not from tentacles.
+  Minimalist, atmospheric.
+</p>
+
+<div class="prompt-card sprite">
+  <div class="card-label">Sprite — open eye v3 (storm cloud)</div>
+  <div class="card-title">Storm cloud with an eye</div>
+  <div class="field-label">Describe</div>
+  <div class="prompt-text">A wide dark storm cloud, horizontally elongated, pixel art fluffy and billowing. In the center of the cloud, an eye opens — eldritch teal-green iris with a sharp vertical slit pupil. The eye occupies about half the cloud's width. The rest is pure cloud: deep indigo and dark violet billows, stormy and dense at center, softer and wispier at the edges, dissolving into transparent sky. No tentacles. The cloud is the shape — a natural-looking storm cloud that happens to have an eye. The creepiness is subtle: just color and the eye itself.</div>
+  <div class="field-label">Style Notes</div>
+  <div class="prompt-text">Pixel art, transparent background. Wide format — cloud is wider than it is tall. Minimalist horror: a storm cloud with one eye, nothing more. Cloud edges are fluffy and natural, dissolving to transparency. Colors: void black cloud core, deep indigo body, dark violet edges, muted purple highlights. Teal-green iris is the only unnatural color. No tentacles, no tendrils, no eldritch shapes — just cloud and eye.</div>
+  <div class="settings">
+    <span>Mode: Text-to-Sprite</span>
+    <span>Size: 128x64</span>
+    <span>Palette lock: #050510 #111138 #1a1a50 #2d1b69 #4a1942 #6a4c93 #0d7377</span>
+    <span>Background: Transparent</span>
+  </div>
+  <div class="notes">
+    128x64 — wider format for the cloud. Eye is ~half the cloud width.
+    No tentacles. Storm cloud aesthetic. Creep from color + eye only.
+  </div>
+  <div class="field-label" style="margin-top:1rem">Results</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+    <div>
+      <div style="font-size:0.72rem;color:var(--text-muted);font-family:sans-serif;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem">Ours</div>
+      <div class="result-slot" data-slot="eye-v3-ours">Click, then paste</div>
+    </div>
+    <div>
+      <div style="font-size:0.72rem;color:var(--text-muted);font-family:sans-serif;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem">Suggested</div>
+      <div class="result-slot" data-slot="eye-v3-suggested">Click, then paste</div>
+    </div>
+  </div>
+</div>
+
+<h3>1A-v4. The cosmic eye — cumulonimbus</h3>
+<p style="font-size:0.88rem;color:var(--text-muted)">
+  Iteration on v3. The cloud should be a cumulonimbus shape: flat bottom edge, billowing
+  rounded top. Towering, dense, storm-like. The flat base gives it visual weight and
+  grounds it in the sky.
+</p>
+
+<div class="prompt-card sprite">
+  <div class="card-label">Sprite — open eye v4 (cumulonimbus)</div>
+  <div class="card-title">Cumulonimbus cloud with an eye</div>
+  <div class="field-label">SpriteLab suggested prompt</div>
+  <div class="prompt-text" style="border-color:#2d1b69">Wide, dark cumulonimbus cloud with a flat bottom and billowing indigo-violet top. A small, central eldritch eye features a teal-green iris and vertical slit pupil. Ominous, idle.</div>
+  <div class="field-label">Describe</div>
+  <div class="prompt-text">A dark cumulonimbus cloud — flat bottom edge, billowing rounded top that towers upward. The cloud is wide, roughly 2:1 width to height. In the center of the cloud, a single eye opens: eldritch teal-green iris with a sharp vertical slit pupil. IMPORTANT: the eye is small relative to the cloud — only about half the cloud's width. The cloud extends well beyond the eye on both sides. The bottom of the cloud is a clean flat horizontal line, dark and dense. The top billows upward in rounded cauliflower shapes, deep indigo and dark violet masses. Cloud edges at the top are soft and dissolve into transparent sky. No tentacles. Most of the sprite is cloud — the eye is embedded within it, not dominating it.</div>
+  <div class="field-label">Style Notes</div>
+  <div class="prompt-text">Pixel art, transparent background. Cumulonimbus shape: FLAT bottom, rounded billowing top. Wide format 128x64. The eye is HALF the cloud width — cloud extends well beyond the eye on left and right. Cloud base is a near-straight horizontal line. Top is puffy, towering, cauliflower-shaped. Colors: void black cloud core, deep indigo body, dark violet billows, muted purple highlights on the rounded top. Teal-green iris only unnatural color. No tentacles.</div>
+  <div class="settings">
+    <span>Mode: Text-to-Sprite</span>
+    <span>Size: 128x64</span>
+    <span>Palette lock: #050510 #111138 #1a1a50 #2d1b69 #4a1942 #6a4c93 #0d7377</span>
+    <span>Background: Transparent</span>
+  </div>
+  <div class="notes">
+    Cumulonimbus: flat base, rounded top. The flat bottom anchors the cloud visually.
+    The eye sits in the dense middle section.
+  </div>
+  <div class="field-label" style="margin-top:1rem">Results</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+    <div>
+      <div style="font-size:0.72rem;color:var(--text-muted);font-family:sans-serif;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem">Ours</div>
+      <div class="result-slot" data-slot="eye-v4-ours">Click, then paste</div>
+    </div>
+    <div>
+      <div style="font-size:0.72rem;color:var(--text-muted);font-family:sans-serif;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem">Suggested</div>
+      <div class="result-slot" data-slot="eye-v4-suggested">Click, then paste</div>
+    </div>
+  </div>
+</div>
+
+<h3>1A-anim. Eye blink animation</h3>
+<p style="font-size:0.88rem;color:var(--text-muted)">
+  Animation of the cumulonimbus eye. SpriteLab animation mode (~20-30 credits).
+  The eye is closed for 2/3 of the cycle — the blink is the event, not the norm.
+</p>
+
+<div class="prompt-card anim">
+  <div class="card-label">Animation — eye blink cycle</div>
+  <div class="card-title">Cumulonimbus eye: blink, look, close</div>
+  <div class="field-label">Describe the motion (ours)</div>
+  <div class="prompt-text">The eye is closed — just a dark cloud with a faint horizontal seam. It slowly blinks open, eyelids parting to reveal the teal-green iris. The eye stays open briefly, then the pupil drifts slowly to the left, pauses, then slowly drifts to the right. After looking both ways, the eye slowly closes again — eyelids meeting at the seam. Everything moves slowly and ominously. The cloud itself is still — only the eye moves.</div>
+  <div class="field-label">SpriteLab suggested (used, based on ours)</div>
+  <div class="prompt-text" style="border-color:#2d1b69">The dark cloud remains still with a faint horizontal seam representing a closed eye. The eyelids slowly part to reveal a teal-green iris, which then drifts deliberately to the left and right before closing again. The eye remains shut for the one third of the duration, creating an ominous and slow-moving animation cycle.</div>
+  <div class="settings">
+    <span>Mode: Animation</span>
+    <span>Base: v4 cumulonimbus sprite</span>
+    <span>~20-30 credits</span>
+    <span>Palette lock: #050510 #111138 #1a1a50 #2d1b69 #4a1942 #6a4c93 #0d7377</span>
+  </div>
+  <div class="notes">
+    16 frames max. 1/3 closed, 2/3 blink+look. Duplicate closed frames in Godot to extend idle.
+  </div>
+  <div class="field-label" style="margin-top:1rem">Result</div>
+  <div class="result-slot" data-slot="eye-anim">
+    Click to paste, or <label style="color:var(--link);cursor:pointer;text-decoration:underline">upload file<input type="file" accept="image/png,image/gif" style="display:none" data-upload-slot="eye-anim"></label>
+  </div>
+</div>
+
+<div class="prompt-card anim">
+  <div class="card-label">Animation — eye look (separate)</div>
+  <div class="card-title">Eye movement: look left, look right</div>
+  <div class="field-label">Describe the motion</div>
+  <div class="prompt-text">The eye shifts its gaze slowly from center toward the left, pausing as if scanning. Then glides back through center to the right, pauses, and returns to forward-facing. The movement is slow and deliberate. The cloud does not move — only the pupil and iris shift.</div>
+  <div class="field-label">SpriteLab suggested (used)</div>
+  <div class="prompt-text" style="border-color:#2d1b69">The character shifts their eyes slowly from the center toward the left, pausing briefly as if scanning the area. They then glide their gaze back through the center and over to the right side before finally returning their eyes to the forward-facing position.</div>
+  <div class="settings">
+    <span>Mode: Animation</span>
+    <span>Base: v4 cumulonimbus sprite</span>
+    <span>~20-30 credits</span>
+  </div>
+  <div class="notes">
+    Separate animation from the blink — composable in Godot.
+    Blink handles open/close, this handles the look direction.
+  </div>
+  <div class="field-label" style="margin-top:1rem">Result</div>
+  <div class="result-slot" data-slot="eye-look">
+    Click to paste, or <label style="color:var(--link);cursor:pointer;text-decoration:underline">upload file<input type="file" accept="image/png,image/gif" style="display:none" data-upload-slot="eye-look"></label>
+  </div>
+</div>
+
+<h3>Learnings from the eye experiments</h3>
+
+<div class="prompt-card" style="border-left:3px solid var(--accent2)">
+  <div class="card-title" style="font-size:1rem">Prompt strategy</div>
+  <ul style="font-size:0.9rem;color:var(--text-muted)">
+    <li><strong>Short beats long — for centered subjects.</strong> SpriteLab's suggested prompts are 1-3 sentences and produce similar results for simple centered subjects (the eye). But for multi-element compositions (lighthouse + cliff + rocks), their compression loses spatial relationships and causes framing artifacts (cutoffs).</li>
+    <li><strong>Spatial context matters.</strong> "Cliff trailing to bottom-right" outperforms "atop a rocky cape" — explicit spatial anchors ("trailing to", "extends from", "bottom-right") prevent the model from cropping or misframing. Their suggested prompts strip these out, which hurts compositions.</li>
+    <li><strong>Lead with shape.</strong> Real-world shape names ("cumulonimbus", "flat bottom") give the model a strong prior. One concrete shape word does more than a paragraph of edge descriptions.</li>
+    <li><strong>2-3 details + mood.</strong> Their formula: [shape/subject] + [2-3 specific visual features] + [1 mood word]. Example: "Wide, dark cumulonimbus cloud with flat bottom and billowing indigo-violet top. A small central eldritch eye. Ominous, idle."</li>
+    <li><strong>Skip negatives.</strong> "No tentacles", "no warm colors" — the model works better with what TO render, not what to avoid. Negatives get stripped in their suggested rewrites.</li>
+    <li><strong>Ratios need emphasis.</strong> The model defaults to filling the frame with the subject. Proportion instructions ("eye is half the cloud width") need to be stated explicitly and repeated.</li>
+  </ul>
+  <div class="card-title" style="font-size:1rem;margin-top:1rem">Process</div>
+  <ul style="font-size:0.9rem;color:var(--text-muted)">
+    <li><strong>Iteration > perfection.</strong> We went through 4 concept shifts (monster eye → sky eye → cloud eye → cumulonimbus). Each was a shape/concept change, not a wording tweak.</li>
+    <li><strong>Named colors work without palette lock.</strong> We never used the hex palette lock tool — named colors in the prompt text ("eldritch teal-green", "deep indigo") were sufficient for consistent palette.</li>
+    <li><strong>Animation is effective.</strong> 16-frame coherent blink+look from a single motion description. The "describe the motion" format works well — action sequence in plain language.</li>
+    <li><strong>Their suggested prompt is the best signal.</strong> No public prompt guide exists. The rewrite they offer IS the guide — study what they keep and what they drop.</li>
+  </ul>
+</div>
+
+<h3>1B. The lighthouse</h3>
+
+<p style="font-size:0.88rem;color:var(--text-muted)">
+  Applying learnings: shorter prompts, lead with shape, 2-3 details + mood, no negatives.
+</p>
+
+<h4 style="color:var(--text-muted);font-family:sans-serif;font-size:0.85rem;margin-bottom:0.5rem">Inspiration</h4>
+<div style="display:flex;gap:1rem;margin-bottom:1.5rem">
+  <div style="flex:0 0 200px">
+    <img src="results/ref-white-island-nh.jpg" style="width:100%;border-radius:4px;border:1px solid var(--border)">
+    <div style="font-size:0.7rem;color:var(--text-muted);font-family:sans-serif;margin-top:4px">White Island Lighthouse, NH — cylindrical tower, one dark band, square base, bare rock</div>
+  </div>
+</div>
+
+<div class="prompt-card sprite">
+  <div class="card-label">Sprite — lighthouse on cape</div>
+  <div class="card-title">Weathered lighthouse on rocky cape</div>
+  <div class="field-label">Describe (v1 — too realistic)</div>
+  <div class="prompt-text" style="opacity:0.5">Tall cylindrical New England lighthouse on a rocky cape, viewed from the left. Pale blue-white stone body with one horizontal dark indigo stripe at the midpoint of the tower. Pale stone above and below the stripe. A narrow vertical slit window. Shadows along the curved sides emphasize the cylindrical shape. Square stone base at the bottom with a small dark doorway. Dark metal lantern housing at the top, compact. Pale gold light glowing from the lantern windows. Jagged cliff trailing to bottom-right. Solitary, desolate.</div>
+  <div class="field-label">SpriteLab suggested (v1)</div>
+  <div class="prompt-text" style="border-color:#2d1b69;opacity:0.5">Tall, cylindrical, pale blue-white stone lighthouse, two dark indigo stripes, slit window. Dark metal, angular lantern glows pale gold atop a rocky cape with jagged cliff, viewed left.</div>
+  <div class="field-label">Describe (v2 — stylized, moonlit, isometric)</div>
+  <div class="prompt-text">Isometric view of a lighthouse compound on a rocky cape. Tall cylindrical lighthouse tower in deep indigo with one slightly lighter indigo stripe at the midpoint. Narrow slit window. A small attached keeper's house at the base, door facing downslope toward bottom-right. Dark lantern housing at the top, unlit. Entirely in blues — moonlit, one side catches faint cold blue highlight, the other falls into deep shadow. Rocky cliff slopes down to the bottom-right. Stylized, ominous, nighttime.</div>
+  <div class="field-label">Style Notes</div>
+  <div class="prompt-text">Pixel art, transparent background, isometric perspective. All blues, no white, no warm colors, no light source. Moonlit: cold blue highlights on one edge, deep shadow on the other. Keeper's house is small relative to the tower. Stylized, not realistic.</div>
+  <div class="settings">
+    <span>Mode: Text-to-Sprite</span>
+    <span>Size: 64x128</span>
+    <span>Palette lock: #050510 #0a0a1a #111138 #1a1a50 #2d1b69 #6a4c93</span>
+    <span>Background: Transparent</span>
+  </div>
+  <div class="notes">
+    64x128 vertical. First pass: lighthouse was cutoff — used their suggested prompt.
+    Beam will be added as a separate animated element in Godot.
+    <br><a href="https://spritelab.dev" target="_blank">Open SpriteLab</a>
+  </div>
+  <div class="field-label" style="margin-top:1rem">Results</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+    <div>
+      <div style="font-size:0.72rem;color:var(--text-muted);font-family:sans-serif;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem">Side view</div>
+      <div class="result-slot" data-slot="lighthouse-side">Click, then paste</div>
+    </div>
+    <div>
+      <div style="font-size:0.72rem;color:var(--text-muted);font-family:sans-serif;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem">Isometric</div>
+      <div class="result-slot" data-slot="lighthouse-iso">Click, then paste</div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<h2>Scene background</h2>
+
+<p>
+  Scene iteration moved to its own page — <a href="scene.html">Scene Iteration</a>.
+  Using DALL-E (gpt-image-1) to generate the background. Currently on v4, iterating
+  cliff ratios and composition.
+</p>
+
+<hr>
+
+<h2>Future work</h2>
+
+<ul>
+  <li><strong>Composite scene.</strong> Layer the eye cloud sprite and lighthouse sprite over the DALL-E background using CSS positioning. Animate the eye blink on the page.</li>
+  <li><strong>Parallax scrolling.</strong> Three depth layers — foreground (lighthouse/cliff), midground (sea rocks, waves), background (distant islands, clouds, horizon). Generate each layer separately with DALL-E, composite with slight parallax offset for depth.</li>
+  <li><strong>SpriteLab palette lock.</strong> Never tested — named colors in prompt text were sufficient. Worth testing whether hex palette lock improves color consistency across sprites.</li>
+  <li><strong>SpriteLab backgrounds.</strong> Their native background mode requires a subscription. DALL-E worked as an alternative, but SpriteLab's output may match sprites better.</li>
+  <li><strong>Sea rocks sprite pack.</strong> Craggy rocks for the waterline (~4 credits). Needed for the full scene composition.</li>
+  <li><strong>DALL-E background iteration.</strong> v2 is close but may need refinement — stronger pixel grid, more visible block edges, better palette match with sprites.</li>
+  <li><strong>Godot integration.</strong> Import sprites + animation sheets into Godot 4. Parallax scrolling, lighthouse beam as a separate animated light.</li>
+</ul>
+
+<p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 1.5rem; font-style: italic;">
+  Note on page styling: we don't love this CSS 'look', but we're keeping it as-is.
+  The purpose of this page is to ensure human and machine see the same thing — a shared
+  visual reference for prompt iteration. Functional, not final.
+</p>
+
+<script>
+  const RESULTS_DIR = 'results/';
+
+  // Copy prompt text on click
+  document.addEventListener('click', e => {
+    if (e.target.classList.contains('prompt-text')) {
+      navigator.clipboard.writeText(e.target.textContent.trim());
+      const orig = e.target.style.borderColor;
+      e.target.style.borderColor = '#1b998b';
+      setTimeout(() => e.target.style.borderColor = orig, 800);
+    }
+  });
+
+  // Animation slots: detect sprite sheet and step through frames
+  const ANIM_SLOTS = new Set(['eye-anim', 'eye-look']);
+
+  function buildAnimPlayer(slot, img) {
+    const NUM_FRAMES = 16;
+    const container = document.createElement('div');
+    container.style.cssText = 'position:relative;overflow:hidden;margin:0 auto;image-rendering:pixelated';
+    const sheet = document.createElement('img');
+    sheet.src = img.src;
+    sheet.style.cssText = 'image-rendering:pixelated;position:absolute;top:0;left:0;max-width:none';
+    sheet.onload = () => {
+      const w = sheet.naturalWidth;
+      const h = sheet.naturalHeight;
+      const frameW = w / NUM_FRAMES;
+      const scale = 3;
+      container.style.width = (frameW * scale) + 'px';
+      container.style.height = (h * scale) + 'px';
+      sheet.style.width = (w * scale) + 'px';
+      sheet.style.height = (h * scale) + 'px';
+      let frame = 0;
+      const label = document.createElement('div');
+      label.style.cssText = 'font-size:0.7rem;color:var(--text-muted);font-family:sans-serif;text-align:center;margin-top:4px';
+      label.textContent = NUM_FRAMES + ' frames · ' + Math.round(frameW) + 'x' + h + 'px';
+      container.parentElement.insertBefore(label, container.nextSibling);
+      setInterval(() => {
+        frame = (frame + 1) % NUM_FRAMES;
+        sheet.style.left = -(frame * frameW * scale) + 'px';
+      }, 200);
+    };
+    container.appendChild(sheet);
+    return container;
+  }
+
+  function buildSlotUI(slot, dataUrl, committed) {
+    slot.innerHTML = '';
+    slot.classList.add('has-image');
+    const isAnim = ANIM_SLOTS.has(slot.dataset.slot);
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    if (isAnim) {
+      const player = buildAnimPlayer(slot, img);
+      slot.appendChild(player);
+    } else {
+      slot.appendChild(img);
+    }
+
+    const toolbar = document.createElement('div');
+    toolbar.style.cssText = 'display:flex;gap:6px;justify-content:flex-end;margin-top:6px;align-items:center';
+
+    if (committed) {
+      const badge = document.createElement('span');
+      badge.style.cssText = 'font-size:0.7rem;color:#1b998b;font-family:sans-serif;margin-right:auto';
+      badge.textContent = 'committed: ' + RESULTS_DIR + slot.dataset.slot + '.png';
+      toolbar.appendChild(badge);
+    } else {
+      const badge = document.createElement('span');
+      badge.style.cssText = 'font-size:0.7rem;color:#1b998b;font-family:sans-serif;margin-right:auto';
+      badge.textContent = 'saved';
+      toolbar.appendChild(badge);
+    }
+
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'clear-btn';
+    clearBtn.textContent = 'clear';
+    clearBtn.onclick = (e) => {
+      e.stopPropagation();
+      slot.classList.remove('has-image');
+      slot.innerHTML = 'Click here, then paste (Ctrl+V / Cmd+V)';
+      localStorage.removeItem('result_' + slot.dataset.slot);
+    };
+    toolbar.appendChild(clearBtn);
+    slot.appendChild(toolbar);
+  }
+
+  // Track which slot is active for paste
+  let activeSlot = null;
+
+  document.querySelectorAll('.result-slot').forEach(slot => {
+    slot.setAttribute('tabindex', '0');
+    slot.addEventListener('click', () => {
+      console.log('[paste] clicked slot:', slot.dataset.slot);
+      if (activeSlot && activeSlot !== slot) {
+        activeSlot.style.borderColor = '';
+      }
+      if (!slot.classList.contains('has-image')) {
+        activeSlot = slot;
+        slot.style.borderColor = '#0d7377';
+        slot.innerHTML = 'Selected — now paste (Ctrl+V / Cmd+V)';
+        slot.focus();
+        console.log('[paste] slot selected, waiting for paste');
+      }
+    });
+  });
+
+  // Upload image blob to server
+  function uploadToServer(blob, slotName) {
+    const filename = slotName + '.png';
+    console.log('[paste] uploading to server:', filename);
+    return fetch('/admin/api/uploads?dest=game-results&filename=' + encodeURIComponent(filename), {
+      method: 'POST',
+      body: blob,
+    }).then(r => r.json()).then(json => {
+      console.log('[paste] upload result:', json);
+      return json.ok;
+    }).catch(err => {
+      console.error('[paste] upload failed:', err);
+      return false;
+    });
+  }
+
+  // Global paste listener — pastes into the active slot, uploads to server
+  document.addEventListener('paste', e => {
+    console.log('[paste] paste event, activeSlot:', activeSlot?.dataset?.slot);
+    if (!activeSlot) return;
+    e.preventDefault();
+    for (const item of e.clipboardData.items) {
+      console.log('[paste] clipboard item:', item.type);
+      if (item.type.startsWith('image/')) {
+        const blob = item.getAsFile();
+        const reader = new FileReader();
+        const slot = activeSlot;
+        const slotName = slot.dataset.slot;
+        slot.innerHTML = 'Uploading...';
+
+        // Upload the raw blob to server
+        uploadToServer(blob, slotName);
+
+        // Show preview from data URL
+        reader.onload = ev => {
+          console.log('[paste] image loaded, showing slot:', slotName);
+          buildSlotUI(slot, ev.target.result, true);
+          slot.style.borderColor = '';
+          activeSlot = null;
+        };
+        reader.readAsDataURL(blob);
+        break;
+      }
+    }
+  });
+
+  // On load: check server for saved results
+  document.querySelectorAll('.result-slot[data-slot]').forEach(slot => {
+    const filename = RESULTS_DIR + slot.dataset.slot + '.png';
+    const img = new Image();
+    img.onload = () => buildSlotUI(slot, filename, true);
+    img.onerror = () => {}; // no file yet, leave empty
+    img.src = filename;
+  });
+
+  // File upload handler for animation sheets etc.
+  document.querySelectorAll('input[data-upload-slot]').forEach(input => {
+    input.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const slotName = input.dataset.uploadSlot;
+      const slot = document.querySelector(`.result-slot[data-slot="${slotName}"]`);
+      if (!slot) return;
+      console.log('[upload] file selected:', file.name, 'for slot:', slotName);
+      uploadToServer(file, slotName);
+      const reader = new FileReader();
+      reader.onload = ev => {
+        buildSlotUI(slot, ev.target.result, true);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  console.log('[paste] script loaded, found', document.querySelectorAll('.result-slot').length, 'result slots');
+</script>
+</body>
+</html>
