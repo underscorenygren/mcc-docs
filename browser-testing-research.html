@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Browser Testing Without a Browser</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .tldr {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+    border-left: 3px solid var(--accent2);
+  }
+
+  .verdict {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+    border-left: 3px solid var(--accent);
+  }
+
+  .diagram {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.8rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    white-space: pre;
+    overflow-x: auto;
+    color: var(--text-muted);
+  }
+
+  .tag.rec { background: #064e3b; color: #6ee7b7; }
+  .tag.viable { background: #1e3a5f; color: #7dd3fc; }
+  .tag.limited { background: #78350f; color: #fcd34d; }
+  .tag.skip { background: #7f1d1d; color: #fca5a5; }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;"><a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a></nav>
+
+<h1>Browser Testing Without a Browser</h1>
+<p class="subtitle">Testing browser-bound code server-side for a Rust-to-TypeScript stream/messaging library.</p>
+
+<div class="tldr">
+  <strong>TL;DR:</strong> Make the state machine the contract. Test it exhaustively in Rust with <code>proptest-state-machine</code>.
+  Transpile the state machine to TypeScript and run the same logical tests via vitest + happy-dom.
+  The browser layer becomes a thin view that barely needs testing. WASM test runners and DOM emulation
+  are useful for edge cases but not the primary strategy.
+</div>
+
+<h2>The Problem</h2>
+
+<p>
+  A stream/messaging library needs to work across web browsers, React Native, and server-side runtimes.
+  The core is written in Rust, transpiled to TypeScript. Testing the full matrix (Rust + TS + browser + mobile)
+  with real browsers is expensive and fragile. Puppeteer/Playwright are heavy: 1-2 second cold starts per browser,
+  300-400MB Chromium downloads, and they test the wrong thing for a state machine library.
+</p>
+
+<p>The question: what can you test without a browser, and where is the real boundary?</p>
+
+<h2>1. Server-Side DOM Emulation in Rust</h2>
+
+<div class="card">
+  <div class="title">Available Crates</div>
+  <div class="desc">
+    <span class="tag limited">Limited</span>
+    HTML parsing, not DOM simulation. Useful for testing markup output, not runtime behavior.
+  </div>
+</div>
+
+<h3>What exists</h3>
+<ul>
+  <li><strong><a href="https://lib.rs/crates/scraper">scraper</a></strong> (v0.27, May 2026) — CSS selectors over html5ever parse trees. Read-only queries, no event model.</li>
+  <li><strong><a href="https://docs.rs/kuchikikiki/latest/kuchikikiki/">kuchikikiki</a></strong> — tree manipulation (insert, remove, reorder nodes). Closest to a mutable DOM, but no events, no layout, no <code>addEventListener</code>.</li>
+  <li><strong>html5ever</strong> — WHATWG-compliant HTML parser from Servo. Callback-driven, not tree-based. Foundation for scraper and kuchiki.</li>
+</ul>
+
+<h3>What they can do</h3>
+<ul>
+  <li>Parse HTML strings into a tree structure</li>
+  <li>Query nodes with CSS selectors</li>
+  <li>Mutate the tree (kuchikikiki): insert, remove, replace nodes</li>
+  <li>Serialize back to HTML</li>
+</ul>
+
+<h3>What they cannot do</h3>
+<ul>
+  <li>Events (<code>addEventListener</code>, <code>dispatchEvent</code>, bubbling/capture)</li>
+  <li>Any Web API: <code>fetch</code>, <code>WebSocket</code>, <code>ReadableStream</code>, <code>MessageChannel</code></li>
+  <li>Layout, rendering, or CSS computation</li>
+  <li>Timer APIs (<code>setTimeout</code>, <code>requestAnimationFrame</code>)</li>
+</ul>
+
+<div class="verdict">
+  <strong>Verdict:</strong> These crates test HTML structure, not runtime behavior. For a stream library
+  that needs <code>WebSocket</code>, <code>ReadableStream</code>, and event dispatch, Rust DOM crates
+  are the wrong tool. They would only help if you needed to test SSR output.
+</div>
+
+<h2>2. WASM Test Runners</h2>
+
+<div class="card">
+  <div class="title">wasm-bindgen-test + wasm-pack</div>
+  <div class="desc">
+    <span class="tag viable">Viable</span>
+    Real browser APIs, lightweight headless execution. Good for integration verification.
+  </div>
+</div>
+
+<h3>How it works</h3>
+<p>
+  <code>wasm-pack test --headless --chrome</code> compiles your Rust to WASM, spins up a headless
+  browser, loads the WASM module, and runs annotated test functions inside the browser context.
+  The test harness is minimal — no Puppeteer, no Node.js test runner, just a small HTML page
+  that loads your WASM and reports results.
+</p>
+
+<pre><code>use wasm_bindgen_test::*;
+
+wasm_bindgen_test_configure!(run_in_browser);
+
+#[wasm_bindgen_test]
+async fn stream_reconnect() {
+    let ws = WebSocket::new("ws://localhost:9090").unwrap();
+    // Test actual browser WebSocket behavior
+    // Assert state machine transitions
+}</code></pre>
+
+<h3>Comparison with Puppeteer/Playwright</h3>
+<table>
+  <tr><th>Dimension</th><th>wasm-bindgen-test</th><th>Puppeteer/Playwright</th></tr>
+  <tr><td>Startup</td><td>~200ms (reuses browser)</td><td>1-2s cold start</td></tr>
+  <tr><td>Install size</td><td>Browser already installed</td><td>300-400MB Chromium</td></tr>
+  <tr><td>API access</td><td>Full browser APIs from Rust</td><td>Full browser via JS</td></tr>
+  <tr><td>Debugging</td><td>Limited (WASM stack traces)</td><td>DevTools, screenshots</td></tr>
+  <tr><td>CI complexity</td><td>Low (just needs chromedriver)</td><td>Medium (browser install step)</td></tr>
+  <tr><td>Test language</td><td>Rust</td><td>JS/TS</td></tr>
+  <tr><td>Workers support</td><td>Dedicated, shared, service workers</td><td>Full control</td></tr>
+</table>
+
+<h3>Limitations</h3>
+<ul>
+  <li>Still requires a browser binary (Chrome, Firefox) — not truly browserless</li>
+  <li>WASM stack traces are harder to debug than native Rust</li>
+  <li>Cannot test the transpiled TypeScript — tests the Rust-as-WASM, which is a different artifact</li>
+  <li>No React Native coverage</li>
+</ul>
+
+<div class="verdict">
+  <strong>Verdict:</strong> Good for verifying that your Rust code works correctly when compiled to WASM
+  and run in a real browser. Use it as an integration check, not the primary test strategy. It does not
+  help test the transpiled TypeScript output.
+</div>
+
+<h2>3. Happy-DOM / jsdom for TypeScript</h2>
+
+<div class="card">
+  <div class="title">happy-dom with vitest</div>
+  <div class="desc">
+    <span class="tag rec">Recommended</span>
+    2-4x faster than jsdom. Sufficient for testing transpiled TS stream logic.
+  </div>
+</div>
+
+<h3>What happy-dom provides</h3>
+<ul>
+  <li>DOM manipulation: <code>document.createElement</code>, <code>querySelector</code>, tree mutations</li>
+  <li>Events: <code>addEventListener</code>, <code>dispatchEvent</code>, bubbling, <code>CustomEvent</code></li>
+  <li><code>fetch</code> API (mocked or real via undici)</li>
+  <li><code>setTimeout</code>, <code>setInterval</code>, <code>requestAnimationFrame</code></li>
+  <li><code>MutationObserver</code>, <code>IntersectionObserver</code> (basic)</li>
+  <li><code>WebSocket</code> (basic implementation)</li>
+</ul>
+
+<h3>What is missing or incomplete</h3>
+<ul>
+  <li><code>ReadableStream</code> / <code>WritableStream</code> — partial or missing (depends on version)</li>
+  <li><code>MessageChannel</code> / <code>MessagePort</code> — may not be implemented</li>
+  <li><code>BroadcastChannel</code> — missing in happy-dom, present in jsdom</li>
+  <li>CSS layout computation — no <code>getBoundingClientRect</code>, <code>offsetWidth</code></li>
+  <li><code>HTMLOptionElement</code>, <code>Selection</code> API — known gaps</li>
+  <li>Event sequencing edge cases — form submission, focus/blur order</li>
+  <li>Service Workers, Web Workers — not available</li>
+</ul>
+
+<h3>Strategy for stream library testing</h3>
+<p>
+  For a stream/messaging library, the critical APIs are WebSocket, custom events, and possibly
+  ReadableStream. happy-dom covers WebSocket and events. For streams, you have options:
+</p>
+<ul>
+  <li>Use Node.js built-in <code>ReadableStream</code> (available since Node 18) — vitest runs on Node</li>
+  <li>Mock the stream interface at the boundary</li>
+  <li>Fall back to jsdom for specific test files: <code>// @vitest-environment jsdom</code></li>
+</ul>
+
+<div class="verdict">
+  <strong>Verdict:</strong> happy-dom + vitest is the right environment for testing transpiled TypeScript.
+  Set it as default, drop to jsdom per-file when you hit gaps. For a stream library, you will likely
+  need to mock or polyfill <code>ReadableStream</code> — but that is a thin wrapper, not core logic.
+</div>
+
+<h2>4. State Machine as the Testing Boundary</h2>
+
+<div class="card">
+  <div class="title">proptest-state-machine</div>
+  <div class="desc">
+    <span class="tag rec">Recommended</span>
+    The highest-leverage approach. Test the core exhaustively, make the browser layer trivial.
+  </div>
+</div>
+
+<h3>The architecture</h3>
+
+<div class="diagram">
+┌─────────────────────────────────────────────────────────┐
+│                    State Machine (Rust)                  │
+│                                                         │
+│  States: Disconnected, Connecting, Connected,           │
+│          Reconnecting, Draining, Closed                 │
+│                                                         │
+│  Transitions: open, message, error, close, timeout,     │
+│               ack, nack, heartbeat_miss, resume          │
+│                                                         │
+│  Properties tested:                                     │
+│   - No message sent in Disconnected state               │
+│   - Reconnect backoff increases monotonically            │
+│   - Buffer never exceeds capacity                        │
+│   - Every sent message eventually acked or nacked        │
+│   - State is always reachable from any error state       │
+└──────────────────────┬──────────────────────────────────┘
+                       │ transpile
+                       ▼
+┌─────────────────────────────────────────────────────────┐
+│                State Machine (TypeScript)                │
+│                                                         │
+│  Same states, same transitions, same properties         │
+│  Tested via vitest with identical fixtures              │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+          ┌────────────┼────────────┐
+          ▼            ▼            ▼
+    ┌──────────┐ ┌──────────┐ ┌──────────┐
+    │ Browser  │ │  React   │ │  Node.js │
+    │  thin    │ │  Native  │ │  server  │
+    │  view    │ │  thin    │ │  thin    │
+    │  layer   │ │  view    │ │  adapter │
+    └──────────┘ └──────────┘ └──────────┘</div>
+
+<h3>proptest-state-machine in practice</h3>
+<p>
+  The <a href="https://docs.rs/proptest-state-machine">proptest-state-machine</a> crate (part of the
+  proptest ecosystem) automates stateful property testing. You define a reference state machine with
+  states and transitions, then the framework generates random sequences of transitions and checks
+  that invariants hold after every step.
+</p>
+
+<pre><code>use proptest_state_machine::*;
+use proptest::prelude::*;
+
+#[derive(Clone, Debug)]
+enum StreamState { Disconnected, Connecting, Connected, Reconnecting }
+
+#[derive(Clone, Debug)]
+enum Transition { Open, Message(Vec&lt;u8&gt;), Error(u16), Close, Timeout }
+
+impl ReferenceStateMachine for StreamSpec {
+    type State = StreamState;
+    type Transition = Transition;
+
+    fn init_state() -&gt; BoxedStrategy&lt;Self::State&gt; {
+        Just(StreamState::Disconnected).boxed()
+    }
+
+    fn transitions(state: &amp;Self::State) -&gt; BoxedStrategy&lt;Self::Transition&gt; {
+        match state {
+            StreamState::Disconnected =&gt; Just(Transition::Open).boxed(),
+            StreamState::Connected =&gt; prop_oneof![
+                any::&lt;Vec&lt;u8&gt;&gt;().prop_map(Transition::Message),
+                (400u16..600).prop_map(Transition::Error),
+                Just(Transition::Close),
+            ].boxed(),
+            // ... other states
+        }
+    }
+
+    fn apply(state: Self::State, transition: &amp;Self::Transition) -&gt; Self::State {
+        // Pure state transition logic — no I/O, no DOM
+    }
+}
+
+// Postconditions checked after every transition:
+fn check_invariants(ref_state: &amp;StreamState, sut: &amp;RealStream) {
+    assert_eq!(sut.can_send(), matches!(ref_state, StreamState::Connected));
+    assert!(sut.buffer_len() &lt;= MAX_BUFFER);
+    // ... more invariants
+}</code></pre>
+
+<h3>What this buys you</h3>
+<ul>
+  <li><strong>Automatic shrinking</strong> — when a property fails, proptest finds the minimal transition sequence that reproduces it</li>
+  <li><strong>Exhaustive edge cases</strong> — rapid disconnect/reconnect, message during reconnect, error during drain</li>
+  <li><strong>Regression seeds</strong> — failing cases are persisted to <code>.proptest-regressions</code> and re-run on every <code>cargo test</code></li>
+  <li><strong>Speed</strong> — hundreds of random sequences per second, pure Rust, no I/O</li>
+  <li><strong>Platform independence</strong> — the state machine has no browser dependency</li>
+</ul>
+
+<h3>The thin view layer</h3>
+<p>
+  If the state machine is the contract, the browser layer reduces to:
+</p>
+<ul>
+  <li>Bind a real <code>WebSocket</code> to the state machine's <code>open</code>/<code>message</code>/<code>error</code>/<code>close</code> inputs</li>
+  <li>Read state machine output (send buffer, connection status) and apply to the transport</li>
+  <li>Wire up reconnect timers</li>
+</ul>
+<p>
+  This layer is 50-100 lines of glue code. It barely needs testing — and what testing it needs
+  is a simple integration check, not exhaustive property testing.
+</p>
+
+<div class="verdict">
+  <strong>Verdict:</strong> This is the right primary strategy for a stream/messaging library. The state
+  machine captures all the hard logic (reconnect, backoff, buffering, ordering, delivery guarantees).
+  Property-based testing finds edge cases that manual tests never would. The browser layer becomes
+  trivially simple.
+</div>
+
+<h2>5. Cross-Platform Test Strategy</h2>
+
+<div class="card">
+  <div class="title">Shared fixtures, multiple runners</div>
+  <div class="desc">
+    <span class="tag rec">Recommended</span>
+    JSON fixtures as the lingua franca between Rust and TypeScript test suites.
+  </div>
+</div>
+
+<h3>Golden file / fixture testing</h3>
+<p>
+  The <a href="https://github.com/odin-foundation/odin-golden-tests">ODIN Golden Tests</a> project
+  demonstrates this at scale: 159 JSON fixture files tested across TypeScript, Rust, .NET, Java,
+  Python, and Ruby. The pattern:
+</p>
+
+<pre><code>tests/
+  fixtures/
+    reconnect-backoff.json        # input sequence + expected states
+    message-ordering.json
+    buffer-overflow.json
+    concurrent-close.json
+  rust/
+    src/lib.rs                    # reads fixtures, runs against Rust SM
+  ts/
+    state-machine.test.ts         # reads same fixtures, runs against TS SM</code></pre>
+
+<h3>Fixture format</h3>
+<pre><code>{
+  "name": "reconnect-backoff-cap",
+  "initial_state": "disconnected",
+  "transitions": [
+    { "input": "open", "expected_state": "connecting" },
+    { "input": "error", "code": 1006, "expected_state": "reconnecting" },
+    { "input": "timeout", "expected_state": "reconnecting",
+      "expected_backoff_ms": 1000 },
+    { "input": "timeout", "expected_state": "reconnecting",
+      "expected_backoff_ms": 2000 },
+    { "input": "timeout", "expected_state": "reconnecting",
+      "expected_backoff_ms": 4000 },
+    { "input": "timeout", "expected_state": "reconnecting",
+      "expected_backoff_ms": 8000 },
+    { "input": "timeout", "expected_state": "reconnecting",
+      "expected_backoff_ms": 8000, "comment": "capped at max" }
+  ]
+}</code></pre>
+
+<h3>Test matrix</h3>
+<table>
+  <tr><th>Layer</th><th>Runner</th><th>Environment</th><th>What it tests</th></tr>
+  <tr><td>Rust state machine</td><td><code>cargo test</code></td><td>Native</td><td>Core logic + property tests</td></tr>
+  <tr><td>Rust WASM</td><td><code>wasm-pack test</code></td><td>Headless Chrome</td><td>WASM compilation correctness</td></tr>
+  <tr><td>TS state machine</td><td><code>vitest</code></td><td>Node.js</td><td>Transpilation fidelity</td></tr>
+  <tr><td>TS + DOM</td><td><code>vitest</code></td><td>happy-dom</td><td>Browser glue layer</td></tr>
+  <tr><td>React Native</td><td><code>vitest</code> or Jest</td><td>Node.js</td><td>Mobile glue layer</td></tr>
+</table>
+
+<h3>Protocol conformance suite</h3>
+<p>
+  Beyond state machine fixtures, define a protocol conformance suite: sequences of wire-format
+  messages and expected responses. This tests serialization/deserialization parity between Rust
+  and TypeScript without needing a browser.
+</p>
+
+<pre><code>{
+  "name": "fragmented-message-reassembly",
+  "wire_input": ["0x01 0x00 0x0A ...", "0x02 0x00 0x0A ..."],
+  "expected_output": { "type": "message", "payload": "hello world" },
+  "expected_state": "connected"
+}</code></pre>
+
+<h2>6. Existing Frameworks Survey</h2>
+
+<div class="card">
+  <div class="title">Deno</div>
+  <div class="desc">
+    <span class="tag limited">Limited</span>
+    No built-in DOM. Uses <a href="https://github.com/b-fuze/deno-dom">deno-dom</a> (WASM or native backend).
+    Similar coverage to happy-dom. Not a meaningful advantage over vitest + happy-dom for this use case.
+  </div>
+</div>
+
+<div class="card">
+  <div class="title">Tauri</div>
+  <div class="desc">
+    <span class="tag limited">Limited</span>
+    Tests split into Rust unit tests (backend) and WebDriver E2E (frontend).
+    Cross-platform webview testing is painful — three rendering engines (WebKit, WebView2, WebKitGTK).
+    A <a href="https://lib.rs/crates/tauri-plugin-playwright">tauri-plugin-playwright</a> exists but requires browser binaries.
+    Tauri's problem is different from ours: they must test native webview integration, we do not.
+  </div>
+</div>
+
+<div class="card">
+  <div class="title">wasm-bindgen-test-runner</div>
+  <div class="desc">
+    <span class="tag viable">Viable</span>
+    Part of <code>wasm-pack test</code>. Supports headless Chrome/Firefox, dedicated/shared/service workers,
+    and Deno as a target. Lightweight relative to Puppeteer — reuses an existing browser binary,
+    no npm dependency tree. Good for WASM integration checks.
+  </div>
+</div>
+
+<div class="card">
+  <div class="title">Vitest 4 Browser Mode</div>
+  <div class="desc">
+    <span class="tag viable">Viable</span>
+    <a href="https://www.sitepoint.com/vitest-4-browser-mode-component-testing-without-playwright/">Vitest 4</a>
+    introduced a browser mode that runs tests in a real browser without Playwright's full overhead.
+    Uses Vite's dev server to serve tests directly. Lower overhead than Playwright, higher fidelity than happy-dom.
+    Worth evaluating if happy-dom gaps become blocking.
+  </div>
+</div>
+
+<div class="card">
+  <div class="title">proptest-stateful (ReadySet)</div>
+  <div class="desc">
+    <span class="tag viable">Viable</span>
+    <a href="https://github.com/readysettech/proptest-stateful">Alternative</a> to proptest-state-machine,
+    from the ReadySet team (database company). Similar API, different ergonomics.
+    Both are built on proptest. Choose based on which API feels better.
+  </div>
+</div>
+
+<h2>Recommendation</h2>
+
+<div class="tldr" style="border-left-color: var(--accent);">
+  <strong>The state machine approach is the right call for a stream/messaging library.</strong>
+  Here is why, and how to structure it.
+</div>
+
+<h3>Why state machine first</h3>
+<p>
+  A stream/messaging library's complexity is almost entirely in state management: reconnection logic,
+  message buffering, delivery guarantees, ordering, backpressure, error recovery. These are pure
+  functions of (current state + input) -> (next state + effects). None of this requires a DOM.
+</p>
+<p>
+  The browser/mobile layer is a thin adapter: bind platform-specific transport (WebSocket, React Native
+  TCP) to the state machine inputs, and apply state machine outputs (send buffer, timers) to the
+  platform. This adapter is simple enough to verify with a handful of integration tests.
+</p>
+
+<h3>Concrete test pyramid</h3>
+
+<div class="diagram">
+                    ╱╲
+                   ╱  ╲
+                  ╱ E2E╲         wasm-pack test --headless
+                 ╱ (few)╲        Smoke test: real browser, real WS
+                ╱────────╲
+               ╱Integration╲     vitest + happy-dom
+              ╱  (moderate) ╲    TS glue: WebSocket binding, timers
+             ╱───────────────╲
+            ╱   State Machine  ╲  cargo test + proptest-state-machine
+           ╱    (exhaustive)    ╲ + vitest with shared JSON fixtures
+          ╱──────────────────────╲</div>
+
+<h3>Implementation order</h3>
+<ol>
+  <li>
+    <strong>Define the state machine in Rust.</strong> States, transitions, invariants.
+    Write property-based tests with <code>proptest-state-machine</code>. Target: hundreds
+    of random transition sequences, checking invariants after every step.
+  </li>
+  <li>
+    <strong>Export golden fixtures.</strong> Run the Rust state machine against hand-crafted
+    scenarios, serialize the (input, state-trace) pairs to JSON. These become the cross-platform
+    conformance suite.
+  </li>
+  <li>
+    <strong>Transpile to TypeScript.</strong> Run the same JSON fixtures against the TS state
+    machine in vitest. Any divergence is a transpilation bug.
+  </li>
+  <li>
+    <strong>Write thin platform adapters.</strong> Browser adapter (WebSocket + DOM timers),
+    React Native adapter, Node.js adapter. Each is small enough to test with a few
+    integration tests in the appropriate environment (happy-dom, Jest, etc.).
+  </li>
+  <li>
+    <strong>Optional: wasm-pack smoke tests.</strong> Compile to WASM, run a few end-to-end
+    scenarios in headless Chrome to verify the WASM build works. Not the primary quality gate.
+  </li>
+</ol>
+
+<h3>What you skip</h3>
+<ul>
+  <li>Puppeteer/Playwright — too heavy, tests the wrong layer</li>
+  <li>Rust DOM crates — wrong tool (parsing, not runtime simulation)</li>
+  <li>Deno DOM — no advantage over happy-dom for this use case</li>
+  <li>Full browser E2E for every test — state machine catches the bugs, browser just confirms wiring</li>
+</ul>
+
+<h3>Risk to watch</h3>
+<p>
+  The thin adapter assumption breaks if the platform layer becomes complex. Watch for:
+</p>
+<ul>
+  <li>Platform-specific WebSocket quirks (mobile network transitions, background/foreground)</li>
+  <li>Timer precision differences (React Native timers vs browser timers)</li>
+  <li>Backpressure behavior differences across transports</li>
+</ul>
+<p>
+  If the adapter grows beyond ~200 lines per platform, it is no longer "thin" and needs its own
+  test strategy. At that point, consider Vitest 4 browser mode for web and platform-specific
+  integration tests for mobile.
+</p>
+
+<p class="meta" style="margin-top: 2.5rem;">October 2026</p>
+
+<!-- published: PENDING @ PENDING -->
+</body>
+</html>
