@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rust in the Browser — Research</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body { max-width: 700px; }
+  .card.green { border-left-color: #059669; }
+  .card.purple { border-left-color: var(--accent); }
+  .card.yellow { border-left-color: #d97706; }
+  .card.blue { border-left-color: #2563eb; }
+  .tag.rec { background: #064e3b; color: #6ee7b7; }
+  .tag.viable { background: #1e3a5f; color: #7dd3fc; }
+  .tag.caution { background: #78350f; color: #fde68a; }
+  .rating { font-size: 0.85rem; }
+  .good { color: #6ee7b7; }
+  .mid { color: #fde68a; }
+  .bad { color: #fca5a5; }
+  .verdict {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-top: 1.5rem;
+  }
+  .verdict .title {
+    font-weight: 700; color: #fff; font-size: 1.1rem;
+    margin-bottom: 0.4rem;
+  }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+</nav>
+
+<h1>Rust in the Browser</h1>
+<p class="subtitle">Options for sharing a Rust stream/messaging library between server and browser client. October 2026.</p>
+
+<p>
+  Context: a Rust codebase implementing a stream and messaging library (framing, sequencing,
+  delivery guarantees). The goal is to run the same logic in both a server process (native Rust or
+  Node/Bun via NAPI) and a browser client. A TypeScript transpile of the Rust code already exists.
+</p>
+
+<h2>Option 1: Rust to WebAssembly</h2>
+
+<div class="card green">
+  <div class="title"><span class="tag rec">Recommended</span> Compile Rust to WASM, run in browser</div>
+  <div class="desc">
+    The Rust toolchain has first-class WASM support. <code>wasm-pack</code> compiles Rust to WASM
+    and generates JS/TS bindings via <code>wasm-bindgen</code>. The result is an npm-installable
+    package that exposes Rust types and functions to JavaScript.
+  </div>
+</div>
+
+<h3>Toolchain</h3>
+<pre><code># Install
+rustup target add wasm32-unknown-unknown
+cargo install wasm-pack
+
+# Build — produces pkg/ with .wasm + .js + .d.ts
+wasm-pack build --target web     # ES module, no bundler needed
+wasm-pack build --target bundler # for webpack/vite/esbuild
+wasm-pack build --target nodejs  # for Node.js (not browser)</code></pre>
+
+<p>
+  <code>wasm-bindgen</code> handles the JS-Rust boundary: converts types, manages memory, generates
+  TypeScript declarations. In 2026 it handles <code>String</code>, <code>Vec&lt;u8&gt;</code>,
+  structs (via <code>#[wasm_bindgen]</code>), enums, <code>Result</code>, and <code>Option</code>.
+</p>
+
+<h3>Async support</h3>
+<p>
+  Rust <code>async</code> functions annotated with <code>#[wasm_bindgen]</code> compile to
+  JS <code>Promise</code>-returning functions. The <code>wasm-bindgen-futures</code> crate bridges
+  Rust futures to JS promises. This works well for request/response patterns. For streaming
+  (continuous frame processing), the typical pattern is to call synchronous Rust functions from
+  JS in a loop or on each incoming message, avoiding the need for Rust-side async runtimes in WASM.
+</p>
+
+<h3>What WASM cannot do</h3>
+<ul>
+  <li>No direct DOM access (must call back into JS)</li>
+  <li>No direct network I/O (no sockets, no fetch from inside WASM)</li>
+  <li>No threads by default (SharedArrayBuffer + Web Workers possible but complex)</li>
+  <li>No direct file system access</li>
+</ul>
+<p>
+  For a stream library, this is fine: JS handles the WebSocket connection and passes raw frames
+  into WASM for processing. WASM handles framing, sequencing, buffering, reassembly. JS handles I/O.
+</p>
+
+<h3>Bundle size</h3>
+<p>
+  A typical Rust WASM module compiles to 50-200 KB gzipped for a medium library. Using
+  <code>wasm-opt</code> (included in wasm-pack) and <code>lto = true</code> in Cargo.toml brings
+  this down. A pure data-processing library without large dependencies (no serde_json, no regex)
+  can be under 50 KB. This is comparable to a minified JS library of equivalent complexity.
+</p>
+
+<h3>Performance</h3>
+<p>
+  WASM runs at near-native speed for compute-bound work. For a stream library, the main cost is
+  crossing the JS-WASM boundary — each call involves copying data across the boundary (no shared
+  memory by default). For message framing, this is negligible: copying a few KB per frame is fast.
+  For bulk data (audio streams, large buffers), <code>Uint8Array</code> views into WASM linear
+  memory avoid copies.
+</p>
+
+<h3>Evaluation</h3>
+<table>
+  <tr><th>Criterion</th><th>Rating</th></tr>
+  <tr><td>Testability</td><td><span class="rating good">Same Rust tests run natively and via wasm-pack test</span></td></tr>
+  <tr><td>Developer experience</td><td><span class="rating mid">Build step adds complexity; debugging via source maps works but is rougher than native JS</span></td></tr>
+  <tr><td>Bundle size</td><td><span class="rating good">50-200 KB gzipped, comparable to equivalent JS</span></td></tr>
+  <tr><td>Browser compatibility</td><td><span class="rating good">All modern browsers since 2017; 97%+ global coverage</span></td></tr>
+  <tr><td>Tooling maturity (2026)</td><td><span class="rating good">Mature — wasm-pack 0.13+, wasm-bindgen stable, wide adoption</span></td></tr>
+</table>
+
+
+<h2>Option 2: Rust to TypeScript Transpilation</h2>
+
+<div class="card yellow">
+  <div class="title"><span class="tag caution">Caution</span> Transpile or manually port Rust to TypeScript</div>
+  <div class="desc">
+    Maintain a TypeScript version of the Rust code. This can be a manual port (already done),
+    an LLM-assisted translation, or tooling like <code>ts-rs</code> (type generation only, not logic).
+  </div>
+</div>
+
+<h3>Current state of tooling</h3>
+<p>
+  No production-grade Rust-to-TypeScript transpiler exists in 2026. The tools that do exist:
+</p>
+<ul>
+  <li><code>ts-rs</code> — generates TypeScript <em>type definitions</em> from Rust structs. Does not
+    transpile logic. Useful for keeping types in sync.</li>
+  <li>LLM-assisted translation — works for initial port, but ongoing sync is manual.</li>
+  <li>Manual port — what you already have. Requires keeping two codebases in sync.</li>
+</ul>
+
+<h3>The sync problem</h3>
+<p>
+  The fundamental issue: two codebases that must stay semantically identical. Every change to the
+  Rust library requires a corresponding change to the TypeScript version. This is manageable for
+  stable code but painful for actively evolving libraries. Behavioral drift is inevitable without
+  cross-language test suites that exercise both implementations against the same fixtures.
+</p>
+
+<h3>When this makes sense</h3>
+<p>
+  If the TypeScript port already exists, is well-tested, and the Rust code is stable (not changing
+  weekly), this is a pragmatic choice. The TS version runs everywhere JS runs with zero build
+  complexity. It is also the easiest to debug — standard browser DevTools, standard stack traces.
+</p>
+
+<h3>Evaluation</h3>
+<table>
+  <tr><th>Criterion</th><th>Rating</th></tr>
+  <tr><td>Testability</td><td><span class="rating mid">Separate test suites; shared fixtures possible but require discipline</span></td></tr>
+  <tr><td>Developer experience</td><td><span class="rating good">Standard TS tooling, full debuggability</span></td></tr>
+  <tr><td>Bundle size</td><td><span class="rating good">Standard JS — tree-shakeable, no WASM overhead</span></td></tr>
+  <tr><td>Browser compatibility</td><td><span class="rating good">Universal — it is just JavaScript</span></td></tr>
+  <tr><td>Tooling maturity</td><td><span class="rating bad">No automated transpiler; manual sync is the reality</span></td></tr>
+</table>
+
+
+<h2>Option 3: Server-Only Rust + Thin Client</h2>
+
+<div class="card blue">
+  <div class="title"><span class="tag viable">Viable</span> Keep all logic server-side, browser is a WebSocket relay</div>
+  <div class="desc">
+    The browser sends raw bytes to the server over WebSocket. The server handles all framing,
+    sequencing, and protocol logic in Rust. The browser is a thin pipe: capture audio, send bytes,
+    receive bytes, play audio.
+  </div>
+</div>
+
+<h3>Architecture</h3>
+<pre><code>Browser                    Server (Rust)
+  |                           |
+  |-- raw audio bytes ------->|  stream library processes
+  |                           |  framing, sequencing, etc.
+  |<-- processed frames ------|
+  |                           |
+  (no stream logic here)      (all logic here)</code></pre>
+
+<h3>Tradeoffs</h3>
+<ul>
+  <li><strong>Simplicity</strong> — one codebase, one language, one test suite.</li>
+  <li><strong>Latency</strong> — every frame round-trips to the server. For real-time audio this adds
+    the connection RTT to every operation. On a fast connection (sub-50ms), acceptable. On mobile
+    or high-latency links, noticeable.</li>
+  <li><strong>Offline</strong> — nothing works without the server. No buffering, no local processing.</li>
+  <li><strong>Scalability</strong> — server does all the work. Each connected client adds CPU load for
+    stream processing that could run on the client instead.</li>
+</ul>
+
+<h3>When this makes sense</h3>
+<p>
+  When the browser client is truly thin — just capturing and playing audio, with no need for
+  client-side buffering, reordering, or protocol awareness. This is the current architecture
+  for many voice applications. It becomes limiting when you want client-side features like
+  optimistic UI updates, local echo cancellation, or offline message queuing.
+</p>
+
+<h3>Evaluation</h3>
+<table>
+  <tr><th>Criterion</th><th>Rating</th></tr>
+  <tr><td>Testability</td><td><span class="rating good">Single codebase — standard Rust testing</span></td></tr>
+  <tr><td>Developer experience</td><td><span class="rating good">No cross-language concerns</span></td></tr>
+  <tr><td>Bundle size</td><td><span class="rating good">Minimal — browser ships almost no code</span></td></tr>
+  <tr><td>Browser compatibility</td><td><span class="rating good">Just WebSocket — universal</span></td></tr>
+  <tr><td>Tooling maturity</td><td><span class="rating good">N/A — no special tooling needed</span></td></tr>
+</table>
+
+
+<h2>Option 4: Hybrid — WASM Core + JS I/O</h2>
+
+<div class="card purple">
+  <div class="title"><span class="tag rec">Recommended</span> WASM for pure logic, JavaScript for I/O and DOM</div>
+  <div class="desc">
+    The production pattern used by Figma, 1Password, Notion, and others. Compile deterministic
+    core logic to WASM. Keep all I/O (WebSocket, DOM, user interaction) in JavaScript. The boundary
+    is clean: JS feeds data in, WASM processes it, JS acts on the output.
+  </div>
+</div>
+
+<h3>The boundary pattern</h3>
+<pre><code>JavaScript layer          WASM layer (Rust)
+  |                           |
+  | WebSocket.onmessage       |
+  |--- raw bytes ------------>| decode_frame()
+  |                           | reorder()
+  |                           | reassemble()
+  |<-- processed message -----|
+  | update DOM                |
+  |                           |
+  | user sends message        |
+  |--- payload -------------->| encode_frame()
+  |                           | add_sequence()
+  |<-- framed bytes ----------|
+  | WebSocket.send()          |
+  |                           |</code></pre>
+
+<h3>Production examples</h3>
+<ul>
+  <li><strong>Figma</strong> — C++ compiled to WASM for the rendering engine. JS handles UI chrome,
+    file I/O, collaboration protocol. The canvas is a WASM-rendered bitmap.</li>
+  <li><strong>1Password</strong> — Rust core (crypto, vault logic) compiled to WASM for the browser
+    extension. JS handles browser extension APIs, DOM, network.</li>
+  <li><strong>Notion</strong> — selective WASM use for performance-critical data operations.</li>
+  <li><strong>Cloudflare Workers</strong> — Rust compiled to WASM runs on the edge. The runtime
+    provides I/O bindings.</li>
+</ul>
+
+<h3>For a stream library specifically</h3>
+<p>
+  This is the natural fit. The stream library is pure data processing:
+</p>
+<ul>
+  <li>Frame encoding/decoding (bytes in, structured data out)</li>
+  <li>Sequence number management</li>
+  <li>Reordering buffers</li>
+  <li>Delivery acknowledgment state machines</li>
+  <li>Backpressure logic</li>
+</ul>
+<p>
+  None of these touch the DOM or network. They take bytes, return bytes or structured events.
+  This is exactly what WASM excels at.
+</p>
+
+<h3>Evaluation</h3>
+<table>
+  <tr><th>Criterion</th><th>Rating</th></tr>
+  <tr><td>Testability</td><td><span class="rating good">Core logic tested in Rust; integration tested in browser; same code</span></td></tr>
+  <tr><td>Developer experience</td><td><span class="rating mid">Two-language project; clear boundary helps; debugging WASM is improving</span></td></tr>
+  <tr><td>Bundle size</td><td><span class="rating good">WASM module + thin JS wrapper; total comparable to a JS-only library</span></td></tr>
+  <tr><td>Browser compatibility</td><td><span class="rating good">All modern browsers</span></td></tr>
+  <tr><td>Tooling maturity</td><td><span class="rating good">Battle-tested by Figma, 1Password, etc.</span></td></tr>
+</table>
+
+
+<h2>Comparison</h2>
+
+<table>
+  <tr>
+    <th>Factor</th>
+    <th>WASM</th>
+    <th>TS Port</th>
+    <th>Server-only</th>
+    <th>Hybrid</th>
+  </tr>
+  <tr>
+    <td>Code sharing</td>
+    <td class="good">Same code</td>
+    <td class="mid">Two codebases</td>
+    <td class="good">One codebase</td>
+    <td class="good">Same core</td>
+  </tr>
+  <tr>
+    <td>Latency</td>
+    <td class="good">Client-side</td>
+    <td class="good">Client-side</td>
+    <td class="bad">Round-trip</td>
+    <td class="good">Client-side</td>
+  </tr>
+  <tr>
+    <td>Offline capable</td>
+    <td class="good">Yes</td>
+    <td class="good">Yes</td>
+    <td class="bad">No</td>
+    <td class="good">Yes</td>
+  </tr>
+  <tr>
+    <td>Build complexity</td>
+    <td class="mid">wasm-pack</td>
+    <td class="good">Standard</td>
+    <td class="good">None</td>
+    <td class="mid">wasm-pack</td>
+  </tr>
+  <tr>
+    <td>Debugging</td>
+    <td class="mid">Source maps</td>
+    <td class="good">Native</td>
+    <td class="good">Server-side</td>
+    <td class="mid">Mixed</td>
+  </tr>
+  <tr>
+    <td>Sync burden</td>
+    <td class="good">Zero</td>
+    <td class="bad">High</td>
+    <td class="good">Zero</td>
+    <td class="good">Zero</td>
+  </tr>
+  <tr>
+    <td>Maturity</td>
+    <td class="good">Stable</td>
+    <td class="bad">Manual</td>
+    <td class="good">Proven</td>
+    <td class="good">Production</td>
+  </tr>
+</table>
+
+
+<h2>Recommendation</h2>
+
+<div class="verdict">
+  <div class="title">For a stream/messaging library: Hybrid WASM (Option 4)</div>
+  <p>
+    The stream library is pure data processing — framing, sequencing, buffering, state machines.
+    This maps directly to the hybrid pattern. Compile the Rust core to WASM via
+    <code>wasm-pack</code>. Keep WebSocket I/O and DOM interaction in JavaScript/TypeScript.
+  </p>
+</div>
+
+<h3>Concrete plan</h3>
+<ol style="margin: 0.8rem 0 0.8rem 1.5rem;">
+  <li style="margin-bottom: 0.5rem;">
+    <strong>Define the WASM boundary.</strong> The Rust library exposes: <code>encode_frame(payload) -> bytes</code>,
+    <code>decode_frame(bytes) -> Frame</code>, <code>SequenceTracker</code> (manages ordering),
+    <code>DeliveryTracker</code> (manages acks). No I/O types cross the boundary.
+  </li>
+  <li style="margin-bottom: 0.5rem;">
+    <strong>Add <code>#[wasm_bindgen]</code> annotations</strong> to the public API. Use
+    <code>wasm-pack build --target web</code> to produce an ES module. The output includes
+    <code>.d.ts</code> files — the browser gets type-safe Rust functions.
+  </li>
+  <li style="margin-bottom: 0.5rem;">
+    <strong>Write a thin JS wrapper</strong> (~50 lines) that connects WebSocket events to WASM
+    functions: <code>ws.onmessage = (e) => { const frame = wasm.decode_frame(new Uint8Array(e.data)); ... }</code>.
+  </li>
+  <li style="margin-bottom: 0.5rem;">
+    <strong>Run <code>wasm-pack test --headless --chrome</code></strong> in CI. This runs the same
+    Rust unit tests inside a real browser. Combined with native <code>cargo test</code>, you get
+    full coverage on both targets from one test suite.
+  </li>
+  <li style="margin-bottom: 0.5rem;">
+    <strong>Retire the TS transpile</strong> once the WASM path is validated. The TS port becomes
+    unnecessary — it was a bridge to this point.
+  </li>
+</ol>
+
+<h3>What about the existing TS transpile?</h3>
+<p>
+  Keep it running until the WASM path is proven. The migration sequence:
+</p>
+<ol style="margin: 0.5rem 0 0.8rem 1.5rem;">
+  <li>Build WASM package, integration-test against the same fixtures as the TS version</li>
+  <li>Run both in parallel (A/B) in the browser for a release cycle</li>
+  <li>Once parity is confirmed, drop the TS version</li>
+</ol>
+<p>
+  The TS transpile is a maintenance liability — every Rust change requires a corresponding TS
+  change. The WASM path eliminates this entirely. One source of truth, two compilation targets.
+</p>
+
+<h3>What about Node/Bun server-side?</h3>
+<p>
+  On the server you have three options, in order of preference:
+</p>
+<ul>
+  <li><strong>Native Rust</strong> — if the server is already Rust, just use the library directly.</li>
+  <li><strong>NAPI binding</strong> (<code>napi-rs</code>) — compiles Rust to a native Node addon.
+    Full native speed, no WASM overhead. Works with Bun.</li>
+  <li><strong>WASM in Node/Bun</strong> — both runtimes support WASM natively. Slightly slower than
+    NAPI but uses the exact same <code>.wasm</code> file as the browser. Simplest path to
+    "same binary everywhere."</li>
+</ul>
+<p>
+  For maximum code sharing with minimum build targets: use the same WASM binary on both server and
+  browser. For maximum performance on the server: use NAPI. Both approaches use the same Rust source.
+</p>
+
+<!-- published: PENDING @ PENDING -->
+</body>
+</html>
