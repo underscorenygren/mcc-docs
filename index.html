@@ -5,147 +5,263 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MCC Docs</title>
 <link rel="stylesheet" href="style.css">
+<style>
+  .topic-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .topic-header h2 {
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+  .topic-header .updated {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+  .topic-header .toggle {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .topic-body {
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+  }
+  .topic-body.collapsed {
+    max-height: 0 !important;
+  }
+  .controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+  }
+  .controls a {
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .controls a:hover {
+    color: var(--link);
+  }
+</style>
 </head>
 <body>
 
 <h1>MCC Docs</h1>
 <p class="subtitle">Explorations, decisions, and reference material.</p>
 
-<h2>Message Mechanics</h2>
-<p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.8rem;">
-  How messages flow through the system — from voice to agent and back.
-  A four-part series that drove key architecture decisions.
-</p>
+<h2 style="font-size: 1.1rem; color: var(--text-muted); border-bottom: none; margin-bottom: 0.5rem;">Topics</h2>
 
-<div class="card">
-  <div class="title"><a href="message/message-mechanics.html">Fundamentals</a></div>
-  <div class="desc">
-    <span class="tag series">Series</span>
-    IDs, ordering, delivery guarantees, the two buses, voice layer, and the blocking problem.
-  </div>
+<div class="controls">
+  <a onclick="toggleAll(false)">Expand all</a>
+  <a onclick="toggleAll(true)">Collapse all</a>
 </div>
 
-<div class="card">
-  <div class="title"><a href="message/message-flow-visual.html">Scenarios</a></div>
-  <div class="desc">
-    <span class="tag series">Series</span>
-    Seven visual walkthroughs: basic chat, voice pipeline, reconnect, multi-tab, agent routing, work dispatch.
+<section class="topic" data-updated="2026-11-05">
+  <div class="topic-header" onclick="toggleSection(this)">
+    <h2>Message Mechanics</h2>
+    <span class="updated">Updated Nov 5, 2026</span>
+    <span class="toggle">collapse</span>
   </div>
-</div>
-
-<div class="card">
-  <div class="title"><a href="message/message-mechanics-decisions.html">Decisions</a></div>
-  <div class="desc">
-    <span class="tag series">Series</span>
-    What we keep, change, and need to explore. Dual ID model, sequence numbers, session manager.
+  <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.8rem;">
+    How messages flow through the system — from voice to agent and back.
+    A four-part series that drove key architecture decisions.
+  </p>
+  <div class="topic-body">
+    <div class="card">
+      <div class="title"><a href="message/message-mechanics.html">Fundamentals</a></div>
+      <div class="desc">
+        <span class="tag series">Series</span>
+        IDs, ordering, delivery guarantees, the two buses, voice layer, and the blocking problem.
+      </div>
+    </div>
+    <div class="card">
+      <div class="title"><a href="message/message-flow-visual.html">Scenarios</a></div>
+      <div class="desc">
+        <span class="tag series">Series</span>
+        Seven visual walkthroughs: basic chat, voice pipeline, reconnect, multi-tab, agent routing, work dispatch.
+      </div>
+    </div>
+    <div class="card">
+      <div class="title"><a href="message/message-mechanics-decisions.html">Decisions</a></div>
+      <div class="desc">
+        <span class="tag series">Series</span>
+        What we keep, change, and need to explore. Dual ID model, sequence numbers, session manager.
+      </div>
+    </div>
   </div>
-</div>
+</section>
 
-<div class="card">
-  <div class="title"><a href="stream/stream-library.html">Stream Library</a></div>
-  <div class="desc">
-    <span class="tag series">Series</span>
-    PR/FAQ for the unified stream library — six layers (L0-L5) from bytes to business logic.
+<section class="topic" data-updated="2026-11-05">
+  <div class="topic-header" onclick="toggleSection(this)">
+    <h2>Stream Library</h2>
+    <span class="updated">Updated Nov 5, 2026</span>
+    <span class="toggle">collapse</span>
   </div>
-</div>
-
-<div class="card">
-  <div class="title"><a href="stream/stream-library-guide.html">Stream Library — Code Guide</a></div>
-  <div class="desc">
-    <span class="tag new">New</span>
-    Walkthrough of the stream library implementation: file map, code extracts, layer-by-layer explanation.
+  <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.8rem;">
+    Unified stream abstraction — six layers from bytes to business logic.
+  </p>
+  <div class="topic-body">
+    <div class="card">
+      <div class="title"><a href="stream/stream-library.html">PR/FAQ</a></div>
+      <div class="desc">
+        <span class="tag series">Series</span>
+        PR/FAQ for the unified stream library — six layers (L0-L5) from bytes to business logic.
+      </div>
+    </div>
+    <div class="card">
+      <div class="title"><a href="stream/stream-library-guide.html">Code Guide</a></div>
+      <div class="desc">
+        <span class="tag series">Series</span>
+        Walkthrough of the stream library implementation: file map, code extracts, layer-by-layer explanation.
+      </div>
+    </div>
+    <div class="card">
+      <div class="title"><a href="stream/stream-migration-summary.html">Migration Summary</a></div>
+      <div class="desc">
+        <span class="tag series">Series</span>
+        What changed when the stream library replaced ad-hoc event bus and raw WebSocket management.
+      </div>
+    </div>
+    <div class="card">
+      <div class="title"><a href="stream/stream-library-research.html">Research</a></div>
+      <div class="desc">
+        <span class="tag standalone">Research</span>
+        Survey of existing TypeScript stream and messaging libraries as alternatives.
+      </div>
+    </div>
   </div>
-</div>
+</section>
 
-<div class="card">
-  <div class="title"><a href="stream/stream-migration-summary.html">Stream Migration Summary</a></div>
-  <div class="desc">
-    <span class="tag new">New</span>
-    What changed when the stream library replaced ad-hoc event bus and raw WebSocket management. API replacements, protocol changes, patterns, and enforcement rules.
+<section class="topic" data-updated="2026-11-05">
+  <div class="topic-header" onclick="toggleSection(this)">
+    <h2>Game</h2>
+    <span class="updated">Updated Nov 5, 2026</span>
+    <span class="toggle">collapse</span>
   </div>
-</div>
-
-<div class="card">
-  <div class="title"><a href="stream/stream-library-research.html">Stream Library Research</a></div>
-  <div class="desc">
-    <span class="tag standalone">Research</span>
-    Survey of existing TypeScript stream and messaging libraries as alternatives.
+  <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.8rem;">
+    Pixel art game experiments with Godot 4 + SpriteLab. Lovecraftian theme.
+  </p>
+  <div class="topic-body">
+    <div class="card">
+      <div class="title"><a href="game/intro.html">Introduction</a></div>
+      <div class="desc">Dark blues, teals, purples — the palette and initial direction.</div>
+    </div>
+    <div class="card">
+      <div class="title"><a href="game/lighthouse.html">Sprite Experiments</a></div>
+      <div class="desc">SpriteLab prompt iteration — eye cloud, lighthouse, learnings.</div>
+    </div>
+    <div class="card">
+      <div class="title"><a href="game/scene.html">Scene Iteration</a></div>
+      <div class="desc">DALL-E background generation — coastal night scene, cliff ratios, parallax prep.</div>
+    </div>
+    <div class="card">
+      <div class="title"><a href="game/playground.html">Playground</a></div>
+      <div class="desc">Parallax layer editor — toggle layers, adjust position/scale/velocity, animate left-to-right.</div>
+    </div>
   </div>
-</div>
+</section>
 
-<h2>State</h2>
-<p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.8rem;">
-  Formalizing state across client, server, and bus. Executable scenarios as docs + tests.
-</p>
-
-<div class="card">
-  <div class="title"><a href="state-fundamentals.html">State Fundamentals</a></div>
-  <div class="desc">
-    <span class="tag new">New</span>
-    Where state lives today, the problems, executable scenario vision, and reference material
-    (event sourcing, The Log, Elm/Redux, Rust ownership, CRDTs).
+<section class="topic" data-updated="2026-11-05">
+  <div class="topic-header" onclick="toggleSection(this)">
+    <h2>State</h2>
+    <span class="updated">Updated Nov 5, 2026</span>
+    <span class="toggle">collapse</span>
   </div>
-</div>
-
-<h2>Projects</h2>
-<p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.8rem;">
-  Independent explorations and ideas, each in their own context.
-</p>
-
-<div class="card">
-  <div class="title"><a href="game/intro.html">Game: Introduction</a></div>
-  <div class="desc">
-    <span class="tag new">New</span>
-    Pixel art game experiments with Godot 4 + SpriteLab. Lovecraftian theme — dark blues, teals, purples.
+  <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.8rem;">
+    Formalizing state across client, server, and bus. Executable scenarios as docs + tests.
+  </p>
+  <div class="topic-body">
+    <div class="card">
+      <div class="title"><a href="state-fundamentals.html">State Fundamentals</a></div>
+      <div class="desc">
+        Where state lives today, the problems, executable scenario vision, and reference material
+        (event sourcing, The Log, Elm/Redux, Rust ownership, CRDTs).
+      </div>
+    </div>
   </div>
-</div>
+</section>
 
-<div class="card">
-  <div class="title"><a href="game/lighthouse.html">Game: Sprite Experiments</a></div>
-  <div class="desc">
-    <span class="tag new">New</span>
-    SpriteLab prompt iteration — eye cloud, lighthouse, learnings.
+<section class="topic" data-updated="2026-11-05">
+  <div class="topic-header" onclick="toggleSection(this)">
+    <h2>Agent Infrastructure</h2>
+    <span class="updated">Updated Nov 5, 2026</span>
+    <span class="toggle">collapse</span>
   </div>
-</div>
-
-<div class="card">
-  <div class="title"><a href="game/scene.html">Game: Scene Iteration</a></div>
-  <div class="desc">
-    <span class="tag new">New</span>
-    DALL-E background generation — coastal night scene, cliff ratios, parallax prep.
+  <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.8rem;">
+    How agents are dispatched, tracked, and observed across hosts.
+  </p>
+  <div class="topic-body">
+    <div class="card">
+      <div class="title"><a href="agent-task-management.html">Agent Task Management</a></div>
+      <div class="desc">
+        Dispatch board design: unified sidebar for tracking teammates, shrooms, remote agents, and external builds.
+      </div>
+    </div>
   </div>
-</div>
+</section>
 
-<div class="card">
-  <div class="title"><a href="game/playground.html">Game: Playground</a></div>
-  <div class="desc">
-    <span class="tag new">New</span>
-    Parallax layer editor — toggle layers, adjust position/scale/velocity, animate left-to-right.
+<section class="topic" data-updated="2026-11-05">
+  <div class="topic-header" onclick="toggleSection(this)">
+    <h2>Reference</h2>
+    <span class="updated">Updated Nov 5, 2026</span>
+    <span class="toggle">collapse</span>
   </div>
-</div>
-
-<h2>Agent Infrastructure</h2>
-<p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.8rem;">
-  How agents are dispatched, tracked, and observed across hosts.
-</p>
-
-<div class="card">
-  <div class="title"><a href="agent-task-management.html">Agent Task Management</a></div>
-  <div class="desc">
-    <span class="tag new">New</span>
-    Dispatch board design: unified sidebar for tracking teammates, shrooms, remote agents, and external builds.
+  <div class="topic-body">
+    <div class="card">
+      <div class="title"><a href="blog-conventions.html">Blog &amp; Doc Conventions</a></div>
+      <div class="desc">
+        <span class="tag standalone">Convention</span>
+        Internal guide: file structure, nav rules, styling, series progression, URL verification.
+      </div>
+    </div>
   </div>
-</div>
+</section>
 
-<h2>Reference</h2>
+<script>
+function toggleSection(header) {
+  const section = header.closest('.topic');
+  const body = section.querySelector('.topic-body');
+  const toggle = header.querySelector('.toggle');
+  if (body.classList.contains('collapsed')) {
+    body.classList.remove('collapsed');
+    body.style.maxHeight = body.scrollHeight + 'px';
+    toggle.textContent = 'collapse';
+  } else {
+    body.style.maxHeight = body.scrollHeight + 'px';
+    requestAnimationFrame(function() {
+      body.classList.add('collapsed');
+    });
+    toggle.textContent = 'expand';
+  }
+}
 
-<div class="card">
-  <div class="title"><a href="blog-conventions.html">Blog &amp; Doc Conventions</a></div>
-  <div class="desc">
-    <span class="tag standalone">Convention</span>
-    Internal guide: file structure, nav rules, styling, series progression, URL verification.
-  </div>
-</div>
+function toggleAll(collapse) {
+  document.querySelectorAll('.topic').forEach(function(section) {
+    var body = section.querySelector('.topic-body');
+    var toggle = section.querySelector('.toggle');
+    if (collapse) {
+      body.style.maxHeight = body.scrollHeight + 'px';
+      requestAnimationFrame(function() { body.classList.add('collapsed'); });
+      toggle.textContent = 'expand';
+    } else {
+      body.classList.remove('collapsed');
+      body.style.maxHeight = body.scrollHeight + 'px';
+      toggle.textContent = 'collapse';
+    }
+  });
+}
+
+// Set initial max-height so animation works
+document.querySelectorAll('.topic-body').forEach(function(body) {
+  body.style.maxHeight = body.scrollHeight + 'px';
+});
+</script>
 
 </body>
 </html>

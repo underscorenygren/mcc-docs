@@ -74,7 +74,8 @@ For docs in subdirectories, adjust the stylesheet path: `href="../../style.css"`
 
 - `<span class="tag series">Series</span>` — Part of a multi-doc series
 - `<span class="tag standalone">Research</span>` — Independent research or reference
-- `<span class="tag new">New</span>` — Recently added
+
+Do not use a "New" tag — freshness is derived from the `data-updated` attribute on topic sections in index.html.
 
 ### Style rules
 
