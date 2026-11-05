@@ -11,15 +11,28 @@ All docs are standalone HTML files that link to `style.css` for consistent styli
 ```
 index.html          # Landing page with card links to all docs
 style.css           # Shared dark-theme stylesheet
-*.html              # Top-level docs
-projects/           # Project-specific docs in subdirectories
-  game/             # Game project docs
-  workout/          # Workout project docs
+message/            # Message mechanics series
+stream/             # Stream library series
+projects/           # Independent project explorations
+  game/
+  workout/
+  writing/
+*.html              # Standalone docs (no siblings yet)
 ```
+
+### Topic folders
+
+Docs are grouped by concept into **topic folders**. Convention:
+
+- All docs about a topic live in the same folder (e.g., `stream/`)
+- All files in a subfolder are **assumed related** — no explicit linking required
+- When a second doc on the same topic appears, create a folder and move both in
+- Standalone docs live at the root until they get a sibling
+- Docs in subfolders use `../style.css` for the stylesheet
 
 ### Creating a new doc
 
-1. Create a new `.html` file at the root (or in a `projects/<name>/` subdirectory for project-specific docs)
+1. Create a new `.html` file in the appropriate topic folder (or at the root if standalone)
 2. Use this template:
 
 ```html
