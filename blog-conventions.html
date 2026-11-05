@@ -75,6 +75,10 @@
 </head>
 <body>
 
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+</nav>
+
 <h1>Blog & Doc Conventions</h1>
 <p class="subtitle">
   Internal guide for generating docs and blog-style pages. These rules ensure
@@ -86,8 +90,17 @@
 <div class="rule must">
   <div class="label">Must</div>
   <div class="body">
-    All docs live in <code>docs/</code>. Standalone docs go in <code>docs/</code> directly.
-    Project-scoped docs go in <code>docs/projects/&lt;name&gt;/</code>.
+    All docs live at the repo root. Related docs are grouped into <strong>topic folders</strong>
+    (e.g., <code>message/</code>, <code>stream/</code>, <code>game/</code>).
+    Standalone docs live at the root until they get a sibling on the same topic.
+  </div>
+</div>
+
+<div class="rule must">
+  <div class="label">Must</div>
+  <div class="body">
+    All files in a topic folder are <strong>assumed related</strong> by proximity.
+    When a second doc on the same topic appears, create a folder and move both in.
   </div>
 </div>
 
@@ -102,28 +115,54 @@
 <div class="rule must">
   <div class="label">Must</div>
   <div class="body">
-    Every new doc must be added to <code>docs/index.html</code> (the landing page)
+    Every new doc must be added to <code>index.html</code> (the landing page)
     so it's discoverable.
   </div>
 </div>
 
 <h2>Navigation</h2>
 
+<h3>Breadcrumbs</h3>
+
 <div class="rule must">
   <div class="label">Must</div>
   <div class="body">
-    <strong>Sibling nav at the top.</strong> Every doc in a folder with peers gets a nav block
-    immediately after the title/subtitle. Lists all siblings in the same folder, highlights
-    the current page, and links back to the docs index. This is how readers move between
+    <strong>Every page gets a breadcrumb at the top.</strong> Immediately after
+    <code>&lt;body&gt;</code>, before the <code>&lt;h1&gt;</code>. This lets the reader
+    always navigate back to the index and see where they are.
+  </div>
+</div>
+
+<p>For root-level pages:</p>
+<pre><code>&lt;nav style="margin-bottom: 1.5rem; font-size: 0.85rem;"&gt;
+  &lt;a href="index.html" style="color: #5dade2; text-decoration: none;"&gt;MCC Docs&lt;/a&gt;
+&lt;/nav&gt;</code></pre>
+
+<p>For pages in a topic folder:</p>
+<pre><code>&lt;nav style="margin-bottom: 1.5rem; font-size: 0.85rem;"&gt;
+  &lt;a href="../index.html" style="color: #5dade2; text-decoration: none;"&gt;MCC Docs&lt;/a&gt;
+  / &lt;span style="color: #94a3b8;"&gt;Topic Name&lt;/span&gt;
+&lt;/nav&gt;</code></pre>
+
+<p>The breadcrumb uses inline styles matching the page's link and muted colors.
+  <code>index.html</code> is the root and does not need a breadcrumb.</p>
+
+<h3>Series nav</h3>
+
+<div class="rule must">
+  <div class="label">Must</div>
+  <div class="body">
+    <strong>Sibling nav after the title.</strong> Every doc in a folder with peers gets a nav block
+    after the title/subtitle. Lists all siblings in the same folder, highlights
+    the current page, and links to the others. This is how readers move between
     related pages — like a blog series.
   </div>
 </div>
 
 <pre><code>&lt;nav style="padding: 0.8rem 1.25rem; background: var(--surface); ..."&gt;
-  &lt;div style="..."&gt;Series / Project name&lt;/div&gt;
+  &lt;div style="..."&gt;Series / Topic name&lt;/div&gt;
   &lt;div&gt;&lt;a href="intro.html"&gt;Introduction&lt;/a&gt; — short description&lt;/div&gt;
   &lt;div&gt;&lt;strong&gt;Current Page&lt;/strong&gt; (this page)&lt;/div&gt;
-  &lt;div&gt;&lt;a href="../../index.html"&gt;All docs&lt;/a&gt;&lt;/div&gt;
 &lt;/nav&gt;</code></pre>
 
 <div class="rule must">
@@ -149,8 +188,9 @@
 <div class="rule must">
   <div class="label">Must</div>
   <div class="body">
-    Self-contained — all CSS inline in the <code>&lt;style&gt;</code> tag. No external
-    stylesheets, no shared CSS files. Each page stands alone.
+    All pages link to the shared <code>style.css</code>. Pages in subdirectories
+    use <code>../style.css</code>. No inline <code>&lt;style&gt;</code> blocks for
+    base styling — only for page-specific additions (custom palettes, demos).
   </div>
 </div>
 
@@ -159,7 +199,7 @@
   <div class="body">
     Dark theme consistent with the project aesthetic. Use the standard palette:
     <code>#0f172a</code> bg, <code>#1e293b</code> surface, <code>#e2e8f0</code> text,
-    <code>#94a3b8</code> muted, <code>#5dade2</code> links. Project-specific pages
+    <code>#94a3b8</code> muted, <code>#5dade2</code> links. Topic-specific pages
     (like the game docs) can define their own palette.
   </div>
 </div>
@@ -175,8 +215,8 @@
 <h2>Content patterns</h2>
 
 <h3>Title block</h3>
-<p>Every page starts with: <code>h1</code> title, <code>.subtitle</code> one-liner,
-  optional <code>.meta</code> with date/status. Then the nav. Then the content.</p>
+<p>Every page starts with: breadcrumb nav, <code>h1</code> title, <code>.subtitle</code> one-liner,
+  optional <code>.meta</code> with date/status. Then the series nav (if applicable). Then the content.</p>
 
 <h3>Series progression</h3>
 <p>When a topic has multiple docs, follow a natural progression:</p>
@@ -189,24 +229,53 @@
 <p>Not every series needs all four. A topic can start as one page and grow.</p>
 
 <h3>Interactive / visual demos</h3>
-<p>CSS-only where possible (no JS, no external images). Pixel art grids, animated scenes,
-  and diagrams all work as pure CSS. This keeps pages self-contained and fast.</p>
+<p>CSS-only where possible for visual elements (pixel art grids, animated scenes, diagrams).
+  This keeps pages self-contained and fast.</p>
 
-<h2>Serving</h2>
+<p>For <strong>runnable code examples</strong>, use the established "Run" button pattern
+  (see <a href="stream/stream-library-guide.html">Stream Library Code Guide</a> for a working example).
+  The pattern:</p>
+
+<pre><code>&lt;pre&gt;&lt;code id="ex-NAME-code"&gt;
+// Your example code here
+// Use log() instead of console.log()
+const result = doSomething();
+log('Result:', result);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;button class="run-btn" onclick="runExample('ex-NAME')"&gt;Run&lt;/button&gt;
+&lt;div class="output" id="ex-NAME-output"&gt;&lt;/div&gt;</code></pre>
+
+<p>The <code>runExample()</code> function captures the code block's text content,
+  wraps it in an async function with library imports in scope, and prints output
+  to the output div. Examples should use <code>log()</code> for output (not <code>console.log</code>).
+  Library-specific imports are loaded via a bundled ES module at the top of the page's
+  <code>&lt;script type="module"&gt;</code> block.</p>
+
+<div class="rule should">
+  <div class="label">Should</div>
+  <div class="body">
+    Every code example that demonstrates behavior should be runnable.
+    Static code blocks (type signatures, configuration) don't need Run buttons.
+  </div>
+</div>
+
+<h2>Hosting</h2>
 
 <div class="rule must">
   <div class="label">Must</div>
   <div class="body">
-    Docs are served at <code>/docs/</code> via nginx. The <code>docs/</code> directory
-    is bind-mounted into the nginx container. No build step — edit the file and it's live.
+    Docs are hosted via <strong>GitHub Pages</strong>. Push to <code>main</code> and
+    the site deploys automatically. No build step, no server configuration —
+    static HTML served directly from the repo root.
   </div>
 </div>
 
 <div class="rule must">
   <div class="label">Must</div>
   <div class="body">
-    <strong>Verify URLs before sharing.</strong> After creating or moving a doc, curl the
-    URL to confirm it returns 200 before posting the link in chat. 404s erode trust.
+    <strong>Verify URLs before sharing.</strong> After creating or moving a doc, check
+    the GitHub Pages URL to confirm it's live before posting the link. 404s erode trust.
   </div>
 </div>
 

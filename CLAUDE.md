@@ -13,10 +13,7 @@ index.html          # Landing page with card links to all docs
 style.css           # Shared dark-theme stylesheet
 message/            # Message mechanics series
 stream/             # Stream library series
-projects/           # Independent project explorations
-  game/
-  workout/
-  writing/
+game/               # Game project explorations
 *.html              # Standalone docs (no siblings yet)
 ```
 
@@ -45,6 +42,11 @@ Docs are grouped by concept into **topic folders**. Convention:
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+</nav>
+
 <h1>Doc Title</h1>
 <p class="subtitle">One-line description.</p>
 
@@ -93,7 +95,7 @@ For docs in subdirectories, adjust the stylesheet path: `href="../../style.css"`
 
 ```bash
 # Check all HTML files parse correctly
-for f in *.html projects/**/*.html; do python3 -c "from html.parser import HTMLParser; HTMLParser().feed(open('$f').read())" 2>&1 && echo "OK: $f" || echo "FAIL: $f"; done
+for f in $(find . -name '*.html' -not -path './.git/*'); do python3 -c "from html.parser import HTMLParser; HTMLParser().feed(open('$f').read())" 2>&1 && echo "OK: $f" || echo "FAIL: $f"; done
 ```
 
 ## Deploy

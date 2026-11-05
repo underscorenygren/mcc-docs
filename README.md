@@ -19,10 +19,7 @@ Docs are grouped into **topic folders**. All docs about a concept live in the sa
 ```
 message/          # Message mechanics series
 stream/           # Stream library series
-projects/         # Independent project explorations
-  game/
-  workout/
-  writing/
+game/             # Game project explorations
 ```
 
 Top-level files (`state-fundamentals.html`, `agent-task-management.html`, etc.) are standalone docs that don't yet have siblings. When a second doc on the same topic appears, create a folder and move both in.
