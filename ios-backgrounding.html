@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iOS Backgrounding &amp; App Lifecycle</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .ok  { color: #52b788; }
+  .warn { color: #e09f3e; }
+  .err  { color: #ef4444; }
+  .date { color: var(--text-muted); font-size: 0.85rem; }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;"><a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a></nav>
+
+<h1>iOS Backgrounding &amp; App Lifecycle</h1>
+<p class="subtitle">How iOS manages app execution when backgrounded, and what that means for voice and WebSocket connections.</p>
+<p class="date">2026-10-21 &mdash; Voice Bridge reference</p>
+
+<h2>iOS App States</h2>
+<table>
+  <tr><th>State</th><th>Code runs?</th><th>Network?</th><th>Audio?</th><th>Trigger</th></tr>
+  <tr><td>Active</td><td class="ok">Yes</td><td class="ok">Yes</td><td class="ok">Yes</td><td>App in foreground</td></tr>
+  <tr><td>Background</td><td class="warn">~30s</td><td class="warn">If audio</td><td class="warn">If entitlement</td><td>Home button, app switch, lock screen</td></tr>
+  <tr><td>Suspended</td><td class="err">No</td><td class="err">No</td><td class="err">No</td><td>iOS freezes app after background time expires</td></tr>
+  <tr><td>Terminated</td><td class="err">No</td><td class="err">No</td><td class="err">No</td><td>iOS kills app for memory, or user force-quits</td></tr>
+</table>
+
+<h2>What Keeps an App Alive in Background</h2>
+
+<h3>1. Audio Background Mode (what we use)</h3>
+<p>The <code>UIBackgroundModes: ["audio"]</code> entitlement tells iOS the app plays or records audio. As long as an <code>AVAudioSession</code> is <strong>actively</strong> playing or recording, iOS keeps the app running with full network access.</p>
+<ul>
+  <li><strong>Recording active:</strong> mic stream keeps process alive, WebSockets stay connected, full functionality</li>
+  <li><strong>Audio playing (ambient sounds, TTS):</strong> same — process stays alive</li>
+  <li><strong>Audio stops:</strong> iOS gives ~30s grace, then suspends the app. WebSockets die silently.</li>
+</ul>
+<p>This is how YouTube, Spotify, and podcast apps work. No audio = no background.</p>
+
+<h3>2. VoIP Push (higher priority)</h3>
+<p>The <code>UIBackgroundModes: ["voip"]</code> entitlement enables VoIP push notifications via PushKit. These wake the app with higher priority than regular silent pushes. Apple requires actual VoIP functionality.</p>
+
+<h3>3. Silent Push Notifications</h3>
+<p>APNs can deliver a <code>content-available: 1</code> push that wakes the app for ~30s of background execution. iOS throttles these to roughly 2-3 per hour. Used by WhatsApp, Telegram for background message delivery.</p>
+
+<h3>4. Background Tasks (BGTaskScheduler)</h3>
+<p>iOS 13+ API for deferred work. Not suitable for real-time messaging — iOS decides when to run them.</p>
+
+<h2>Our Current Implementation</h2>
+
+<h3>Suspend/Resume Events</h3>
+<pre>
+// Typed events (shared/core/orch-events.ts)
+Evt.App.Suspend  — 'app:suspend'
+Evt.App.Resume   — 'app:resume'
+
+// Mobile: React Native AppState listener
+RNAppState.addEventListener("change", (state) => {
+  if (state === "active")     bus.emit(Evt.App.Resume, {});
+  if (state === "background") bus.emit(Evt.App.Suspend, {});
+});
+
+// Web: visibilitychange listener
+document.addEventListener("visibilitychange", () => {
+  bus.emit(document.hidden ? Evt.App.Suspend : Evt.App.Resume, {});
+});
+</pre>
+
+<h3>Orchestrator Behavior on Suspend</h3>
+<table>
+  <tr><th>Condition</th><th>Action</th><th>Why</th></tr>
+  <tr><td>Recording active</td><td>Skip suspend entirely</td><td>iOS background audio keeps everything alive</td></tr>
+  <tr><td>Idle (not recording)</td><td>Disconnect voice WS only</td><td>Mic not needed; saves resources</td></tr>
+  <tr><td>Chat WS</td><td>Stays connected</td><td>Incoming messages can trigger TTS playback</td></tr>
+</table>
+
+<h3>On Resume</h3>
+<ul>
+  <li>Reconnect voice WS if disconnected</li>
+  <li>Reconnect chat WS if iOS killed it while suspended</li>
+</ul>
+
+<h3>Disconnect Sound</h3>
+<p>Both web and mobile play an error chime (<code>synth/error.wav</code>) when a WebSocket drops. This gives the user an audible signal that iOS may have frozen the app.</p>
+
+<h2>Known Gaps</h2>
+
+<table>
+  <tr><th>Gap</th><th>Impact</th><th>Solution</th><th>Effort</th></tr>
+  <tr>
+    <td>No audio playing = app freezes</td>
+    <td>Messages don't arrive, no TTS</td>
+    <td>Silent audio loop when backgrounded, or push notifications</td>
+    <td>Small (silent loop) / Medium (push)</td>
+  </tr>
+  <tr>
+    <td>WS dies silently after iOS suspension</td>
+    <td>No messages until user returns to app</td>
+    <td>Push notification wakes app briefly for message fetch + TTS</td>
+    <td>Medium — needs APNs setup, server-side push</td>
+  </tr>
+  <tr>
+    <td>No reconnect after long suspension</td>
+    <td>Auth token may expire during suspension</td>
+    <td>On resume, check auth before reconnecting</td>
+    <td>Small</td>
+  </tr>
+</table>
+
+<h2>Recommended Next Steps</h2>
+<ol>
+  <li><strong>Silent audio keepalive:</strong> When app backgrounds and no audio is playing, start a silent AVAudioSession loop. Stop on resume. Minimal battery impact, keeps WS alive.</li>
+  <li><strong>Push notifications (expo-notifications):</strong> Server detects client disconnect, sends APNs silent push, app wakes for 30s, fetches message, plays TTS. Handles the case where audio keepalive eventually stops.</li>
+  <li><strong>VoIP push for priority delivery:</strong> Higher priority than regular silent push, but Apple reviews VoIP usage strictly.</li>
+</ol>
+
+<h2>How Other Apps Handle It</h2>
+<table>
+  <tr><th>App</th><th>Strategy</th></tr>
+  <tr><td>YouTube / Spotify</td><td>Audio background mode — stays alive while audio plays</td></tr>
+  <tr><td>WhatsApp / Telegram</td><td>Silent push notifications — APNs wakes app for message fetch</td></tr>
+  <tr><td>Clubhouse / Discord</td><td>VoIP push + audio background mode</td></tr>
+  <tr><td>Walkie-talkie apps</td><td>Silent audio loop + VoIP push</td></tr>
+</table>
+
+<!-- published: PENDING @ PENDING -->
+</body>
+</html>
