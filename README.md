@@ -1,16 +1,14 @@
 # MCC Docs
 
-Public documentation site for [Mushroom Cloud Computing](https://mushroomcloudcomputing.com).
+## For Humans
 
-Design explorations, architecture decisions, and reference material from building a voice-first agent orchestration platform. Written collaboratively by humans and AI agents.
+This is the home of work documents produced by my coding agents. 
 
-## What's here
+The idea here is that the "blog voice" from AI is sloppy (as in slop), and therefore not suitable for distribution. However, the same blog voice can be really useful as a teaching tool, quickly breaking down concepts, visualizing them, for when I am working with the machine to develop some concept. 
 
-- **Message Mechanics** — How messages flow through a real-time system: IDs, ordering, delivery, buses, voice
-- **Stream Library** — Designing a layered messaging library from bytes to business logic
-- **State** — Formalizing state across client, server, and event bus
-- **Projects** — Game experiments, interactive demos
-- **Agent Infrastructure** — Dispatching, tracking, and observing AI agents
+Sometimes, when I am wrestling with a technical concept I struggle to fit into my brain in its entirety, I might ask the computer to break it down and visualize it. I find the "blogging" structure really helpful for this. In the past, I would have googled around until I found something suitable. Now, I trust the machine to generate something similar. Sometimes, I will prompt based on articles I've read in the past, other times I will ask the machine to take on its own research. I then consume the 'blog post' over time as I continue to work on the problem, building on topics by asking the machine to refine an article, or create new, related topics. 
+
+I've found it really useful to have a consistent visual style. It is also really helpful to have the machine visualize things that I would otherwise squiggle in my notebook (not that I still don't, but that gets lost much more easily). For example, I would never myself spend the time to completely flesh out a sequence diagram, but I might really like looking at one as I think about some interaction. Using AI in this way solves the problem nicely: I get the diagram without having to put in any effort at all; I can prompt it to produce it while we are continuing on other work. 
 
 ## For agents
 
