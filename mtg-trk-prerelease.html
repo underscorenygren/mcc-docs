@@ -208,9 +208,46 @@
     padding-top: 1rem;
     border-top: 1px solid #333;
   }
+  /* Pull quote styling */
+  .pull-quote {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 0.5rem 0.8rem;
+    margin: 0.5rem 0;
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+  .pull-quote cite {
+    display: block;
+    font-size: 0.75rem;
+    color: #666;
+    margin-top: 0.2rem;
+    font-style: normal;
+  }
+
+  /* Bomb subsection headers */
+  .bomb-color-intro {
+    color: var(--muted);
+    font-size: 0.88rem;
+    margin: 0.3rem 0 0.8rem;
+  }
+
+  /* Mobile responsiveness */
   @media (max-width: 600px) {
-    body { padding: 0 0.5rem 3rem; }
+    body { padding: 0 1rem 3rem; }
+    header h1 { font-size: 1.5rem; }
     .card-grid { grid-template-columns: 1fr; }
+    .card-entry img { max-width: 100%; height: auto; }
+    .card-entry .info { padding: 0.7rem 1rem; }
+    .tldr { padding: 1rem; }
+    .cheat-sheet { padding: 0.8rem; }
+    .cheat-sheet td { font-size: 0.82rem; padding: 0.25rem 0.3rem; }
+    .mechanics { grid-template-columns: 1fr; }
+    h2 { font-size: 1.2rem; }
+    .color-header { font-size: 1.05rem; }
+    .tier { flex-direction: column; }
+    .arch-card { font-size: 0.82rem; }
   }
 </style>
 </head>
