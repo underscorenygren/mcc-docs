@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MTG Star Trek (TRK) — Sealed Prerelease Guide</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --card: #334155;
+    --accent: #e94560;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --white: #f5e6c8;
+    --blue: #7eb8da;
+    --black: #c9a0dc;
+    --red: #e8836b;
+    --green: #7dcea0;
+    --gold: #f0c040;
+    --common: #888;
+    --uncommon: #c0c0c0;
+    --rare: #f0c040;
+    --mythic: #e94560;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 0 1rem 4rem;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  header {
+    text-align: center;
+    padding: 2rem 0 1rem;
+    border-bottom: 2px solid var(--accent);
+    margin-bottom: 2rem;
+  }
+  header h1 { font-size: 2rem; margin-bottom: 0.25rem; }
+  header .subtitle { color: var(--muted); font-size: 0.95rem; }
+  h2 {
+    font-size: 1.4rem;
+    margin: 2.5rem 0 1rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid #333;
+  }
+  h3 { font-size: 1.15rem; margin: 1.5rem 0 0.5rem; }
+
+  .tldr {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    padding: 1.2rem 1.5rem;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 2rem;
+  }
+  .tldr h2 { margin-top: 0; border: none; padding: 0; }
+  .tldr ul { margin: 0.5rem 0 0 1.2rem; }
+  .tldr li { margin-bottom: 0.3rem; }
+
+  .sealed-note {
+    background: var(--card);
+    border: 1px solid var(--gold);
+    padding: 0.8rem 1rem;
+    border-radius: 6px;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.9rem;
+  }
+  .sealed-note strong { color: var(--gold); }
+
+  .tier { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .tier-label {
+    font-weight: bold;
+    min-width: 50px;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 0.85rem;
+  }
+  .tier-s { background: var(--accent); }
+  .tier-a { background: #c06030; }
+  .tier-b { background: #606060; }
+  .arch-card {
+    background: var(--card);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+
+  .mechanics {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.8rem;
+    margin: 1rem 0;
+  }
+  .mech-card {
+    background: var(--card);
+    padding: 0.7rem;
+    border-radius: 6px;
+  }
+  .mech-card .mech-name { font-weight: bold; font-size: 0.95rem; }
+  .mech-card .mech-desc { font-size: 0.82rem; color: var(--muted); margin-top: 0.2rem; }
+
+  /* Card grid — used for bombs, tricks, and signal cards */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .card-entry {
+    background: var(--surface);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #333;
+  }
+  .card-entry img {
+    width: 100%;
+    display: block;
+    border-radius: 8px 8px 0 0;
+  }
+  .card-entry .info {
+    padding: 0.7rem 0.9rem;
+  }
+  .card-entry .name { font-weight: bold; font-size: 1rem; }
+  .card-entry .tags {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.3rem;
+    flex-wrap: wrap;
+  }
+  .tag {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 3px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .tag-mana { background: #2a2a4a; color: var(--gold); }
+  .tag-common { background: #2a2a3a; color: var(--common); }
+  .tag-uncommon { background: #1a2a3a; color: var(--uncommon); }
+  .tag-rare { background: #3a2a1a; color: var(--rare); }
+  .tag-mythic { background: #3a1a2a; color: var(--mythic); }
+  .tag-flash { background: var(--blue); color: #000; }
+  .card-entry .effect {
+    font-size: 0.85rem;
+    color: var(--text);
+    margin-top: 0.4rem;
+    line-height: 1.4;
+  }
+  .card-entry .commentary {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-top: 0.3rem;
+    border-top: 1px solid #2a2a3a;
+    padding-top: 0.3rem;
+  }
+
+  /* Color section headers */
+  .color-header {
+    font-size: 1.2rem;
+    margin: 2rem 0 0.5rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    display: inline-block;
+  }
+  .color-header.white { background: rgba(245,230,200,0.15); border-left: 4px solid var(--white); }
+  .color-header.blue { background: rgba(126,184,218,0.15); border-left: 4px solid var(--blue); }
+  .color-header.black { background: rgba(201,160,220,0.15); border-left: 4px solid var(--black); }
+  .color-header.red { background: rgba(232,131,107,0.15); border-left: 4px solid var(--red); }
+  .color-header.green { background: rgba(125,206,160,0.15); border-left: 4px solid var(--green); }
+  .color-header.multi { background: rgba(240,192,64,0.15); border-left: 4px solid var(--gold); }
+
+  .mana { font-family: monospace; color: var(--gold); white-space: nowrap; }
+
+  .cheat-sheet {
+    background: var(--card);
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    padding: 1.2rem;
+    margin: 2rem 0;
+  }
+  .cheat-sheet h3 { color: var(--accent); margin-top: 0; }
+  .cheat-sheet table { width: 100%; }
+  .cheat-sheet td { padding: 0.3rem 0.5rem; font-size: 0.88rem; }
+  .cheat-sheet .mana { min-width: 50px; }
+
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 0.3rem 0.8rem;
+    margin: 0.5rem 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.85rem;
+  }
+  blockquote cite { display: block; font-size: 0.75rem; color: #666; margin-top: 0.2rem; font-style: normal; }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid #333;
+  }
+  @media (max-width: 600px) {
+    body { padding: 0 0.5rem 3rem; }
+    .card-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+</nav>
+
+<header>
+  <h1>Star Trek (TRK) — Sealed Prerelease Guide</h1>
+  <div class="subtitle">What to build, what to play around, what to first-pick &middot; November 2026</div>
+</header>
+
+<!-- ==================== TL;DR ==================== -->
+<div class="tldr">
+  <h2>TL;DR — Sealed Priorities</h2>
+  <ul>
+    <li><strong>Open your bombs first, build around them.</strong> Strange New Worlds lands fix mana generously — splashing is encouraged. Don't force two colors if your rares pull you wider.</li>
+    <li><strong>Federation rewards creature-type diversity.</strong> In sealed, you naturally get varied creature types across your pool. Lean into it.</li>
+    <li><strong>Gruul landfall</strong> and <strong>Dimir dilemma control</strong> are the strongest shells if your pool supports them.</li>
+    <li><strong>Borg (Orzhov) snowballs.</strong> If you see Assimilate pieces, go all-in. If your opponent has them, kill their first Borg creature on sight.</li>
+    <li><strong>White has the best common trick</strong> — Set Phasers to... is modal removal at 1 mana. Always respect open W.</li>
+    <li><strong>Red is the deepest trick color</strong> — 9 instant-speed cards. Always respect open R mana.</li>
+    <li><strong>Format is midrange.</strong> Sealed especially rewards bombs + removal + good mana over speed.</li>
+  </ul>
+</div>
+
+<div class="sealed-note">
+  <strong>Sealed-specific:</strong> You won't draft archetypes — you'll discover them in your pool. Sort by color, identify your bombs and removal, then find which 2-3 color combination gives you the best curve with the most powerful cards. Strange New Worlds lands make 3-color builds very viable.
+</div>
+
+<!-- ==================== MECHANICS ==================== -->
+<h2>Key Mechanics</h2>
+<div class="mechanics">
+  <div class="mech-card">
+    <div class="mech-name">Beam Me Up</div>
+    <div class="mech-desc">Exile a creature, return it later. Reuse ETBs, dodge removal.</div>
+  </div>
+  <div class="mech-card">
+    <div class="mech-name">Face a Dilemma</div>
+    <div class="mech-desc">Opponent chooses between two bad options. Dimir's core mechanic.</div>
+  </div>
+  <div class="mech-card">
+    <div class="mech-name">Federation</div>
+    <div class="mech-desc">Bonus when you control creatures with diverse types. Build wide, varied boards.</div>
+  </div>
+  <div class="mech-card">
+    <div class="mech-name">Strange New Worlds</div>
+    <div class="mech-desc">Explore-style lands. Enter tapped but fix mana and enable landfall.</div>
+  </div>
+  <div class="mech-card">
+    <div class="mech-name">Assimilate</div>
+    <div class="mech-desc">Borg mechanic. Turns opponents' creatures into Borg. Snowballs hard.</div>
+  </div>
+  <div class="mech-card">
+    <div class="mech-name">Spacecraft</div>
+    <div class="mech-desc">Vehicle-like artifacts. Crew them for evasive damage.</div>
+  </div>
+</div>
+
+<!-- ==================== ARCHETYPES ==================== -->
+<h2>Archetype Tier List</h2>
+<p style="color:var(--muted);margin-bottom:0.8rem;">In sealed, you don't choose an archetype — but knowing the synergies helps you identify what your pool is trying to do.</p>
+
+<div class="tier">
+  <span class="tier-label tier-s">S</span>
+  <span class="arch-card" style="border-left:3px solid var(--red)">RG Gruul — Away Team Landfall</span>
+  <span class="arch-card" style="border-left:3px solid var(--blue)">UB Dimir — Dilemma Control</span>
+</div>
+<div class="tier">
+  <span class="tier-label tier-a">A</span>
+  <span class="arch-card" style="border-left:3px solid var(--white)">GW Selesnya — Doctors &amp; Counters</span>
+  <span class="arch-card" style="border-left:3px solid var(--blue)">UR Izzet — Scientists</span>
+  <span class="arch-card" style="border-left:3px solid var(--white)">WB Orzhov — Borg Assimilate</span>
+</div>
+<div class="tier">
+  <span class="tier-label tier-b">B</span>
+  <span class="arch-card" style="border-left:3px solid var(--black)">BR Rakdos — Klingon Aggro</span>
+  <span class="arch-card" style="border-left:3px solid var(--white)">WU Azorius — Spacecraft Fleet</span>
+  <span class="arch-card" style="border-left:3px solid var(--green)">BG Golgari — Graveyard Value</span>
+</div>
+
+<blockquote>
+  "Gruul Away Team is the best performing archetype in early data. Landfall triggers off Strange New Worlds are essentially free value, and the payoffs are real."
+  <cite>— GameTyrant, TRK Limited Tier List</cite>
+</blockquote>
+
+<!-- ==================== BOMBS ==================== -->
+<h2>Bombs — Build Around These</h2>
+<p style="color:var(--muted);margin-bottom:0.8rem;">If you open any of these, they should be in your deck. Splash if needed.</p>
+
+<div class="card-grid">
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/d/3/d3102654-6ac2-4fb3-b855-d29e01269dff.jpg?1784065440" alt="Captain Kathryn Janeway" loading="lazy">
+    <div class="info">
+      <div class="name">Captain Kathryn Janeway</div>
+      <div class="tags"><span class="tag tag-mythic">Mythic</span></div>
+      <div class="effect">Format-defining threat. Federation payoff that takes over games.</div>
+      <div class="commentary">"The card that makes 5-color soup a real strategy in sealed." — GameTyrant</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/9/5/956eeb71-fd5f-4a26-aff6-77127c0ad4e7.jpg?1793274247" alt="Wesley Crusher, Starfleet Cadet" loading="lazy">
+    <div class="info">
+      <div class="name">Wesley Crusher, Starfleet Cadet</div>
+      <div class="tags"><span class="tag tag-mana">2UU</span><span class="tag tag-rare">Rare</span><span class="tag tag-flash">Flash</span></div>
+      <div class="effect">Choose TWO: counter noncreature unless pay 2 / bounce MV&le;2 / unblockable / draw 2 discard 2</div>
+      <div class="commentary">"A flash 4-drop that does two things is absurd. This is a first pick over most rares." — MTGRocks</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/d/8/d8593bf7-5248-4f4a-bf8b-9816d2f76c6b.jpg?1793187127" alt="Dr. Leonard Bones McCoy" loading="lazy">
+    <div class="info">
+      <div class="name">Dr. Leonard "Bones" McCoy</div>
+      <div class="tags"><span class="tag tag-mana">1GG</span><span class="tag tag-rare">Rare</span><span class="tag tag-flash">Flash</span></div>
+      <div class="effect">Choose: return non-Doctor permanent from GY to hand / target creature returns with +1/+1 counter when it dies this turn</div>
+      <div class="commentary">"Recursion or death insurance on a flash body. Card advantage machine that's never bad." — GameTyrant</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/7/d/7d90016d-c2cb-457b-9d97-c3b9411c46e3.jpg?1793013074" alt="Subcommander T'Pol" loading="lazy">
+    <div class="info">
+      <div class="name">Subcommander T'Pol</div>
+      <div class="tags"><span class="tag tag-mana">2U</span><span class="tag tag-rare">Rare</span><span class="tag tag-flash">Flash</span></div>
+      <div class="effect">Choose: counter activated/triggered ability / tap + stun counter</div>
+      <div class="commentary">"A Stifle or a tap-down on a body at flash speed. This card creates impossible combat situations." — MTGRocks</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/5/b/5b306901-1bba-488b-866e-83aa162dab5a.jpg?1793274251" alt="Brazen Bluff" loading="lazy">
+    <div class="info">
+      <div class="name">Brazen Bluff</div>
+      <div class="tags"><span class="tag tag-mana">RR</span><span class="tag tag-rare">Rare</span></div>
+      <div class="effect">Target opponent's noncreature spell: they exile it or you free-cast a noncreature from hand.</div>
+      <div class="commentary">"Pure mindgames. Either you counter their spell or you get to cheat something into play." — GameTyrant</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== COMMONS/UNCOMMONS SIGNAL ==================== -->
+<h2>Commons &amp; Uncommons — Best Cards by Color</h2>
+<p style="color:var(--muted);margin-bottom:0.8rem;">The cards that make or break your sealed pool. Build your deck around the colors where you have the most of these.</p>
+
+<!-- WHITE -->
+<h3 class="color-header white">White</h3>
+<div class="card-grid">
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/5/4/54dbf416-973d-46c8-b9be-e863283d328b.jpg?1784036750" alt="Set Phasers to..." loading="lazy">
+    <div class="info">
+      <div class="name">Set Phasers to...</div>
+      <div class="tags"><span class="tag tag-mana">W</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">Choose: tap + stun counter / 3 damage to attacking creature</div>
+      <div class="commentary">"The best common in the set. Modal removal at one mana that handles both offense and defense." — GameTyrant</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/0/b/0b60c9af-8ea9-491d-a4a4-226a2143e7f3.jpg?1785981369" alt="Shields Up!" loading="lazy">
+    <div class="info">
+      <div class="name">Shields Up!</div>
+      <div class="tags"><span class="tag tag-mana">1W</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">Hexproof + indestructible until EOT. If creature, +1/+1 counter.</div>
+      <div class="commentary">Blanks any removal spell AND leaves behind a permanent buff. Devastating when held up.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/3/7/3783c530-a2da-4dc1-811a-0a9a412c8e78.jpg?1785981363" alt="Saavik, Stoic Student" loading="lazy">
+    <div class="info">
+      <div class="name">Saavik, Stoic Student</div>
+      <div class="tags"><span class="tag tag-mana">4W</span><span class="tag tag-uncommon">Uncommon</span><span class="tag tag-flash">Flash</span></div>
+      <div class="effect">Legendary. ETB: deals X damage to attacking/blocking creature (X = creature types among non-Borg creatures you control)</div>
+      <div class="commentary">Federation payoff that's also removal. Flash means she's a combat blowout.</div>
+    </div>
+  </div>
+</div>
+
+<!-- BLUE -->
+<h3 class="color-header blue">Blue</h3>
+<div class="card-grid">
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/4/e/4e8f75b8-cca7-4ed3-90db-bcac02e74611.jpg?1784036751" alt="Consider the Prime Directive" loading="lazy">
+    <div class="info">
+      <div class="name">Consider the Prime Directive</div>
+      <div class="tags"><span class="tag tag-mana">2U</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">Choose: counter unless pay 3 / tap + stun counter + draw a card</div>
+      <div class="commentary">"Both modes are good. The draw mode makes this never dead even when they play around the counter." — GameTyrant</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/1/1/11c94c5f-abf4-429e-8703-c5db9abd79bf.jpg?1784065440" alt="Highly Illogical" loading="lazy">
+    <div class="info">
+      <div class="name">Highly Illogical</div>
+      <div class="tags"><span class="tag tag-mana">1U</span><span class="tag tag-uncommon">Uncommon</span></div>
+      <div class="effect">Counter MV&le;2. Kicker 1U: counter any spell.</div>
+      <div class="commentary">"A 2-mana counter early, a hard counter late. The flexibility is what makes it premium." — MTGRocks</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/9/5/959318c1-3f7e-4418-91ce-be529af27972.jpg?1785981391" alt="Cloistered Telepath" loading="lazy">
+    <div class="info">
+      <div class="name">Cloistered Telepath</div>
+      <div class="tags"><span class="tag tag-mana">1U</span><span class="tag tag-common">Common</span><span class="tag tag-flash">Flash</span></div>
+      <div class="effect">1/1 creature. ETB: draw, then discard.</div>
+      <div class="commentary">Flash looting on a body. Smooths your draws, fills the graveyard, ambush-blocks 1/1s.</div>
+    </div>
+  </div>
+</div>
+
+<!-- BLACK -->
+<h3 class="color-header black">Black</h3>
+<div class="card-grid">
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/0/4/04a479be-8093-4775-a5d9-8b0e1683bf12.jpg?1785981475" alt="Eject the Warp Core" loading="lazy">
+    <div class="info">
+      <div class="name">Eject the Warp Core</div>
+      <div class="tags"><span class="tag tag-mana">1B</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">Target creature gets -2/-2. Kicker (sac artifact/creature): -6/-6 instead.</div>
+      <div class="commentary">"The kicked mode kills basically everything in the format. Premium common removal." — GameTyrant</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/2/c/2c309b0d-94b4-405e-be6c-18b407323e51.jpg?1785981492" alt="He's Dead, Jim" loading="lazy">
+    <div class="info">
+      <div class="name">He's Dead, Jim</div>
+      <div class="tags"><span class="tag tag-mana">3B</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">Destroy target creature. Surveil 1.</div>
+      <div class="commentary">Unconditional removal + card selection. The bread and butter of any black deck.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/6/c/6c5a87cf-7790-4335-8497-ff793bbdcb05.jpg?1793013157" alt="Impossible Choice" loading="lazy">
+    <div class="info">
+      <div class="name">Impossible Choice</div>
+      <div class="tags"><span class="tag tag-mana">2B</span><span class="tag tag-uncommon">Uncommon</span></div>
+      <div class="effect">Choose: destroy creature (controller gets two 1/1 tokens) / draw 2, each player loses 2 life</div>
+      <div class="commentary">"Both modes generate advantage. The removal mode is real removal — two 1/1s are a fine trade for a bomb." — MTGRocks</div>
+    </div>
+  </div>
+</div>
+
+<!-- RED -->
+<h3 class="color-header red">Red</h3>
+<div class="card-grid">
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/3/d/3df10e9a-efb6-4945-9b1b-29200688702a.jpg?1785981548" alt="Perils of the Past" loading="lazy">
+    <div class="info">
+      <div class="name">Perils of the Past</div>
+      <div class="tags"><span class="tag tag-mana">1R</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">Choose: target creature gets +3/+2 / destroy target artifact</div>
+      <div class="commentary">"The pump mode wins combats, the artifact mode answers Spacecraft. Modal commons are king in sealed." — GameTyrant</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/0/c/0c340eba-645d-416a-9ed4-f2303aa8c919.jpg?1785981528" alt="Captain's Tutelage" loading="lazy">
+    <div class="info">
+      <div class="name">Captain's Tutelage</div>
+      <div class="tags"><span class="tag tag-mana">1R</span><span class="tag tag-common">Common</span><span class="tag tag-flash">Flash</span></div>
+      <div class="effect">Aura. Flash. +2/+0. ETB: enchanted creature gains first strike until EOT.</div>
+      <div class="commentary">Flash aura is a permanent +2/+0 that also wins the combat it enters. Two-for-one potential.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/0/f/0f9b10d3-ba76-45ec-a85c-fb7b26da5561.jpg?1793274269" alt="Red Alert!" loading="lazy">
+    <div class="info">
+      <div class="name">Red Alert!</div>
+      <div class="tags"><span class="tag tag-mana">2R</span><span class="tag tag-uncommon">Uncommon</span></div>
+      <div class="effect">Costs 2 less if a creature is attacking you. All your creatures get +2/+0 until EOT.</div>
+      <div class="commentary">"On defense this costs R for a team-wide pump. On offense it closes games. Either way it's a blowout." — GameTyrant</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/2/2/22c60c17-74ec-460b-bf7a-e56e42239826.jpg?1785981536" alt="Khaaaaaaaaaaaannn!" loading="lazy">
+    <div class="info">
+      <div class="name">Khaaaaaaaaaaaannn!</div>
+      <div class="tags"><span class="tag tag-mana">XR</span><span class="tag tag-uncommon">Uncommon</span></div>
+      <div class="effect">Deals twice X damage to target creature. Exiles if it would die this turn.</div>
+      <div class="commentary">"Scalable removal that exiles. Kills small things early, kills bombs late. The exile clause matters against graveyard recursion." — MTGRocks</div>
+    </div>
+  </div>
+</div>
+
+<!-- GREEN -->
+<h3 class="color-header green">Green</h3>
+<div class="card-grid">
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/c/0/c07979d4-8a58-4cfb-bffa-74e8bd97c7ff.jpg?1785981585" alt="I'm a Doctor, Not a..." loading="lazy">
+    <div class="info">
+      <div class="name">I'm a Doctor, Not a...</div>
+      <div class="tags"><span class="tag tag-mana">G</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">Put a +1/+1 counter on target creature. Untap it. Until EOT, it gets +1/+1 and becomes a Doctor.</div>
+      <div class="commentary">"Does everything — ambush-blocks, saves your creature, adds a permanent counter, AND adds the Doctor type for Federation. Best green common." — GameTyrant</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/9/4/94e9d400-f2bb-46e7-8d41-6038ebdc6c8b.jpg?1785981571" alt="Dathon and Picard at El-Adrel" loading="lazy">
+    <div class="info">
+      <div class="name">Dathon and Picard at El-Adrel</div>
+      <div class="tags"><span class="tag tag-mana">2G</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">Choose: +3/+3 and trample until EOT / each opponent sacrifices a nontoken artifact or enchantment</div>
+      <div class="commentary">+3/+3 trample wins any combat, and the Naturalize mode is maindeckable with Spacecraft and Borg enchantments running around.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/4/4/445de44d-8af9-4ea3-b165-9e8eb8939820.jpg?1793187139" alt="Saru, Unthreatened" loading="lazy">
+    <div class="info">
+      <div class="name">Saru, Unthreatened</div>
+      <div class="tags"><span class="tag tag-mana">2G</span><span class="tag tag-uncommon">Uncommon</span><span class="tag tag-flash">Flash</span></div>
+      <div class="effect">Legendary. ETB: another target creature gains hexproof until EOT.</div>
+      <div class="commentary">Flash hexproof protection for your best threat. In sealed where bombs matter more, this keeps them alive.</div>
+    </div>
+  </div>
+</div>
+
+<!-- MULTICOLOR -->
+<h3 class="color-header multi">Multicolor &amp; Colorless — Sealed Payoffs</h3>
+<p style="color:var(--muted);margin:0.3rem 0 0.8rem;">Multicolor cards are harder to cast but often more powerful. In sealed with Strange New Worlds fixing, they're very playable.</p>
+
+<blockquote>
+  "The Strange New Worlds lands make 3-color decks genuinely consistent. Don't be afraid to splash gold cards — the fixing is there."
+  <cite>— MTGRocks, TRK Sealed Guide</cite>
+</blockquote>
+
+<div class="card-grid">
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/8/9/89e3ec23-e4dc-4d58-aeda-9f73ed4504a5.jpg?1793013095" alt="Test of Priorities" loading="lazy">
+    <div class="info">
+      <div class="name">Test of Priorities</div>
+      <div class="tags"><span class="tag tag-mana">1U</span><span class="tag tag-uncommon">Uncommon</span></div>
+      <div class="effect">Choose: surveil 2 + draw / exile your creature, return at end step</div>
+      <div class="commentary">The flicker mode reuses powerful ETBs (Bones, T'Pol, Saavik) and dodges removal. The draw mode is never dead.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/7/e/7e1c0423-bf58-47a1-a838-c15bbf40eaba.jpg?1793359534" alt="Test of Identity" loading="lazy">
+    <div class="info">
+      <div class="name">Test of Identity</div>
+      <div class="tags"><span class="tag tag-mana">1R</span><span class="tag tag-uncommon">Uncommon</span></div>
+      <div class="effect">Choose: target Klingon gets +1/+1 and double strike / discard 1, draw 2</div>
+      <div class="commentary">Double strike on a Klingon is lethal. The loot mode ensures it's never a dead card even without Klingons.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/2/9/291b9b6b-54bf-4e71-98f1-cb9301ea0727.jpg?1792668501" alt="Test of Courage" loading="lazy">
+    <div class="info">
+      <div class="name">Test of Courage</div>
+      <div class="tags"><span class="tag tag-mana">G</span><span class="tag tag-uncommon">Uncommon</span></div>
+      <div class="effect">Choose: exile target card from graveyard + gain 2 life / destroy artifact or enchantment MV&le;3</div>
+      <div class="commentary">Maindeckable artifact/enchantment removal at 1 mana. The graveyard hate mode shuts down recursion strategies.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== INSTANTS & COMBAT TRICKS ==================== -->
+<h2>Instants &amp; Combat Tricks — Full Reference</h2>
+<p style="color:var(--muted);margin-bottom:0.5rem;">30 total: 23 instants + 7 flash creatures/auras. Know these to play around them.</p>
+
+<blockquote>
+  "The trick density in TRK is high, especially in red. If your opponent has red mana up, assume they have something."
+  <cite>— GameTyrant, TRK Combat Tricks Guide</cite>
+</blockquote>
+
+<!-- WHITE TRICKS -->
+<h3 class="color-header white">White — 4 tricks</h3>
+<div class="card-grid">
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/5/4/54dbf416-973d-46c8-b9be-e863283d328b.jpg?1784036750" alt="Set Phasers to..." loading="lazy">
+    <div class="info">
+      <div class="name">Set Phasers to...</div>
+      <div class="tags"><span class="tag tag-mana">W</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">Choose: tap + stun counter / 3 damage to attacking creature</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/0/b/0b60c9af-8ea9-491d-a4a4-226a2143e7f3.jpg?1785981369" alt="Shields Up!" loading="lazy">
+    <div class="info">
+      <div class="name">Shields Up!</div>
+      <div class="tags"><span class="tag tag-mana">1W</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">Hexproof + indestructible until EOT. If creature, +1/+1 counter.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/c/7/c779279f-681b-4107-b62c-5202c544d3e8.jpg?1793187981" alt="The Needs of the Many" loading="lazy">
+    <div class="info">
+      <div class="name">The Needs of the Many</div>
+      <div class="tags"><span class="tag tag-mana">1W</span><span class="tag tag-rare">Rare</span></div>
+      <div class="effect">Sac a creature: all your creatures get hexproof + indestructible. You get hexproof + prevent all damage. Exiles.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/3/7/3783c530-a2da-4dc1-811a-0a9a412c8e78.jpg?1785981363" alt="Saavik, Stoic Student" loading="lazy">
+    <div class="info">
+      <div class="name">Saavik, Stoic Student</div>
+      <div class="tags"><span class="tag tag-mana">4W</span><span class="tag tag-uncommon">Uncommon</span><span class="tag tag-flash">Flash</span></div>
+      <div class="effect">ETB: deals X to attacking/blocking creature (X = creature types among your non-Borg)</div>
+    </div>
+  </div>
+</div>
+
+<!-- BLUE TRICKS -->
+<h3 class="color-header blue">Blue — 7 tricks</h3>
+<div class="card-grid">
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/9/5/959318c1-3f7e-4418-91ce-be529af27972.jpg?1785981391" alt="Cloistered Telepath" loading="lazy">
+    <div class="info">
+      <div class="name">Cloistered Telepath</div>
+      <div class="tags"><span class="tag tag-mana">1U</span><span class="tag tag-common">Common</span><span class="tag tag-flash">Flash</span></div>
+      <div class="effect">1/1 creature. ETB: draw, then discard.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/1/1/11c94c5f-abf4-429e-8703-c5db9abd79bf.jpg?1784065440" alt="Highly Illogical" loading="lazy">
+    <div class="info">
+      <div class="name">Highly Illogical</div>
+      <div class="tags"><span class="tag tag-mana">1U</span><span class="tag tag-uncommon">Uncommon</span></div>
+      <div class="effect">Counter MV&le;2. Kicker 1U: counter any spell.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/8/9/89e3ec23-e4dc-4d58-aeda-9f73ed4504a5.jpg?1793013095" alt="Test of Priorities" loading="lazy">
+    <div class="info">
+      <div class="name">Test of Priorities</div>
+      <div class="tags"><span class="tag tag-mana">1U</span><span class="tag tag-uncommon">Uncommon</span></div>
+      <div class="effect">Choose: surveil 2 + draw / exile your creature, return at end step</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/7/d/7d90016d-c2cb-457b-9d97-c3b9411c46e3.jpg?1793013074" alt="Subcommander T'Pol" loading="lazy">
+    <div class="info">
+      <div class="name">Subcommander T'Pol</div>
+      <div class="tags"><span class="tag tag-mana">2U</span><span class="tag tag-rare">Rare</span><span class="tag tag-flash">Flash</span></div>
+      <div class="effect">Choose: counter activated/triggered ability / tap + stun</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/4/e/4e8f75b8-cca7-4ed3-90db-bcac02e74611.jpg?1784036751" alt="Consider the Prime Directive" loading="lazy">
+    <div class="info">
+      <div class="name">Consider the Prime Directive</div>
+      <div class="tags"><span class="tag tag-mana">2U</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">Choose: counter unless pay 3 / tap + stun + draw</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/8/6/86b790e6-3c99-4a95-8327-eb90ed9380f2.jpg?1785981409" alt="Guidance Failure" loading="lazy">
+    <div class="info">
+      <div class="name">Guidance Failure</div>
+      <div class="tags"><span class="tag tag-mana">3U</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">Owner puts creature/Spacecraft on top or bottom of library. Costs 1 less targeting attackers.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/9/5/956eeb71-fd5f-4a26-aff6-77127c0ad4e7.jpg?1793274247" alt="Wesley Crusher" loading="lazy">
+    <div class="info">
+      <div class="name">Wesley Crusher, Starfleet Cadet</div>
+      <div class="tags"><span class="tag tag-mana">2UU</span><span class="tag tag-rare">Rare</span><span class="tag tag-flash">Flash</span></div>
+      <div class="effect">Choose TWO: counter noncreature unless 2 / bounce MV&le;2 / unblockable / draw 2 discard 2</div>
+    </div>
+  </div>
+</div>
+
+<!-- BLACK TRICKS -->
+<h3 class="color-header black">Black — 4 tricks</h3>
+<div class="card-grid">
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/e/2/e2b350b2-0eda-4c2b-b9d6-b58ab4848545.jpg?1785981483" alt="A Good Day to Die" loading="lazy">
+    <div class="info">
+      <div class="name">A Good Day to Die</div>
+      <div class="tags"><span class="tag tag-mana">B</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">+2/+0 until EOT. When that creature dies this turn, draw a card.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/0/4/04a479be-8093-4775-a5d9-8b0e1683bf12.jpg?1785981475" alt="Eject the Warp Core" loading="lazy">
+    <div class="info">
+      <div class="name">Eject the Warp Core</div>
+      <div class="tags"><span class="tag tag-mana">1B</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">-2/-2. Kicker (sac artifact/creature): -6/-6 instead.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/6/c/6c5a87cf-7790-4335-8497-ff793bbdcb05.jpg?1793013157" alt="Impossible Choice" loading="lazy">
+    <div class="info">
+      <div class="name">Impossible Choice</div>
+      <div class="tags"><span class="tag tag-mana">2B</span><span class="tag tag-uncommon">Uncommon</span></div>
+      <div class="effect">Choose: destroy creature (they get two 1/1s) / draw 2, each player loses 2</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/2/c/2c309b0d-94b4-405e-be6c-18b407323e51.jpg?1785981492" alt="He's Dead, Jim" loading="lazy">
+    <div class="info">
+      <div class="name">He's Dead, Jim</div>
+      <div class="tags"><span class="tag tag-mana">3B</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">Destroy target creature. Surveil 1.</div>
+    </div>
+  </div>
+</div>
+
+<!-- RED TRICKS -->
+<h3 class="color-header red">Red — 9 tricks (deepest color)</h3>
+<div class="card-grid">
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/2/2/22c60c17-74ec-460b-bf7a-e56e42239826.jpg?1785981536" alt="Khaaaaaaaaaaaannn!" loading="lazy">
+    <div class="info">
+      <div class="name">Khaaaaaaaaaaaannn!</div>
+      <div class="tags"><span class="tag tag-mana">XR</span><span class="tag tag-uncommon">Uncommon</span></div>
+      <div class="effect">Deals 2X to creature. Exiles if it would die.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/3/d/3df10e9a-efb6-4945-9b1b-29200688702a.jpg?1785981548" alt="Perils of the Past" loading="lazy">
+    <div class="info">
+      <div class="name">Perils of the Past</div>
+      <div class="tags"><span class="tag tag-mana">1R</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">Choose: +3/+2 / destroy artifact</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/7/e/7e1c0423-bf58-47a1-a838-c15bbf40eaba.jpg?1793359534" alt="Test of Identity" loading="lazy">
+    <div class="info">
+      <div class="name">Test of Identity</div>
+      <div name="tags"><span class="tag tag-mana">1R</span><span class="tag tag-uncommon">Uncommon</span></div>
+      <div class="effect">Choose: Klingon gets +1/+1 + double strike / discard 1, draw 2</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/0/c/0c340eba-645d-416a-9ed4-f2303aa8c919.jpg?1785981528" alt="Captain's Tutelage" loading="lazy">
+    <div class="info">
+      <div class="name">Captain's Tutelage</div>
+      <div class="tags"><span class="tag tag-mana">1R</span><span class="tag tag-common">Common</span><span class="tag tag-flash">Flash</span></div>
+      <div class="effect">Aura. +2/+0. ETB: first strike until EOT.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/5/b/5b306901-1bba-488b-866e-83aa162dab5a.jpg?1793274251" alt="Brazen Bluff" loading="lazy">
+    <div class="info">
+      <div class="name">Brazen Bluff</div>
+      <div class="tags"><span class="tag tag-mana">RR</span><span class="tag tag-rare">Rare</span></div>
+      <div class="effect">Target noncreature spell: they exile it or you free-cast from hand.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/3/c/3c786a2f-3de4-4b24-a3a0-15b1f2a07324.jpg?1785981557" alt="Plasma Cascade" loading="lazy">
+    <div class="info">
+      <div class="name">Plasma Cascade</div>
+      <div class="tags"><span class="tag tag-mana">2R</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">3 damage to any target. May discard to draw.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/0/f/0f9b10d3-ba76-45ec-a85c-fb7b26da5561.jpg?1793274269" alt="Red Alert!" loading="lazy">
+    <div class="info">
+      <div class="name">Red Alert!</div>
+      <div class="tags"><span class="tag tag-mana">2R</span><span class="tag tag-uncommon">Uncommon</span></div>
+      <div class="effect">Costs 2 less if attacked. All your creatures get +2/+0.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/9/a/9a49f66c-7017-4ddd-8787-21d68fe1bff5.jpg?1793274490" alt="Encounter the Unknown" loading="lazy">
+    <div class="info">
+      <div class="name">Encounter the Unknown</div>
+      <div class="tags"><span class="tag tag-mana">1RR</span><span class="tag tag-rare">Rare</span></div>
+      <div class="effect">Choose: exile top 2, play until next end step / 2 damage to each creature + player</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/f/0/f0996bab-c2e4-4483-a76e-1355c81f1577.jpg?1793361330" alt="Genesis Effect" loading="lazy">
+    <div class="info">
+      <div class="name">Genesis Effect</div>
+      <div class="tags"><span class="tag tag-mana">4R</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">6 damage to creature. Destroy your land, create tapped any-color Planet.</div>
+    </div>
+  </div>
+</div>
+
+<!-- GREEN TRICKS -->
+<h3 class="color-header green">Green — 6 tricks</h3>
+<div class="card-grid">
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/c/0/c07979d4-8a58-4cfb-bffa-74e8bd97c7ff.jpg?1785981585" alt="I'm a Doctor, Not a..." loading="lazy">
+    <div class="info">
+      <div class="name">I'm a Doctor, Not a...</div>
+      <div class="tags"><span class="tag tag-mana">G</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">+1/+1 counter, untap, +1/+1 until EOT. Becomes Doctor.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/2/9/291b9b6b-54bf-4e71-98f1-cb9301ea0727.jpg?1792668501" alt="Test of Courage" loading="lazy">
+    <div class="info">
+      <div class="name">Test of Courage</div>
+      <div class="tags"><span class="tag tag-mana">G</span><span class="tag tag-uncommon">Uncommon</span></div>
+      <div class="effect">Choose: exile graveyard card + gain 2 / destroy artifact/enchantment MV&le;3</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/5/4/5407e8f4-0c8e-4e66-9d2f-f22277aa38f4.jpg?1785981580" alt="First Contact" loading="lazy">
+    <div class="info">
+      <div class="name">First Contact</div>
+      <div class="tags"><span class="tag tag-mana">1G</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">Mill 4, return a permanent card to hand. First spell bonus: gain 2 life.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/4/4/445de44d-8af9-4ea3-b165-9e8eb8939820.jpg?1793187139" alt="Saru, Unthreatened" loading="lazy">
+    <div class="info">
+      <div class="name">Saru, Unthreatened</div>
+      <div class="tags"><span class="tag tag-mana">2G</span><span class="tag tag-uncommon">Uncommon</span><span class="tag tag-flash">Flash</span></div>
+      <div class="effect">ETB: another creature gains hexproof until EOT.</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/9/4/94e9d400-f2bb-46e7-8d41-6038ebdc6c8b.jpg?1785981571" alt="Dathon and Picard at El-Adrel" loading="lazy">
+    <div class="info">
+      <div class="name">Dathon and Picard at El-Adrel</div>
+      <div class="tags"><span class="tag tag-mana">2G</span><span class="tag tag-common">Common</span></div>
+      <div class="effect">Choose: +3/+3 trample / opponents sac nontoken artifact or enchantment</div>
+    </div>
+  </div>
+  <div class="card-entry">
+    <img src="https://cards.scryfall.io/normal/front/d/8/d8593bf7-5248-4f4a-bf8b-9816d2f76c6b.jpg?1793187127" alt="Dr. Leonard Bones McCoy" loading="lazy">
+    <div class="info">
+      <div class="name">Dr. Leonard "Bones" McCoy</div>
+      <div class="tags"><span class="tag tag-mana">1GG</span><span class="tag tag-rare">Rare</span><span class="tag tag-flash">Flash</span></div>
+      <div class="effect">Choose: return non-Doctor permanent from GY to hand / creature returns with +1/+1 when it dies</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== CHEAT SHEET ==================== -->
+<div class="cheat-sheet">
+  <h3>Quick Cheat Sheet — Common Tricks to Play Around</h3>
+  <table>
+    <tr><td class="mana">W</td><td><strong>Set Phasers</strong> — tap+stun OR 3 to attacker</td></tr>
+    <tr><td class="mana">1W</td><td><strong>Shields Up!</strong> — hexproof + indestructible + counter</td></tr>
+    <tr><td class="mana">B</td><td><strong>A Good Day to Die</strong> — +2/+0, draws on death</td></tr>
+    <tr><td class="mana">1B</td><td><strong>Eject Warp Core</strong> — -2/-2 (or -6/-6 kicked)</td></tr>
+    <tr><td class="mana">3B</td><td><strong>He's Dead, Jim</strong> — destroy anything + surveil</td></tr>
+    <tr><td class="mana">1R</td><td><strong>Perils of the Past</strong> — +3/+2 OR destroy artifact</td></tr>
+    <tr><td class="mana">1R</td><td><strong>Captain's Tutelage</strong> — flash aura +2/+0 + first strike</td></tr>
+    <tr><td class="mana">2R</td><td><strong>Plasma Cascade</strong> — 3 damage anywhere + loot</td></tr>
+    <tr><td class="mana">G</td><td><strong>I'm a Doctor</strong> — +1/+1 counter + untap + +1/+1</td></tr>
+    <tr><td class="mana">2G</td><td><strong>Dathon &amp; Picard</strong> — +3/+3 trample OR Naturalize</td></tr>
+  </table>
+</div>
+
+<footer>
+  Data sourced from Scryfall API, GameTyrant, MTGRocks &middot; Generated 2026-11-06
+</footer>
+
+<!-- published: PENDING @ PENDING -->
+</body>
+</html>
