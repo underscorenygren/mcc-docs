@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session Review — 2026-11-06</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --text: #e0e0e0;
+    --text-muted: #a0a0b0;
+    --accent: #e94560;
+    --accent2: #0f9b8e;
+    --link: #5dade2;
+    --code-bg: #0d1b2a;
+    --border: #2a2a4a;
+    --green: #27ae60;
+    --yellow: #f39c12;
+    --red: #e74c3c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #fff;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    color: #fff;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-top: 1.8rem;
+    margin-bottom: 0.6rem;
+    color: #ddd;
+  }
+  p { margin-bottom: 0.8rem; }
+  code {
+    background: var(--code-bg);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+    font-size: 0.9em;
+    color: var(--accent2);
+  }
+  .status {
+    display: inline-block;
+    padding: 0.15em 0.6em;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 600;
+  }
+  .status-done { background: rgba(39,174,96,0.2); color: var(--green); }
+  .status-open { background: rgba(243,156,18,0.2); color: var(--yellow); }
+  .status-stale { background: rgba(231,76,60,0.2); color: var(--red); }
+  .status-discuss { background: rgba(93,173,226,0.2); color: var(--link); }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem 1.4rem;
+    margin-bottom: 1.2rem;
+  }
+  .card h3 { margin-top: 0; }
+  .field { margin-bottom: 0.4rem; }
+  .field strong { color: var(--text-muted); font-size: 0.9em; }
+  ul { padding-left: 1.5rem; margin-bottom: 0.8rem; }
+  li { margin-bottom: 0.3rem; }
+  ol { padding-left: 1.5rem; margin-bottom: 0.8rem; }
+  ol li { margin-bottom: 0.5rem; }
+  .decisions {
+    background: var(--surface);
+    border-left: 3px solid var(--accent2);
+    padding: 1rem 1.25rem;
+    border-radius: 0 6px 6px 0;
+  }
+  .decisions ol { padding-left: 1.2rem; }
+  .decisions li { margin-bottom: 0.5rem; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<h1>Session Review</h1>
+<p class="subtitle">2026-11-06 — Mute fix shipped, TS migration and async rewrite ready, mobile crash patched, annotation app deployed.</p>
+
+<h2>1. Completed and Merged</h2>
+
+<div class="card">
+  <h3>Mute TTS Fix <span class="status status-done">PR #262 merged</span></h3>
+  <p class="field"><strong>Problem:</strong> <code>isMuted</code> was hardcoded to <code>false</code> in <code>voice-react.tsx</code>.</p>
+  <p class="field"><strong>Fix:</strong> Wired <code>orch.toggleMute()</code> so the mute button actually controls TTS playback. 5 tests added.</p>
+</div>
+
+<div class="card">
+  <h3>Auth Failure Visibility <span class="status status-done">PR #264 merged</span></h3>
+  <p class="field"><strong>Fix:</strong> Bridge emits <code>type: "auth"</code> error to sysbus on 401. Status tile now shows "Login expired". 9 tests.</p>
+</div>
+
+<div class="card">
+  <h3>Voice-UI Redeployed <span class="status status-done">deployed</span></h3>
+  <p>Container was 9 hours stale and missing the mute fix. Rebuilt and deployed.</p>
+</div>
+
+<div class="card">
+  <h3>Dockerfile.voice-ui Fix <span class="status status-done">4d8985f</span></h3>
+  <p>Dockerfile referenced <code>.ts</code> files but main still has <code>.js</code> (TS migration not yet merged). Fixed COPY lines and updated build stamp glob.</p>
+</div>
+
+<h2>2. PRs Ready for Review</h2>
+
+<div class="card">
+  <h3>PR #265 — JS to TS Migration <span class="status status-open">ready</span></h3>
+  <p>All 5 root-level JS files migrated to typed TypeScript. Zero <code>any</code>. 572 tests pass, Vite build succeeds.</p>
+</div>
+
+<div class="card">
+  <h3>PR #270 — Voice Async Rewrite <span class="status status-open">ready</span></h3>
+  <p>5-phase rewrite: async TTS loop, VAD pure state machine, <code>HumanSpeech</code> class, bus-direct events, orchestrator slim-down. Controller cut from ~300 to ~60 lines. <code>VoiceCallbacks</code> interface deleted. 9 new VAD tests. All tests pass.</p>
+</div>
+
+<div class="card">
+  <h3>PR #272 — Mobile Auth Crash + iOS Period <span class="status status-open">ready</span></h3>
+  <p><code>session.accessToken</code> crash fixed — <code>getMobileSession</code> returns a string, not an object. iOS double-space auto-period disabled via <code>smartInsertDelete=false</code>.</p>
+</div>
+
+<h2>3. New Work Items Created</h2>
+
+<div class="card">
+  <ul>
+    <li><strong>#266</strong> — Sound controller refactor: shared web + mobile pattern</li>
+    <li><strong>#267</strong> — Universal status indicators: connection state, loading, errors (user flagged: "can do now, not just mobile")</li>
+    <li><strong>#268</strong> — Disconnect sounds play when ambient sounds are off</li>
+    <li><strong>#269</strong> — Browser testing: Vitest browser mode evaluation</li>
+    <li><strong>#271</strong> — Reminder: test new mobile build with ambient noise controls</li>
+  </ul>
+</div>
+
+<h2>4. Plans and Research Published</h2>
+
+<div class="card">
+  <h3>Voice Async Rewrite Plan</h3>
+  <p class="field"><strong>Location:</strong> <code>assets/plans/voice-async-rewrite.md</code></p>
+  <p>5-phase approach replacing boolean gates with async loops, VAD as pure state machine, bus-direct event emission.</p>
+</div>
+
+<div class="card">
+  <h3>Redis Streams Migration Doc</h3>
+  <p class="field"><strong>URL:</strong> <a href="https://docs.mushroomcloudcomputing.com/redis-streams-migration.html">docs.mushroomcloudcomputing.com/redis-streams-migration.html</a></p>
+  <p>Before/after code comparisons (Go to Redis Go to TypeScript). ~422 lines of Go replaced by ~28 lines of Redis calls.</p>
+</div>
+
+<div class="card">
+  <h3>Stale Branch Report</h3>
+  <p class="field"><strong>Location:</strong> <code>assets/plans/stale-branch-report.md</code></p>
+  <p>106 remote + 139 local branches, ~120+110 safe to delete. Cleanup script included, awaiting user approval.</p>
+</div>
+
+<h2>5. Infrastructure</h2>
+
+<div class="card">
+  <h3>Annotate App v1 <span class="status status-done">deployed</span></h3>
+  <p>Browser shell with voice/text annotation, chatbus persistence, sidebar history. Deployed at <code>/apps/annotate</code>.</p>
+</div>
+
+<div class="card">
+  <h3>Annotation Worker <span class="status status-done">running</span></h3>
+  <p>Background worker (<code>ops/annotation-worker.sh</code>) polls chatbus annotations channel, processes with <code>claude --print</code>, responds on bus.</p>
+</div>
+
+<div class="card">
+  <h3>Session Review Cron <span class="status status-stale">did not fire</span></h3>
+  <p>Crontab entry set for 12:17am UTC. Did not fire overnight — supervisor may not have been listening. Needs investigation.</p>
+</div>
+
+<div class="card">
+  <h3>JS to TS Migration Worker <span class="status status-done">completed</span></h3>
+  <p>Background worker completed successfully, produced PR #265.</p>
+</div>
+
+<h2>6. Stale / Needs Attention</h2>
+
+<div class="card">
+  <ul>
+    <li><span class="status status-stale">investigate</span> <strong>Session review cron</strong> — entry and script exist but no output was generated overnight</li>
+    <li><span class="status status-open">awaiting approval</span> <strong>~120+ stale branches</strong> — report ready, cleanup script prepared</li>
+    <li><span class="status status-stale">triage needed</span> <strong>Open draft issues accumulating</strong> — #239, #242, #249, #251, #252, #253, #255</li>
+    <li><span class="status status-discuss">not started</span> <strong>Private docs (Convex)</strong> — scaffolded but not started, pending since Nov 5</li>
+  </ul>
+</div>
+
+<h2>7. Today's Priorities (Suggested)</h2>
+
+<div class="decisions">
+  <ol>
+    <li><strong>Merge PRs</strong> — #265 (TS), #270 (async rewrite), #272 (mobile fixes) — all tested and ready</li>
+    <li><strong>Mobile build</strong> — trigger EAS build after merging mobile fix, test ambient noise controls (#271)</li>
+    <li><strong>Status indicators (#267)</strong> — user said "we can do now" — universal connection/loading/error state</li>
+    <li><strong>Stale branch cleanup</strong> — user reviewed report, execute the cleanup script</li>
+    <li><strong>Fix session review cron</strong> — investigate why overnight cron did not produce output</li>
+  </ol>
+</div>
+
+</body>
+</html>
