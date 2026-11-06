@@ -26,7 +26,7 @@
     background: var(--bg);
     color: var(--text);
     line-height: 1.7;
-    max-width: 800px;
+    max-width: 860px;
     margin: 0 auto;
     padding: 2rem 1.5rem 4rem;
   }
@@ -58,6 +58,13 @@
     margin-bottom: 0.6rem;
     color: #ddd;
   }
+  h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 1.2rem;
+    margin-bottom: 0.4rem;
+    color: #ccc;
+  }
   p { margin-bottom: 0.8rem; }
   code {
     background: var(--code-bg);
@@ -71,14 +78,14 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     padding: 1rem 1.2rem;
-    margin-bottom: 1rem;
     overflow-x: auto;
-    font-size: 0.88em;
+    margin-bottom: 1.2rem;
     line-height: 1.5;
   }
   pre code {
     background: none;
     padding: 0;
+    font-size: 0.85em;
     color: var(--text);
   }
   .card {
@@ -89,21 +96,8 @@
     margin-bottom: 1.2rem;
   }
   .card h3 { margin-top: 0; }
-  .field { margin-bottom: 0.4rem; }
-  .field strong { color: var(--text-muted); font-size: 0.9em; }
   ul, ol { padding-left: 1.5rem; margin-bottom: 0.8rem; }
   li { margin-bottom: 0.3rem; }
-  .decisions {
-    background: var(--surface);
-    border-left: 3px solid var(--accent2);
-    padding: 1rem 1.25rem;
-    border-radius: 0 6px 6px 0;
-    margin-bottom: 1.2rem;
-  }
-  .decisions ol { padding-left: 1.2rem; }
-  .decisions li { margin-bottom: 0.5rem; }
-  a { color: var(--link); text-decoration: none; }
-  a:hover { text-decoration: underline; }
   table {
     width: 100%;
     border-collapse: collapse;
@@ -111,9 +105,9 @@
     font-size: 0.92em;
   }
   th, td {
-    text-align: left;
-    padding: 0.5rem 0.7rem;
+    padding: 0.6rem 0.8rem;
     border: 1px solid var(--border);
+    text-align: left;
   }
   th {
     background: var(--surface2);
@@ -123,35 +117,82 @@
   td {
     background: var(--surface);
   }
-  .status {
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .code-label {
     display: inline-block;
-    padding: 0.15em 0.6em;
-    border-radius: 4px;
-    font-size: 0.85em;
+    font-size: 0.8em;
     font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.2em 0.6em;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: -1px;
+    position: relative;
+    top: 1px;
   }
-  .status-gain { background: rgba(39,174,96,0.2); color: var(--green); }
-  .status-cost { background: rgba(243,156,18,0.2); color: var(--yellow); }
-  .status-deleted { background: rgba(231,76,60,0.2); color: var(--red); }
-  .status-kept { background: rgba(93,173,226,0.2); color: var(--link); }
+  .label-before {
+    background: rgba(231,76,60,0.2);
+    color: var(--red);
+    border: 1px solid var(--border);
+    border-bottom: 1px solid var(--code-bg);
+  }
+  .label-after {
+    background: rgba(39,174,96,0.2);
+    color: var(--green);
+    border: 1px solid var(--border);
+    border-bottom: 1px solid var(--code-bg);
+  }
+  .label-after-ts {
+    background: rgba(93,173,226,0.2);
+    color: var(--link);
+    border: 1px solid var(--border);
+    border-bottom: 1px solid var(--code-bg);
+  }
+  .label-unchanged {
+    background: rgba(160,160,176,0.15);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-bottom: 1px solid var(--code-bg);
+  }
+  .decisions {
+    background: var(--surface);
+    border-left: 3px solid var(--accent2);
+    padding: 1rem 1.25rem;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 1.2rem;
+  }
+  .decisions ol { padding-left: 1.2rem; }
+  .decisions li { margin-bottom: 0.5rem; }
   hr {
     border: none;
     border-top: 1px solid var(--border);
-    margin: 2rem 0;
+    margin: 2.5rem 0;
   }
+  .tag {
+    display: inline-block;
+    padding: 0.1em 0.5em;
+    border-radius: 4px;
+    font-size: 0.82em;
+    font-weight: 600;
+  }
+  .tag-deleted { background: rgba(231,76,60,0.2); color: var(--red); }
+  .tag-simplified { background: rgba(243,156,18,0.2); color: var(--yellow); }
+  .tag-stays { background: rgba(39,174,96,0.2); color: var(--green); }
+  .comment { color: #6a9955; }
 </style>
 </head>
 <body>
 
 <h1>Redis Streams Migration</h1>
-<p class="subtitle">Chatbus replacement analysis — what the current Go chatbus does, how Redis Streams maps onto it, and the phased migration path.</p>
+<p class="subtitle">Chatbus replacement analysis — current architecture, Redis Streams mapping, migration path, and code examples.</p>
+
+<!-- ==================== CURRENT ARCHITECTURE ==================== -->
 
 <h2>Current Go Chatbus Architecture</h2>
 
 <h3>What it does</h3>
-
 <p>The chatbus is an HTTP-based message bus that routes chat messages between agents, users, and the web UI. It provides:</p>
-
 <ol>
   <li><strong>Publish/subscribe messaging</strong> via HTTP endpoints</li>
   <li><strong>Message persistence</strong> to a JSONL file on disk</li>
@@ -164,7 +205,6 @@
 </ol>
 
 <h3>Code layout</h3>
-
 <table>
   <tr><th>File</th><th>Lines</th><th>Purpose</th></tr>
   <tr><td><code>cmd/chatbus/main.go</code></td><td>383</td><td>HTTP server, agent routing, dedup, payload transform</td></tr>
@@ -177,7 +217,6 @@
 </table>
 
 <h3>API endpoints</h3>
-
 <table>
   <tr><th>Method</th><th>Path</th><th>Behavior</th></tr>
   <tr><td><code>POST</code></td><td><code>/publish</code></td><td>Accept an envelope (or raw ChatPayload via transform), store + dispatch</td></tr>
@@ -188,15 +227,11 @@
 </table>
 
 <h3>Message storage details</h3>
-
 <p><strong>On-disk:</strong> Append-only JSONL file at <code>data/chatbus/bus-messages.jsonl</code>. Currently 186K lines (~95MB). Each line is a full <code>Envelope</code> JSON object. On startup, the tail (up to <code>BUS_RING_SIZE</code>) lines are loaded into memory.</p>
-
 <p><strong>In-memory:</strong> Go slice acting as a ring buffer (default 20,000 entries). When capacity is exceeded, the oldest entries are dropped from memory (but remain on disk). A monotonic <code>Seq</code> counter is assigned on append — this is the primary cursor for subscription polling.</p>
-
 <p><strong>Compaction:</strong> <code>Store.Compact()</code> method exists to rewrite the file, archiving old entries. Intended for cron but not actively wired up.</p>
 
 <h3>Guarantees</h3>
-
 <table>
   <tr><th>Property</th><th>Current behavior</th></tr>
   <tr><td>Ordering</td><td>Single-writer append, monotonic Seq — total order within the process</td></tr>
@@ -208,34 +243,33 @@
 </table>
 
 <h3>Consumers</h3>
-
 <p>Services that connect to chatbus (set <code>BUS_URL=http://chatbus:9095</code>):</p>
-
-<ul>
-  <li><strong>bus-follower</strong> — task classifier, polls /subscribe</li>
-  <li><strong>task-query</strong> — reads bus for task API</li>
-  <li><strong>builder</strong> — subscribes for build commands</li>
-  <li><strong>scheduler</strong> — subscribes for wake/sleep commands</li>
-  <li><strong>cron</strong> — publishes periodic triggers</li>
-  <li><strong>webhook</strong> — publishes GitHub events</li>
-  <li><strong>tester</strong> — subscribes for test commands</li>
-  <li><strong>taskmaster</strong> — polls for task changes</li>
-  <li><strong>edward</strong> — skill runner agent</li>
-  <li><strong>vivi</strong> — skill runner agent</li>
-  <li><strong>storage-sync</strong> — subscribes for sync triggers</li>
-</ul>
-
-<p>The <strong>web UI</strong> sends messages via <code>POST /bus/agent/{name}/send</code> (proxied through nginx), implemented in <code>shared/core/chatbus/send.ts</code>.</p>
+<div class="card">
+  <ul>
+    <li><strong>bus-follower</strong> — task classifier, polls /subscribe</li>
+    <li><strong>task-query</strong> — reads bus for task API</li>
+    <li><strong>builder</strong> — subscribes for build commands</li>
+    <li><strong>scheduler</strong> — subscribes for wake/sleep commands</li>
+    <li><strong>cron</strong> — publishes periodic triggers</li>
+    <li><strong>webhook</strong> — publishes GitHub events</li>
+    <li><strong>tester</strong> — subscribes for test commands</li>
+    <li><strong>taskmaster</strong> — polls for task changes</li>
+    <li><strong>edward</strong> — skill runner agent</li>
+    <li><strong>vivi</strong> — skill runner agent</li>
+    <li><strong>storage-sync</strong> — subscribes for sync triggers</li>
+  </ul>
+  <p>The <strong>web UI</strong> sends messages via <code>POST /bus/agent/{name}/send</code> (proxied through nginx).</p>
+</div>
 
 <hr>
+
+<!-- ==================== REDIS MAPPING ==================== -->
 
 <h2>What Redis Streams Would Replace</h2>
 
 <h3>Core concept mapping</h3>
-
 <p>Redis Streams is a log data structure. Each stream is an append-only sequence of entries with auto-generated IDs (timestamp-based, e.g. <code>1699012345678-0</code>). Consumer groups provide exactly-once delivery semantics.</p>
 
-<div class="card">
 <table>
   <tr><th>Current chatbus concept</th><th>Redis Streams equivalent</th></tr>
   <tr><td><code>Envelope</code></td><td>Stream entry (field-value pairs)</td></tr>
@@ -247,73 +281,71 @@
   <tr><td><code>Store.Query()</code></td><td><code>XRANGE stream_key start end COUNT limit</code></td></tr>
   <tr><td><code>/subscribe</code> long-poll</td><td><code>XREAD BLOCK 30000 STREAMS stream_key $</code> (blocking read) or consumer groups</td></tr>
   <tr><td>In-process <code>Subscribers.Dispatch()</code></td><td>Consumer groups: <code>XREADGROUP GROUP name consumer BLOCK 30000 STREAMS key &gt;</code></td></tr>
-  <tr><td>Dedup middleware</td><td>Application-level (Redis doesn't deduplicate), or use <code>NX</code> on a dedup key with TTL</td></tr>
+  <tr><td>Dedup middleware</td><td>Application-level: <code>SET key NX EX 300</code></td></tr>
 </table>
-</div>
 
 <h3>What Go code becomes unnecessary</h3>
-
 <table>
   <tr><th>File</th><th>What goes away</th><th>What remains</th></tr>
   <tr>
-    <td><code>pkg/provider/bus/store.go</code> (288 lines)</td>
-    <td><span class="status status-deleted">entire file</span> Ring buffer, JSONL read/write, Compact(), loadTail(), Wait() — all replaced by Redis persistence + XRANGE/XREAD</td>
+    <td><code>store.go</code> (288 lines)</td>
+    <td><span class="tag tag-deleted">entire file</span> Ring buffer, JSONL read/write, Compact(), loadTail(), Wait()</td>
     <td>Nothing</td>
   </tr>
   <tr>
-    <td><code>pkg/provider/bus/subscribe.go</code> (66 lines)</td>
-    <td><span class="status status-deleted">entire file</span> In-process dispatch replaced by Redis consumer groups</td>
+    <td><code>subscribe.go</code> (66 lines)</td>
+    <td><span class="tag tag-deleted">entire file</span> In-process dispatch replaced by consumer groups</td>
     <td>Nothing</td>
   </tr>
   <tr>
-    <td><code>pkg/provider/bus/middleware.go</code> (44 lines)</td>
-    <td><span class="status status-deleted">entire file</span> Dedup moves to Redis <code>SET key NX EX 300</code></td>
+    <td><code>middleware.go</code> (44 lines)</td>
+    <td><span class="tag tag-deleted">entire file</span> Dedup moves to Redis <code>SET NX EX 300</code></td>
     <td>Nothing</td>
   </tr>
   <tr>
-    <td><code>pkg/provider/bus/envelope.go</code> (59 lines)</td>
-    <td>Seq assignment (Redis auto-IDs replace it)</td>
-    <td><span class="status status-kept">kept</span> Envelope type definition, Stamp()</td>
+    <td><code>envelope.go</code> (59 lines)</td>
+    <td><span class="tag tag-simplified">simplified</span> Seq assignment (Redis auto-IDs replace it)</td>
+    <td>Envelope type definition, Stamp()</td>
   </tr>
   <tr>
-    <td><code>pkg/provider/bus/server.go</code> (285 lines)</td>
-    <td>Store initialization, Wait-based long-poll, bridge push wiring</td>
-    <td><span class="status status-kept">kept</span> HTTP handlers (simplified), Publish() calls XADD</td>
+    <td><code>server.go</code> (285 lines)</td>
+    <td><span class="tag tag-simplified">simplified</span> Store init, Wait-based long-poll, bridge push wiring</td>
+    <td>HTTP handlers (simplified), Publish() calls XADD</td>
   </tr>
   <tr>
-    <td><code>cmd/chatbus/main.go</code> (383 lines)</td>
-    <td><code>dedupCache</code>/<code>dedupCheck</code>/<code>dedupMark</code> (lines 56-100)</td>
-    <td><span class="status status-kept">kept</span> Agent routing, HTTP server, transform</td>
+    <td><code>main.go</code> (383 lines)</td>
+    <td><span class="tag tag-simplified">simplified</span> dedupCache/dedupCheck/dedupMark (lines 56-100)</td>
+    <td>Agent routing, HTTP server, transform</td>
   </tr>
   <tr>
-    <td><code>pkg/busclient/client.go</code> (194 lines)</td>
-    <td>Long-poll Subscribe() loop (lines 120-173)</td>
-    <td><span class="status status-kept">kept</span> Fetch() for HTTP clients, or replaced entirely</td>
+    <td><code>busclient/client.go</code> (194 lines)</td>
+    <td><span class="tag tag-simplified">simplified</span> Long-poll Subscribe() loop (lines 120-173)</td>
+    <td>Fetch() for HTTP clients, or replaced entirely</td>
   </tr>
 </table>
 
 <p><strong>Net code reduction estimate:</strong> ~500 lines of Go storage/subscription code replaced by Redis client calls. The HTTP API layer (~300 lines) stays as a compatibility wrapper, but gets simpler.</p>
 
 <h3>Endpoint changes</h3>
-
 <table>
   <tr><th>Current endpoint</th><th>Change</th></tr>
-  <tr><td><code>POST /publish</code></td><td>Stays. Internally calls <code>XADD</code> instead of <code>Store.Append()</code></td></tr>
-  <tr><td><code>GET /messages</code></td><td>Stays. Internally calls <code>XRANGE</code> + optional filtering instead of scanning Go slice</td></tr>
-  <tr><td><code>GET /subscribe</code></td><td>Stays. Internally calls <code>XREAD BLOCK</code> instead of <code>Store.Wait()</code> + <code>Store.Query()</code></td></tr>
-  <tr><td><code>POST /agent/{name}/send</code></td><td>Stays unchanged — routing logic, not storage</td></tr>
-  <tr><td><code>GET /health</code></td><td>Stays. Calls <code>XLEN</code> instead of <code>Store.Len()</code></td></tr>
+  <tr><td><code>POST /publish</code></td><td><span class="tag tag-stays">stays</span> Internally calls <code>XADD</code> instead of <code>Store.Append()</code></td></tr>
+  <tr><td><code>GET /messages</code></td><td><span class="tag tag-stays">stays</span> Internally calls <code>XRANGE</code> + optional filtering</td></tr>
+  <tr><td><code>GET /subscribe</code></td><td><span class="tag tag-stays">stays</span> Internally calls <code>XREAD BLOCK</code> instead of <code>Store.Wait()</code></td></tr>
+  <tr><td><code>POST /agent/{name}/send</code></td><td><span class="tag tag-stays">stays</span> Routing logic unchanged</td></tr>
+  <tr><td><code>GET /health</code></td><td><span class="tag tag-stays">stays</span> Calls <code>XLEN</code> instead of <code>Store.Len()</code></td></tr>
 </table>
 
 <p>The HTTP API is a backward-compatible wrapper. Consumers that use <code>pkg/busclient</code> or raw HTTP continue working without changes. The transport swap is invisible.</p>
 
 <hr>
 
+<!-- ==================== MIGRATION PATH ==================== -->
+
 <h2>Migration Path</h2>
 
 <h3>Phase 1: Add Redis container</h3>
-
-<pre><code># docker-compose.yml addition
+<pre><code><span class="comment"># docker-compose.yml addition</span>
 redis:
   image: redis:7-alpine
   mem_limit: 128m
@@ -325,17 +357,14 @@ redis:
   restart: unless-stopped
   profiles:
     - prod</code></pre>
-
-<p>Add <code>REDIS_URL=redis://redis:6379</code> to the chatbus environment. Self-hosting Redis 7 Alpine is ~30MB memory at idle and trivially small operationally.</p>
+<p>Add <code>REDIS_URL=redis://redis:6379</code> to the chatbus environment. Self-hosting Redis 7 Alpine is ~30MB memory at idle.</p>
 
 <h3>Phase 2: Replace Store with Redis-backed implementation</h3>
-
 <p>Create <code>pkg/provider/bus/redis_store.go</code> implementing the same interface as <code>Store</code>:</p>
-
-<pre><code>// Sketch — not production code
+<pre><code><span class="comment">// Sketch — not production code</span>
 type RedisStore struct {
     client *redis.Client
-    prefix string  // "bus:" — stream key prefix
+    prefix string  <span class="comment">// "bus:" — stream key prefix</span>
 }
 
 func (s *RedisStore) Append(env Envelope) {
@@ -354,94 +383,77 @@ func (s *RedisStore) Append(env Envelope) {
 }
 
 func (s *RedisStore) Query(opts QueryOpts) []Envelope {
-    // XRANGE with filtering by agent/channel
+    <span class="comment">// XRANGE with filtering by agent/channel</span>
 }</code></pre>
 
 <h3>Phase 3: Replace long-poll with XREAD BLOCK</h3>
-
 <p>The <code>/subscribe</code> handler currently uses <code>Store.Wait()</code> (a Go channel-based notification). Replace with:</p>
-
-<pre><code>// Blocking read — Redis handles the wait
+<pre><code><span class="comment">// Blocking read — Redis handles the wait</span>
 results, _ := client.XRead(ctx, &amp;redis.XReadArgs{
     Streams: []string{streamKey, lastID},
     Block:   30 * time.Second,
     Count:   50,
 })</code></pre>
-
-<p>This is simpler and more efficient than the current approach (which wakes all waiters on any message, then each waiter re-queries and filters).</p>
+<p>Simpler and more efficient than the current approach (which wakes all waiters on any message, then each waiter re-queries and filters).</p>
 
 <h3>Phase 4: Consumer groups for service subscribers</h3>
-
 <p>Services currently long-poll via <code>busclient.Subscribe()</code>. Replace with Redis consumer groups for guaranteed delivery:</p>
-
 <pre><code>XGROUP CREATE bus:work builder-group 0 MKSTREAM
 XREADGROUP GROUP builder-group builder-1 BLOCK 30000 STREAMS bus:work &gt;
 XACK bus:work builder-group &lt;id&gt;</code></pre>
-
-<p>This gives exactly-once processing semantics — if a consumer crashes before ACKing, the message is re-delivered to another consumer in the group. The current system has no such guarantee.</p>
+<p>This gives exactly-once processing semantics — if a consumer crashes before ACKing, the message is re-delivered to another consumer in the group.</p>
 
 <h3>Phase 5: Dedup via Redis</h3>
-
-<p>Replace the in-memory dedup cache:</p>
-
-<pre><code>// SET NX with TTL — atomic check-and-set
+<pre><code><span class="comment">// SET NX with TTL — atomic check-and-set</span>
 set, _ := client.SetNX(ctx, "dedup:"+key, "1", 5*time.Minute).Result()
 if !set {
-    // duplicate
+    <span class="comment">// duplicate</span>
 }</code></pre>
 
 <h3>What stays</h3>
-
-<ol>
-  <li><strong>HTTP API</strong> (<code>server.go</code> handlers) — thin wrapper, calls Redis instead of Go store</li>
-  <li><strong>Agent routing</strong> (<code>main.go</code> agentSendHandler) — pure routing logic, storage-agnostic</li>
-  <li><strong>Envelope type</strong> (<code>envelope.go</code>) — application-level type, serialized to/from Redis</li>
-  <li><strong>Bridge push</strong> (<code>OnPublished</code> callback) — side effect, storage-agnostic</li>
-  <li><strong><code>pkg/busclient</code></strong> — HTTP client for services that prefer HTTP over direct Redis</li>
-</ol>
+<div class="decisions">
+  <ol>
+    <li><strong>HTTP API</strong> (<code>server.go</code> handlers) — thin wrapper, calls Redis instead of Go store</li>
+    <li><strong>Agent routing</strong> (<code>main.go</code> agentSendHandler) — pure routing logic, storage-agnostic</li>
+    <li><strong>Envelope type</strong> (<code>envelope.go</code>) — application-level type, serialized to/from Redis</li>
+    <li><strong>Bridge push</strong> (<code>OnPublished</code> callback) — side effect, storage-agnostic</li>
+    <li><strong><code>pkg/busclient</code></strong> — HTTP client for services that prefer HTTP over direct Redis</li>
+  </ol>
+</div>
 
 <h3>What changes</h3>
-
-<ol>
-  <li><strong>Store backend</strong> — JSONL file + Go slice replaced by Redis XADD/XRANGE</li>
-  <li><strong>Subscription mechanism</strong> — Go channels + long-poll replaced by XREAD BLOCK</li>
-  <li><strong>Dedup</strong> — In-memory map replaced by Redis SET NX</li>
-  <li><strong>Persistence</strong> — JSONL file replaced by Redis AOF. The <code>data/chatbus/bus-messages.jsonl</code> file is retired.</li>
-  <li><strong>Compaction</strong> — No longer needed. Redis MAXLEN handles stream trimming automatically.</li>
-</ol>
+<div class="card">
+  <ol>
+    <li><strong>Store backend</strong> — JSONL file + Go slice replaced by Redis XADD/XRANGE</li>
+    <li><strong>Subscription mechanism</strong> — Go channels + long-poll replaced by XREAD BLOCK</li>
+    <li><strong>Dedup</strong> — In-memory map replaced by Redis SET NX</li>
+    <li><strong>Persistence</strong> — JSONL file replaced by Redis AOF. The <code>data/chatbus/bus-messages.jsonl</code> file is retired.</li>
+    <li><strong>Compaction</strong> — No longer needed. Redis MAXLEN handles stream trimming automatically.</li>
+  </ol>
+</div>
 
 <h3>TypeScript SDK quality</h3>
-
-<p><strong>ioredis</strong> (the standard Node.js Redis client) has full Redis Streams support:</p>
-
-<ul>
-  <li><code>xadd</code>, <code>xread</code>, <code>xrange</code>, <code>xreadgroup</code>, <code>xack</code> — all available</li>
-  <li>Blocking reads work natively</li>
-  <li>TypeScript types included</li>
-  <li>Widely used in production (&gt;13K GitHub stars)</li>
-</ul>
-
-<p>The web UI's <code>shared/core/chatbus/send.ts</code> currently POSTs to the HTTP API. It can continue doing so (the HTTP wrapper stays). For future optimization, a direct Redis-backed WebSocket transport could replace the HTTP round-trip entirely.</p>
+<p><strong>ioredis</strong> (the standard Node.js Redis client) has full Redis Streams support: <code>xadd</code>, <code>xread</code>, <code>xrange</code>, <code>xreadgroup</code>, <code>xack</code> — all available. Blocking reads work natively. TypeScript types included. Widely used in production (&gt;13K GitHub stars).</p>
+<p>The web UI's <code>shared/core/chatbus/send.ts</code> currently POSTs to the HTTP API. It can continue doing so. For future optimization, a direct Redis-backed WebSocket transport could replace the HTTP round-trip entirely.</p>
 
 <h3>Self-hosting complexity</h3>
-
-<p>Redis 7 Alpine in Docker Compose is operationally trivial:</p>
-
-<ul>
-  <li><strong>Memory:</strong> ~30MB idle, ~100MB with 20K messages (configurable via <code>maxmemory</code>)</li>
-  <li><strong>Disk:</strong> AOF persistence, auto-rewrite. Comparable to current JSONL but with built-in compaction</li>
-  <li><strong>Monitoring:</strong> <code>redis-cli INFO</code> for stats, <code>XLEN</code> for stream sizes</li>
-  <li><strong>Backup:</strong> Copy the AOF/RDB file, or <code>BGSAVE</code></li>
-  <li><strong>Failure mode:</strong> Single instance, same as current chatbus. If Redis dies, chatbus dies. No worse than today.</li>
-</ul>
+<div class="card">
+  <ul>
+    <li><strong>Memory:</strong> ~30MB idle, ~100MB with 20K messages (configurable via <code>maxmemory</code>)</li>
+    <li><strong>Disk:</strong> AOF persistence, auto-rewrite. Comparable to current JSONL but with built-in compaction</li>
+    <li><strong>Monitoring:</strong> <code>redis-cli INFO</code> for stats, <code>XLEN</code> for stream sizes</li>
+    <li><strong>Backup:</strong> Copy the AOF/RDB file, or <code>BGSAVE</code></li>
+    <li><strong>Failure mode:</strong> Single instance, same as current chatbus. If Redis dies, chatbus dies. No worse than today.</li>
+  </ul>
+</div>
 
 <hr>
 
-<h2>Concrete Comparison Tables</h2>
+<!-- ==================== CONCRETE COMPARISON ==================== -->
+
+<h2>Concrete Comparison Table</h2>
 
 <h3>API endpoint mapping</h3>
-
-<div class="card">
 <table>
   <tr><th>Current HTTP endpoint</th><th>Implementation today</th><th>Redis Streams implementation</th></tr>
   <tr>
@@ -450,19 +462,19 @@ if !set {
     <td>Same handler, calls <code>XADD bus:{channel} MAXLEN ~20000 * data {json}</code></td>
   </tr>
   <tr>
-    <td><code>GET /messages?agent=X&amp;since_seq=N&amp;limit=L</code></td>
+    <td><code>GET /messages</code></td>
     <td><code>server.go:114</code> — <code>Store.Query()</code> scans in-memory slice</td>
     <td><code>XRANGE bus:{channel} {since_id} + COUNT {limit}</code> + filter by agent field</td>
   </tr>
   <tr>
-    <td><code>GET /subscribe?agent=X&amp;since_seq=N&amp;timeout=30s</code></td>
-    <td><code>server.go:150</code> — <code>Store.Wait()</code> blocks on Go channel, then <code>Store.Query()</code></td>
-    <td><code>XREAD BLOCK 30000 STREAMS bus:{channel} {last_id}</code> — Redis handles the blocking</td>
+    <td><code>GET /subscribe</code></td>
+    <td><code>server.go:150</code> — <code>Store.Wait()</code> blocks on Go channel</td>
+    <td><code>XREAD BLOCK 30000 STREAMS bus:{channel} {last_id}</code></td>
   </tr>
   <tr>
     <td><code>POST /agent/{name}/send</code></td>
-    <td><code>main.go:227</code> — dedup + proxy + record in/out</td>
-    <td>Same, but dedup uses <code>SET NX EX 300</code> and record uses <code>XADD</code></td>
+    <td><code>main.go:227</code> — dedup + proxy + record</td>
+    <td>Same, dedup uses <code>SET NX EX 300</code>, record uses <code>XADD</code></td>
   </tr>
   <tr>
     <td><code>GET /health</code></td>
@@ -470,50 +482,47 @@ if !set {
     <td><code>XLEN bus:*</code> (sum across streams)</td>
   </tr>
 </table>
-</div>
 
 <h3>Go code path mapping</h3>
-
-<div class="card">
 <table>
   <tr><th>Current code path</th><th>File:line</th><th>Redis replacement</th></tr>
   <tr>
-    <td><code>Store.Append()</code> — append to slice + write JSONL line</td>
+    <td><code>Store.Append()</code> — append to slice + write JSONL</td>
     <td><code>store.go:194-218</code></td>
-    <td><code>redis.XAdd()</code> — one call, persistence handled by Redis</td>
+    <td><code>redis.XAdd()</code> — one call</td>
   </tr>
   <tr>
     <td><code>Store.Query()</code> — linear scan with filters</td>
     <td><code>store.go:231-254</code></td>
-    <td><code>redis.XRange()</code> + field filter. O(log N) seek vs O(N) scan</td>
+    <td><code>redis.XRange()</code> + field filter. O(log N) vs O(N)</td>
   </tr>
   <tr>
-    <td><code>Store.Wait()</code> — register waiter channel, block</td>
+    <td><code>Store.Wait()</code> — register waiter, block</td>
     <td><code>store.go:264-287</code></td>
-    <td><code>redis.XRead(Block: 30s)</code> — Redis handles notification natively</td>
+    <td><code>redis.XRead(Block: 30s)</code> — native</td>
   </tr>
   <tr>
-    <td><code>Store.Compact()</code> — rewrite JSONL, archive old</td>
+    <td><code>Store.Compact()</code> — rewrite JSONL</td>
     <td><code>store.go:124-190</code></td>
-    <td><code>XTRIM bus:{channel} MAXLEN ~20000</code> — automatic on every XADD</td>
+    <td><code>XTRIM MAXLEN ~20000</code> — automatic on every XADD</td>
   </tr>
   <tr>
-    <td><code>loadTail()</code> — scan entire JSONL on startup</td>
+    <td><code>loadTail()</code> — scan JSONL on startup</td>
     <td><code>store.go:78-119</code></td>
     <td>Not needed — Redis loads its own persistence</td>
   </tr>
   <tr>
-    <td><code>Subscribers.Dispatch()</code> — fan out to handlers</td>
+    <td><code>Subscribers.Dispatch()</code> — fan out</td>
     <td><code>subscribe.go:41-52</code></td>
     <td>Consumer groups: <code>XREADGROUP</code> per subscriber</td>
   </tr>
   <tr>
-    <td><code>Dedup()</code> middleware — in-memory map with TTL</td>
+    <td><code>Dedup()</code> middleware</td>
     <td><code>middleware.go:11-44</code></td>
-    <td><code>redis.SetNX("dedup:{key}", "1", 5*time.Minute)</code></td>
+    <td><code>redis.SetNX("dedup:{key}", "1", 5min)</code></td>
   </tr>
   <tr>
-    <td><code>dedupCheck/dedupMark</code> in main.go</td>
+    <td><code>dedupCheck/dedupMark</code></td>
     <td><code>main.go:79-100</code></td>
     <td>Same Redis SetNX approach</td>
   </tr>
@@ -523,16 +532,13 @@ if !set {
     <td>Redis stream IDs are auto-assigned and monotonic</td>
   </tr>
 </table>
-</div>
 
 <h3>Consumer migration</h3>
-
-<div class="card">
 <table>
   <tr><th>Service</th><th>Current pattern</th><th>Redis Streams pattern</th></tr>
   <tr>
     <td>bus-follower</td>
-    <td><code>busclient.Subscribe()</code> — HTTP long-poll loop</td>
+    <td><code>busclient.Subscribe()</code> — HTTP long-poll</td>
     <td><code>XREADGROUP GROUP follower follower-1 BLOCK 30000 STREAMS bus:* &gt;</code></td>
   </tr>
   <tr>
@@ -556,42 +562,402 @@ if !set {
     <td>No change — HTTP API stays as wrapper</td>
   </tr>
 </table>
-</div>
 
 <hr>
 
+<!-- ==================== CODE EXAMPLES ==================== -->
+
+<h2>Code Examples: Before and After</h2>
+
+<!-- Example 1 -->
+<h3>1. Publishing a message</h3>
+
+<span class="code-label label-before">Before — Go (store.go:193-218)</span>
+<pre><code>func (s *Store) Append(env Envelope) {
+    env.Stamp()
+    env.Seq = atomic.AddInt64(&amp;s.seqCounter, 1)
+
+    s.mu.Lock()
+    s.envelopes = append(s.envelopes, env)
+    if s.ringSize &gt; 0 &amp;&amp; len(s.envelopes) &gt; s.ringSize {
+        s.envelopes = s.envelopes[len(s.envelopes)-s.ringSize:]
+    }
+    if s.file != nil {
+        if data, err := json.Marshal(env); err == nil {
+            s.file.Write(append(data, '\n'))
+        }
+    }
+    s.mu.Unlock()
+
+    <span class="comment">// Notify waiters</span>
+    s.subMu.Lock()
+    for _, ch := range s.waiters {
+        select {
+        case ch &lt;- struct{}{}:
+        default:
+        }
+    }
+    s.subMu.Unlock()
+}</code></pre>
+
+<span class="code-label label-after">After — Go with Redis</span>
+<pre><code>func (s *RedisStore) Append(env Envelope) {
+    data, _ := json.Marshal(env)
+    s.client.XAdd(ctx, &amp;redis.XAddArgs{
+        Stream: "bus:" + env.Channel,
+        MaxLen: 20000,
+        Approx: true,
+        Values: map[string]interface{}{"data": string(data)},
+    })
+    <span class="comment">// No mutex, no file write, no manual ring trim, no waiter notification.</span>
+    <span class="comment">// Redis handles persistence, trimming, and subscriber wakeup.</span>
+}</code></pre>
+
+<span class="code-label label-after-ts">After — TypeScript with ioredis</span>
+<pre><code>import Redis from 'ioredis';
+const redis = new Redis(process.env.REDIS_URL);
+
+async function publish(env: Envelope): Promise&lt;string&gt; {
+    const id = await redis.xadd(
+        `bus:${env.channel}`,
+        'MAXLEN', '~', '20000',
+        '*',  <span class="comment">// auto-generate ID</span>
+        'data', JSON.stringify(env),
+    );
+    return id;  <span class="comment">// e.g. "1699012345678-0"</span>
+}</code></pre>
+
+<!-- Example 2 -->
+<h3>2. Querying messages</h3>
+
+<span class="code-label label-before">Before — Go (store.go:231-254) — O(N) linear scan</span>
+<pre><code>func (s *Store) Query(opts QueryOpts) []Envelope {
+    s.mu.RLock()
+    defer s.mu.RUnlock()
+
+    var result []Envelope
+    for _, env := range s.envelopes {
+        if opts.Agent != "" &amp;&amp; env.Agent != opts.Agent {
+            continue
+        }
+        if opts.Channel != "" &amp;&amp; env.Channel != opts.Channel {
+            continue
+        }
+        if opts.SinceSeq &gt; 0 &amp;&amp; env.Seq &lt;= opts.SinceSeq {
+            continue
+        }
+        result = append(result, env)
+    }
+    if opts.Limit &gt; 0 &amp;&amp; len(result) &gt; opts.Limit {
+        result = result[len(result)-opts.Limit:]
+    }
+    return result
+}</code></pre>
+
+<span class="code-label label-after">After — Go with Redis — O(log N) range query</span>
+<pre><code>func (s *RedisStore) Query(opts QueryOpts) ([]Envelope, error) {
+    start := "-"
+    if opts.SinceSeq &gt; 0 {
+        start = fmt.Sprintf("%d", opts.SinceSeq)
+    }
+    msgs, err := s.client.XRange(ctx, "bus:"+opts.Channel, start, "+").Result()
+    if err != nil {
+        return nil, err
+    }
+    var result []Envelope
+    for _, msg := range msgs {
+        var env Envelope
+        json.Unmarshal([]byte(msg.Values["data"].(string)), &amp;env)
+        if opts.Agent != "" &amp;&amp; env.Agent != opts.Agent {
+            continue  <span class="comment">// field filtering still needed</span>
+        }
+        result = append(result, env)
+    }
+    if opts.Limit &gt; 0 &amp;&amp; len(result) &gt; opts.Limit {
+        result = result[len(result)-opts.Limit:]
+    }
+    return result, nil
+}</code></pre>
+
+<span class="code-label label-after-ts">After — TypeScript with ioredis</span>
+<pre><code>async function query(channel: string, opts: { since?: string; limit?: number }): Promise&lt;Envelope[]&gt; {
+    const start = opts.since ?? '-';
+    const count = opts.limit ?? 100;
+    const results = await redis.xrange(`bus:${channel}`, start, '+', 'COUNT', count);
+    return results.map(([id, fields]) =&gt; ({
+        ...JSON.parse(fields[1]),  <span class="comment">// fields = ['data', '{json}']</span>
+        streamId: id,
+    }));
+}</code></pre>
+
+<!-- Example 3 -->
+<h3>3. Subscribing (blocking wait for new messages)</h3>
+
+<span class="code-label label-before">Before — Go (busclient/client.go:120-173) — HTTP long-poll loop</span>
+<pre><code>func (c *Client) Subscribe(ctx context.Context, agent string, handler func(Message)) error {
+    longClient := &amp;http.Client{Timeout: 45 * time.Second}
+    var cursor time.Time
+
+    for {
+        if ctx.Err() != nil {
+            return ctx.Err()
+        }
+        q := url.Values{}
+        q.Set("agent", agent)
+        if !cursor.IsZero() {
+            q.Set("since", cursor.Add(time.Nanosecond).UTC().Format(time.RFC3339Nano))
+        }
+        q.Set("timeout", "30s")
+
+        req, _ := http.NewRequestWithContext(ctx, http.MethodGet,
+            c.BaseURL+"/subscribe?"+q.Encode(), nil)
+        resp, err := longClient.Do(req)
+        if err != nil {
+            time.Sleep(2 * time.Second)
+            continue
+        }
+        var body listResponse
+        json.NewDecoder(resp.Body).Decode(&amp;body)
+        resp.Body.Close()
+
+        for _, msg := range body.Messages {
+            handler(msg)
+            if msg.Timestamp.After(cursor) {
+                cursor = msg.Timestamp
+            }
+        }
+    }
+}</code></pre>
+
+<span class="code-label label-after">After — Go with Redis consumer groups (exactly-once delivery)</span>
+<pre><code>func Subscribe(ctx context.Context, redis *redis.Client,
+    group, consumer, stream string, handler func(Envelope)) error {
+    <span class="comment">// Create consumer group (idempotent)</span>
+    redis.XGroupCreateMkStream(ctx, stream, group, "0")
+
+    for {
+        if ctx.Err() != nil {
+            return ctx.Err()
+        }
+        results, err := redis.XReadGroup(ctx, &amp;redis.XReadGroupArgs{
+            Group:    group,
+            Consumer: consumer,
+            Streams:  []string{stream, "&gt;"},
+            Block:    30 * time.Second,
+            Count:    10,
+        }).Result()
+        if err != nil {
+            continue  <span class="comment">// timeout or transient error</span>
+        }
+        for _, msg := range results[0].Messages {
+            var env Envelope
+            json.Unmarshal([]byte(msg.Values["data"].(string)), &amp;env)
+            handler(env)
+            redis.XAck(ctx, stream, group, msg.ID)  <span class="comment">// acknowledge</span>
+        }
+    }
+}
+
+<span class="comment">// Usage:</span>
+Subscribe(ctx, redisClient, "builder-group", "builder-1", "bus:work",
+    func(env Envelope) {
+        fmt.Println("got:", env.Text)
+    },
+)</code></pre>
+
+<span class="code-label label-after-ts">After — TypeScript with ioredis</span>
+<pre><code>async function subscribe(
+    group: string,
+    consumer: string,
+    stream: string,
+    handler: (env: Envelope) =&gt; Promise&lt;void&gt;,
+): Promise&lt;void&gt; {
+    <span class="comment">// Create group (ignore error if exists)</span>
+    await redis.xgroup('CREATE', stream, group, '0', 'MKSTREAM').catch(() =&gt; {});
+
+    while (true) {
+        const results = await redis.xreadgroup(
+            'GROUP', group, consumer,
+            'BLOCK', 30000,
+            'COUNT', 10,
+            'STREAMS', stream, '&gt;',
+        );
+        if (!results) continue;  <span class="comment">// timeout</span>
+        for (const [, messages] of results) {
+            for (const [id, fields] of messages) {
+                const env: Envelope = JSON.parse(fields[1]);
+                await handler(env);
+                await redis.xack(stream, group, id);
+            }
+        }
+    }
+}</code></pre>
+
+<!-- Example 4 -->
+<h3>4. Waiting for new messages (server-side)</h3>
+
+<span class="code-label label-before">Before — Go (store.go:264-287) — manual channel-based waiter</span>
+<pre><code>func (s *Store) Wait(done &lt;-chan struct{}) bool {
+    ch := make(chan struct{}, 1)
+    s.subMu.Lock()
+    s.waiters = append(s.waiters, ch)
+    s.subMu.Unlock()
+
+    defer func() {
+        s.subMu.Lock()
+        for i, w := range s.waiters {
+            if w == ch {
+                s.waiters = append(s.waiters[:i], s.waiters[i+1:]...)
+                break
+            }
+        }
+        s.subMu.Unlock()
+    }()
+
+    select {
+    case &lt;-ch:
+        return true
+    case &lt;-done:
+        return false
+    }
+}</code></pre>
+
+<span class="code-label label-after">After — Redis (the concept disappears)</span>
+<pre><code><span class="comment">// No Wait() needed. XREAD BLOCK and XREADGROUP BLOCK handle</span>
+<span class="comment">// the blocking natively inside Redis. The 30 lines of Go waiter</span>
+<span class="comment">// management code are deleted entirely.</span></code></pre>
+
+<!-- Example 5 -->
+<h3>5. Dedup</h3>
+
+<span class="code-label label-before">Before — Go (main.go:79-100) — in-memory map</span>
+<pre><code>var dedupCache = struct {
+    sync.Mutex
+    m map[string]time.Time
+}{m: make(map[string]time.Time)}
+
+func dedupCheck(key string) bool {
+    dedupCache.Lock()
+    defer dedupCache.Unlock()
+    if t, ok := dedupCache.m[key]; ok &amp;&amp; time.Since(t) &lt; 5*time.Minute {
+        return true
+    }
+    return false
+}
+
+func dedupMark(key string) {
+    dedupCache.Lock()
+    dedupCache.m[key] = time.Now()
+    dedupCache.Unlock()
+}</code></pre>
+
+<span class="code-label label-after">After — Redis SET NX (one line each)</span>
+<pre><code>func dedupCheck(ctx context.Context, redis *redis.Client, key string) bool {
+    set, _ := redis.SetNX(ctx, "dedup:"+key, "1", 5*time.Minute).Result()
+    return !set  <span class="comment">// true = duplicate (key already existed)</span>
+}
+<span class="comment">// dedupMark is gone — SetNX does both check and mark atomically.</span></code></pre>
+
+<span class="code-label label-after-ts">After — TypeScript</span>
+<pre><code>async function isDuplicate(key: string): Promise&lt;boolean&gt; {
+    const set = await redis.set(`dedup:${key}`, '1', 'EX', 300, 'NX');
+    return set === null;  <span class="comment">// null = key existed = duplicate</span>
+}</code></pre>
+
+<!-- Example 6 -->
+<h3>6. Web UI sending (TypeScript — unchanged)</h3>
+
+<span class="code-label label-unchanged">Unchanged — shared/core/chatbus/send.ts</span>
+<pre><code><span class="comment">// The web UI POSTs to /bus/agent/{name}/send via HTTP.</span>
+<span class="comment">// This doesn't change — the HTTP API wrapper stays.</span>
+_fetch('/bus/agent/' + agentName + '/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, from: 'web-chat', source: 'chat', id: msgId }),
+});
+<span class="comment">// No Redis client needed in the browser.</span>
+<span class="comment">// The chatbus HTTP wrapper translates this to XADD internally.</span></code></pre>
+
+<hr>
+
+<!-- ==================== SUMMARY TABLE ==================== -->
+
+<h2>Summary: What We Save</h2>
+
+<table>
+  <tr><th>Concern</th><th>Current Go code</th><th>After Redis</th><th>Lines saved</th></tr>
+  <tr>
+    <td>Store (append + ring + file)</td>
+    <td><code>store.go</code> 288 lines</td>
+    <td>~20 lines Redis calls</td>
+    <td>~268</td>
+  </tr>
+  <tr>
+    <td>Waiter notification</td>
+    <td><code>store.go</code> Wait() 30 lines</td>
+    <td>Deleted (XREAD BLOCK)</td>
+    <td>30</td>
+  </tr>
+  <tr>
+    <td>Subscriber dispatch</td>
+    <td><code>subscribe.go</code> 66 lines</td>
+    <td>Deleted (consumer groups)</td>
+    <td>66</td>
+  </tr>
+  <tr>
+    <td>Dedup middleware</td>
+    <td><code>middleware.go</code> 44 lines</td>
+    <td>~5 lines Redis SET NX</td>
+    <td>~39</td>
+  </tr>
+  <tr>
+    <td>Dedup in main</td>
+    <td><code>main.go</code> 22 lines</td>
+    <td>~3 lines</td>
+    <td>~19</td>
+  </tr>
+  <tr style="font-weight: 600;">
+    <td>Total</td>
+    <td>~450 lines</td>
+    <td>~28 lines</td>
+    <td>~422</td>
+  </tr>
+</table>
+
+<p>If we go TypeScript-only (drop Go chatbus entirely), the HTTP wrapper + agent routing is ~150 lines of TypeScript replacing 383 lines of Go in main.go + 285 lines in server.go.</p>
+
+<hr>
+
+<!-- ==================== TRADEOFFS ==================== -->
+
 <h2>Tradeoffs</h2>
 
-<h3>Gains</h3>
-
-<div class="decisions">
-<ol>
-  <li><span class="status status-gain">gain</span> <strong>Exactly-once delivery</strong> via consumer groups (current system is at-most-once)</li>
-  <li><span class="status status-gain">gain</span> <strong>No startup JSONL scan</strong> — Redis loads its own state, no 186K-line file parse</li>
-  <li><span class="status status-gain">gain</span> <strong>Efficient blocking reads</strong> — <code>XREAD BLOCK</code> is cheaper than HTTP long-poll (no TCP connection setup per poll cycle)</li>
-  <li><span class="status status-gain">gain</span> <strong>Built-in stream trimming</strong> — no manual compaction needed</li>
-  <li><span class="status status-gain">gain</span> <strong>Query by ID range</strong> — O(log N) vs current O(N) linear scan</li>
-  <li><span class="status status-gain">gain</span> <strong>~500 lines of Go code deleted</strong> — store, subscribe, middleware, file I/O</li>
-  <li><span class="status status-gain">gain</span> <strong>Multi-consumer parallelism</strong> — consumer groups allow scaling subscribers without code changes</li>
-</ol>
+<h3>Gains from migration</h3>
+<div class="card">
+  <ol>
+    <li><strong>Exactly-once delivery</strong> via consumer groups (current system is at-most-once)</li>
+    <li><strong>No startup JSONL scan</strong> — Redis loads its own state, no 186K-line file parse</li>
+    <li><strong>Efficient blocking reads</strong> — <code>XREAD BLOCK</code> is cheaper than HTTP long-poll</li>
+    <li><strong>Built-in stream trimming</strong> — no manual compaction needed</li>
+    <li><strong>Query by ID range</strong> — O(log N) vs current O(N) linear scan</li>
+    <li><strong>~500 lines of Go code deleted</strong> — store, subscribe, middleware, file I/O</li>
+    <li><strong>Multi-consumer parallelism</strong> — consumer groups allow scaling subscribers without code changes</li>
+  </ol>
 </div>
 
 <h3>Costs</h3>
-
-<div class="decisions">
-<ol>
-  <li><span class="status status-cost">cost</span> <strong>New dependency</strong> — Redis container in docker-compose (~30MB memory)</li>
-  <li><span class="status status-cost">cost</span> <strong>Operational surface</strong> — Redis needs monitoring (memory, AOF size, connection count)</li>
-  <li><span class="status status-cost">cost</span> <strong>Migration work</strong> — estimated 2-3 days to implement, test, and cut over</li>
-  <li><span class="status status-cost">cost</span> <strong>Single point of failure</strong> — Redis replaces the JSONL file but is equally a SPOF. No improvement unless Redis Sentinel/Cluster is added (overkill for this scale)</li>
-  <li><span class="status status-cost">cost</span> <strong>Filtering limitations</strong> — Redis Streams doesn't filter by field values natively. Agent/channel filtering must happen either by using separate streams per channel or by client-side filtering after XRANGE</li>
-</ol>
+<div class="card">
+  <ol>
+    <li><strong>New dependency</strong> — Redis container in docker-compose (~30MB memory)</li>
+    <li><strong>Operational surface</strong> — Redis needs monitoring (memory, AOF size, connection count)</li>
+    <li><strong>Migration work</strong> — estimated 2-3 days to implement, test, and cut over</li>
+    <li><strong>Single point of failure</strong> — Redis replaces the JSONL file but is equally a SPOF</li>
+    <li><strong>Filtering limitations</strong> — Redis Streams doesn't filter by field values natively. Separate streams per channel is the natural fit.</li>
+  </ol>
 </div>
 
 <h3>Recommendation</h3>
-
 <p>The migration is justified if consumer group semantics (exactly-once delivery, pending message tracking) are needed — which they are for reliable work dispatch to builder, scheduler, and tester. The current at-most-once long-poll means a builder crash during a build command can silently drop the message.</p>
-
 <p>For the current scale (~186K messages total, ~15 services), the operational cost of Redis is minimal and the code simplification is significant. The HTTP API stays as a backward-compatible wrapper, so no consumer code changes are required in Phase 1.</p>
 
 </body>
