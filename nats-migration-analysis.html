@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NATS Migration Analysis — Full Replacement Mapping</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --text: #e0e0e0;
+    --text-muted: #a0a0b0;
+    --accent: #e94560;
+    --accent2: #0f9b8e;
+    --link: #5dade2;
+    --code-bg: #0d1b2a;
+    --border: #2a2a4a;
+    --green: #27ae60;
+    --yellow: #f39c12;
+    --red: #e74c3c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #fff;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    color: #fff;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-top: 1.8rem;
+    margin-bottom: 0.6rem;
+    color: #ddd;
+  }
+  h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 1.2rem;
+    margin-bottom: 0.4rem;
+    color: #ccc;
+  }
+  p { margin-bottom: 0.8rem; }
+  code {
+    background: var(--code-bg);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+    font-size: 0.9em;
+    color: var(--accent2);
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    margin-bottom: 1.2rem;
+    line-height: 1.5;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    font-size: 0.85em;
+    color: var(--text);
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem 1.4rem;
+    margin-bottom: 1.2rem;
+  }
+  .card h3 { margin-top: 0; }
+  .card h4 { margin-top: 0; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 0.8rem; }
+  li { margin-bottom: 0.3rem; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.2rem;
+    font-size: 0.92em;
+  }
+  th, td {
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+  th {
+    background: var(--surface2);
+    color: #fff;
+    font-weight: 600;
+  }
+  td {
+    background: var(--surface);
+  }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .decisions {
+    background: var(--surface);
+    border-left: 3px solid var(--accent2);
+    padding: 1rem 1.25rem;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 1.2rem;
+  }
+  .decisions ol { padding-left: 1.2rem; }
+  .decisions li { margin-bottom: 0.5rem; }
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+  .tldr {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.25rem;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 2rem;
+  }
+  .tldr h3 { margin-top: 0; color: var(--accent); }
+  .tldr li { margin-bottom: 0.5rem; }
+  .diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.2rem;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 0.82em;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--text-muted);
+  }
+  .diagram .highlight { color: var(--accent2); }
+  .diagram .label { color: var(--yellow); }
+  .diagram .note { color: #6a9955; }
+  .comment { color: #6a9955; }
+  .tag {
+    display: inline-block;
+    padding: 0.1em 0.5em;
+    border-radius: 4px;
+    font-size: 0.82em;
+    font-weight: 600;
+  }
+  .tag-yes { background: rgba(39,174,96,0.2); color: var(--green); }
+  .tag-no { background: rgba(231,76,60,0.2); color: var(--red); }
+  .tag-partial { background: rgba(243,156,18,0.2); color: var(--yellow); }
+  .series-nav {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    margin-bottom: 2rem;
+    font-size: 0.9em;
+  }
+  .series-nav strong { color: var(--yellow); }
+  .before-after {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+  .before-after > div {
+    min-width: 0;
+  }
+  .before-after h4 {
+    margin-top: 0;
+  }
+  @media (max-width: 700px) {
+    .before-after { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="series-nav">
+  <strong>Messaging architecture series:</strong>
+  <a href="http-vs-websocket-pubsub.html">HTTP vs WebSocket Pub/Sub</a> &rarr;
+  <a href="redis-streams-migration.html">Redis Streams Migration</a> &rarr;
+  <strong>NATS Migration Analysis</strong> (this document)
+</div>
+
+<h1>NATS Migration Analysis</h1>
+<p class="subtitle">Full replacement mapping for chatbus, sysbus, and voice signaling. What NATS replaces, what stays, what gets deleted, and a phased migration path. Builds on the <a href="http-vs-websocket-pubsub.html">HTTP vs WebSocket Pub/Sub</a> analysis which deferred the NATS decision.</p>
+
+<!-- ==================== TL;DR ==================== -->
+
+<div class="tldr">
+  <h3>TL;DR</h3>
+  <p>NATS can replace both the chatbus and sysbus as a single dependency, eliminating two custom Go services (~2,500 lines of Go, their Dockerfiles, Docker Compose entries, and the <code>pkg/busclient</code> client library), while also collapsing three browser WebSocket connections into one <code>nats.ws</code> connection. JetStream replaces our JSONL file persistence and ring buffer with built-in disk-backed streams, consumer groups, and replay. PCM audio streaming should <em>not</em> move to NATS &mdash; the binary frames are too large and latency-sensitive for a message bus &mdash; but voice <em>signaling</em> (session start/end, transcription results, TTS notifications) fits cleanly into NATS subjects. The migration is three independent phases: chatbus first (highest code savings, lowest risk), sysbus second, voice signaling third. Each phase is independently deployable and reversible.</p>
+</div>
+
+<hr>
+
+<!-- ==================== CURRENT ARCHITECTURE ==================== -->
+
+<h2>1. Current Architecture</h2>
+
+<p>The system runs three independent messaging services, each with its own protocol, storage, and browser connection:</p>
+
+<div class="diagram"><span class="label">Current: three separate messaging systems</span>
+
+  Browser ──<span class="highlight">WS #1</span>──&gt; bridge /ws/voice     Voice protocol: PCM audio, session, transcription, TTS
+  Browser ──<span class="highlight">WS #2</span>──&gt; sysbus /ws/events    System events: tool_use, lifecycle signals, activity
+  Browser ──<span class="highlight">WS #3</span>──&gt; chatbus (via bridge)  Chat messages: agent replies, user messages
+
+  <span class="label">Backend:</span>
+
+  Go services ──HTTP long-poll──&gt; <span class="highlight">chatbus</span> (:9095)    383 lines  + pkg/provider/bus (1,016 lines)
+                                     │
+                                 JSONL file (bus-messages.jsonl)
+                                 Ring buffer (20,000 msgs in-memory)
+                                 Dedup cache
+                                 Agent routing (HTTP POST to agent endpoints)
+                                 Bridge callback (POST /internal/broadcast)
+
+  Claude/agents ──HTTP POST──&gt; <span class="highlight">sysbus</span> (:9097)      186 lines + pkg/provider/ws (339 lines)
+                                     │
+                                 Ring buffer (50 events in-memory)
+                                 WebSocket fan-out to browser clients
+
+  Browser &lt;──WS──&gt; <span class="highlight">bridge</span> (:8080)                  3,643 lines
+                        │
+                   Voice protocol (PCM audio streaming)
+                   Session management
+                   Realtime API proxy
+                   Chat relay (receives POST from chatbus, pushes to browser)
+
+  <span class="note">Three Docker containers. Three WebSocket connections per browser tab.</span>
+  <span class="note">Each service has its own Dockerfile, compose entry, health check, and monitoring.</span>
+</div>
+
+<h3>What each system carries</h3>
+
+<table>
+  <tr><th>System</th><th>Protocol</th><th>Message type</th><th>Persistence</th><th>Browser connection</th></tr>
+  <tr>
+    <td>chatbus</td>
+    <td>HTTP POST (publish)<br>HTTP long-poll (subscribe)</td>
+    <td>JSON chat messages (~0.5&ndash;16 KB)</td>
+    <td>JSONL file + ring buffer</td>
+    <td>Indirect (via bridge WS)</td>
+  </tr>
+  <tr>
+    <td>sysbus</td>
+    <td>HTTP POST (publish)<br>WebSocket (subscribe)</td>
+    <td>JSON events (~0.1&ndash;1 KB)</td>
+    <td>Ring buffer only (50 events)</td>
+    <td>Direct WS at <code>/sysbus/ws/events</code></td>
+  </tr>
+  <tr>
+    <td>bridge</td>
+    <td>WebSocket (bidirectional)</td>
+    <td>JSON signaling + binary PCM audio</td>
+    <td>None (stateless relay)</td>
+    <td>Direct WS at <code>/ws/voice</code></td>
+  </tr>
+</table>
+
+<hr>
+
+<!-- ==================== NATS REPLACEMENT MAPPING ==================== -->
+
+<h2>2. NATS Replacement Mapping</h2>
+
+<p>Each system maps to NATS subjects. The subject hierarchy is the authorization boundary &mdash; NATS JWT permissions control who can publish/subscribe to which subjects.</p>
+
+<h3>Subject design</h3>
+
+<pre><code><span class="comment"># Chat messages (replaces chatbus)</span>
+chat.{agent}.in          # User/service &rarr; agent messages
+chat.{agent}.out         # Agent &rarr; user/browser messages
+chat.supervisor.in       # Messages to supervisor
+chat.supervisor.out      # Supervisor replies
+chat.&gt;                   # Wildcard: all chat traffic
+
+<span class="comment"># System events (replaces sysbus)</span>
+sys.tool_use             # Tool call events
+sys.session              # Session lifecycle (starting, ready, error)
+sys.channel              # Channel lifecycle (stdio_connected, mcp_init)
+sys.dispatch             # Work dispatch signals
+sys.build                # Build lifecycle
+sys.deploy               # Deploy lifecycle
+sys.merge                # PR merge signals
+sys.&gt;                    # Wildcard: all system events
+
+<span class="comment"># Voice signaling (replaces bridge JSON protocol, NOT audio)</span>
+voice.signal.session     # Session start/end
+voice.signal.transcript  # Transcription results
+voice.signal.tts         # TTS start/end/status
+voice.signal.state       # State changes (listening, thinking, speaking)
+voice.signal.&gt;           # Wildcard: all voice signals</code></pre>
+
+<h3>2a. Chatbus &rarr; NATS</h3>
+
+<div class="card">
+  <h4>What gets deleted</h4>
+  <table>
+    <tr><th>File</th><th>Lines</th><th>Purpose</th></tr>
+    <tr><td><code>cmd/chatbus/main.go</code></td><td>383</td><td>Entire service: dedup, agent routing, publish/subscribe, bridge callback</td></tr>
+    <tr><td><code>cmd/chatbus/Dockerfile</code></td><td>15</td><td>Docker build for chatbus binary</td></tr>
+    <tr><td><code>pkg/busclient/client.go</code></td><td>193</td><td>HTTP client library: Fetch, Subscribe (long-poll loop), cursor management</td></tr>
+    <tr><td><code>pkg/busclient/client_test.go</code></td><td>125</td><td>Tests for HTTP client</td></tr>
+    <tr><td><code>pkg/provider/bus/</code> (6 files)</td><td>1,016</td><td>Server, store (JSONL + ring buffer), envelope, subscribe, middleware, tests</td></tr>
+    <tr><td>Docker Compose entries</td><td>~30</td><td>chatbus service + taskbus (reuses chatbus image)</td></tr>
+    <tr><td><strong>Total</strong></td><td><strong>~1,762</strong></td><td></td></tr>
+  </table>
+
+  <h4>What gets added</h4>
+  <p>A NATS client wrapper (~60 lines Go) that all services import instead of <code>pkg/busclient</code>. Each consuming service replaces its <code>busclient.Subscribe()</code> call with a NATS subscription &mdash; typically a 5-line change per service.</p>
+</div>
+
+<div class="before-after">
+  <div>
+    <h4>Before: busclient Subscribe (53 lines)</h4>
+<pre><code>// pkg/busclient/client.go — long-poll loop
+func (c *Client) Subscribe(ctx context.Context,
+    agent string, handler func(Message)) error {
+  longClient := &amp;http.Client{Timeout: 45 * time.Second}
+  var cursor time.Time
+  for {
+    if ctx.Err() != nil { return ctx.Err() }
+    q := url.Values{}
+    q.Set("agent", agent)
+    if !cursor.IsZero() {
+      q.Set("since", cursor.Add(time.Nanosecond).
+        UTC().Format(time.RFC3339Nano))
+    }
+    q.Set("timeout", "30s")
+    endpoint := c.BaseURL + "/subscribe?" + q.Encode()
+    req, _ := http.NewRequestWithContext(
+      ctx, http.MethodGet, endpoint, nil)
+    resp, err := longClient.Do(req)
+    if err != nil {
+      time.Sleep(2 * time.Second)
+      continue
+    }
+    var body listResponse
+    json.NewDecoder(resp.Body).Decode(&amp;body)
+    resp.Body.Close()
+    for _, msg := range body.Messages {
+      handler(msg)
+      if msg.Timestamp.After(cursor) {
+        cursor = msg.Timestamp
+      }
+    }
+  }
+}</code></pre>
+  </div>
+  <div>
+    <h4>After: NATS Subscribe (12 lines)</h4>
+<pre><code>// pkg/natsbus/client.go — NATS subscription
+func Subscribe(nc *nats.Conn, agent string,
+    handler func(Message)) error {
+  subject := fmt.Sprintf("chat.%s.in", agent)
+  _, err := nc.Subscribe(subject,
+    func(msg *nats.Msg) {
+      var m Message
+      if json.Unmarshal(msg.Data, &amp;m) == nil {
+        handler(m)
+      }
+    })
+  return err
+}
+
+// With JetStream (durable, replay on reconnect):
+func SubscribeDurable(js jetstream.JetStream,
+    agent string, handler func(Message)) error {
+  stream, _ := js.Stream(ctx, "CHAT")
+  cons, _ := stream.CreateOrUpdateConsumer(ctx,
+    jetstream.ConsumerConfig{
+      Durable:       agent + "-consumer",
+      FilterSubject: "chat." + agent + ".in",
+      AckPolicy:     jetstream.AckExplicitPolicy,
+    })
+  _, err := cons.Consume(func(msg jetstream.Msg) {
+    var m Message
+    if json.Unmarshal(msg.Data(), &amp;m) == nil {
+      handler(m)
+    }
+    msg.Ack()
+  })
+  return err
+}</code></pre>
+  </div>
+</div>
+
+<p>The key difference: no cursor management, no HTTP retry loop, no long-poll timeout tuning. NATS handles connection management, message delivery, and reconnection internally. The durable consumer version also handles replay after disconnection &mdash; the consumer picks up where it left off.</p>
+
+<h4>Agent routing</h4>
+
+<p>The chatbus currently resolves agent URLs and POSTs messages to <code>http://mcc-agent-{name}:9091/message</code>. With NATS, agents subscribe to their own subject (<code>chat.{name}.in</code>) and publish replies to <code>chat.{name}.out</code>. No HTTP proxy, no URL resolution, no timeout management. The agent routing code in <code>cmd/chatbus/main.go</code> (lines 104&ndash;120, 225&ndash;383) is entirely eliminated.</p>
+
+<h4>Dedup</h4>
+
+<p>The chatbus dedup logic (lines 56&ndash;100, ~45 lines) is replaced by JetStream's built-in deduplication. Publishers set a <code>Nats-Msg-Id</code> header; JetStream deduplicates within a configurable window (default 2 minutes, configurable up to any duration). Zero application code for dedup.</p>
+
+<h3>2b. Sysbus &rarr; NATS</h3>
+
+<div class="card">
+  <h4>What gets deleted</h4>
+  <table>
+    <tr><th>File</th><th>Lines</th><th>Purpose</th></tr>
+    <tr><td><code>cmd/sysbus/main.go</code></td><td>186</td><td>Entire service: event ingestion, WebSocket fan-out, snapshot, ping</td></tr>
+    <tr><td><code>cmd/sysbus/Dockerfile</code></td><td>13</td><td>Docker build for sysbus binary</td></tr>
+    <tr><td><code>pkg/provider/ws/ws.go</code></td><td>199</td><td>WebSocket hub, connection management, broadcast</td></tr>
+    <tr><td><code>pkg/provider/ws/ws_test.go</code></td><td>140</td><td>WebSocket hub tests</td></tr>
+    <tr><td>Docker Compose entry</td><td>~15</td><td>sysbus service</td></tr>
+    <tr><td><strong>Total</strong></td><td><strong>~553</strong></td><td></td></tr>
+  </table>
+
+  <h4>What gets added</h4>
+  <p>Event publishers (Claude Code hooks, curl from bash) switch from <code>POST http://sysbus:9097/events</code> to <code>nats.Publish("sys.tool_use", data)</code>. Since most publishers are bash <code>curl</code> commands, they become <code>nats pub</code> calls &mdash; or a thin HTTP adapter receives the POST and publishes to NATS (backward compatibility during migration).</p>
+</div>
+
+<div class="before-after">
+  <div>
+    <h4>Before: Sysbus event POST</h4>
+<pre><code># From CLAUDE.md lifecycle signals:
+curl -sf -X POST http://localhost:9097/events \
+  -H 'Content-Type: application/json' \
+  -d '{"type":"session","agent":"supervisor",
+       "status":"ready",
+       "message":"Supervisor ready"}' \
+  2>/dev/null || true</code></pre>
+  </div>
+  <div>
+    <h4>After: NATS publish</h4>
+<pre><code># Direct NATS publish (nats CLI):
+nats pub sys.session \
+  '{"type":"session","agent":"supervisor",
+    "status":"ready",
+    "message":"Supervisor ready"}' \
+  2>/dev/null || true
+
+# Or keep HTTP adapter for backward compat:
+curl -sf -X POST http://localhost:9097/events \
+  ...  # Adapter publishes to NATS internally</code></pre>
+  </div>
+</div>
+
+<h3>2c. Services that import busclient</h3>
+
+<p>Twelve Go services currently import <code>pkg/busclient</code>. Each would switch to the NATS client:</p>
+
+<table>
+  <tr><th>Service</th><th>Current usage</th><th>NATS equivalent</th></tr>
+  <tr><td><code>cmd/bus-follower</code></td><td><code>busclient.Subscribe(ctx, "", handler)</code></td><td><code>nc.Subscribe("chat.>", handler)</code></td></tr>
+  <tr><td><code>cmd/builder</code></td><td><code>busclient.Subscribe(ctx, "builder", handler)</code></td><td><code>nc.Subscribe("chat.builder.in", handler)</code></td></tr>
+  <tr><td><code>cmd/scheduler</code></td><td><code>busclient.Subscribe(ctx, "scheduler", handler)</code> + <code>Fetch()</code></td><td><code>nc.Subscribe("chat.scheduler.in", handler)</code></td></tr>
+  <tr><td><code>cmd/scribe</code></td><td><code>busclient.Subscribe()</code></td><td><code>nc.Subscribe("chat.scribe.in", handler)</code></td></tr>
+  <tr><td><code>cmd/edward</code></td><td><code>busclient.Subscribe()</code></td><td><code>nc.Subscribe("chat.edward.in", handler)</code></td></tr>
+  <tr><td><code>cmd/skill-runner</code></td><td><code>busclient.Subscribe()</code></td><td><code>nc.Subscribe("chat.skill-runner.in", handler)</code></td></tr>
+  <tr><td><code>cmd/storage-sync</code></td><td><code>busclient.Subscribe()</code></td><td><code>nc.Subscribe("chat.storage-sync.in", handler)</code></td></tr>
+  <tr><td><code>cmd/tester</code></td><td><code>busclient.Fetch()</code></td><td><code>js.Stream("CHAT").GetMsg()</code> or subscribe</td></tr>
+  <tr><td><code>cmd/bus-rpc</code></td><td><code>busclient.Fetch()</code></td><td>NATS request-reply: <code>nc.Request()</code></td></tr>
+  <tr><td><code>cmd/auto-worker</code></td><td><code>busclient.Subscribe()</code></td><td><code>nc.Subscribe("chat.auto-worker.in", handler)</code></td></tr>
+</table>
+
+<p>Each migration is a ~5 line change: replace <code>busclient.New(busURL)</code> + <code>client.Subscribe()</code> with <code>nats.Connect(natsURL)</code> + <code>nc.Subscribe()</code>. The long-poll retry loop, cursor management, and HTTP error handling all disappear.</p>
+
+<hr>
+
+<!-- ==================== VOICE BRIDGE ANALYSIS ==================== -->
+
+<h2>3. Voice Bridge Analysis</h2>
+
+<p>The bridge (<code>cmd/bridge/</code>, 3,643 lines) handles two fundamentally different types of traffic over one WebSocket connection:</p>
+
+<table>
+  <tr><th>Traffic type</th><th>Format</th><th>Size</th><th>Latency requirement</th><th>NATS fit</th></tr>
+  <tr>
+    <td>Voice signaling</td>
+    <td>JSON</td>
+    <td>0.1&ndash;2 KB</td>
+    <td>&lt;50ms acceptable</td>
+    <td><span class="tag tag-yes">Yes</span></td>
+  </tr>
+  <tr>
+    <td>PCM audio streaming</td>
+    <td>Binary (PCM16, 24kHz mono)</td>
+    <td>~48 KB/sec continuous</td>
+    <td>&lt;20ms required</td>
+    <td><span class="tag tag-no">No</span></td>
+  </tr>
+</table>
+
+<h3>Voice signaling &mdash; moves to NATS</h3>
+
+<p>Session management, transcription results, TTS notifications, and state changes are small JSON messages that fit within NATS's default 1 MB max payload by orders of magnitude. These can publish to <code>voice.signal.*</code> subjects:</p>
+
+<pre><code>// Bridge publishes transcription result
+nc.Publish("voice.signal.transcript", json.Marshal(map[string]any{
+    "session_id": sessionID,
+    "text":       "Hello, how are you?",
+    "confidence": 0.95,
+    "timestamp":  time.Now().UTC(),
+}))
+
+// Browser subscribes to voice signals
+nc.Subscribe("voice.signal.>", func(msg *nats.Msg) {
+    // Update UI state: listening bubble, transcription display, etc.
+})</code></pre>
+
+<h3>PCM audio streaming &mdash; stays on dedicated WebSocket</h3>
+
+<p>PCM audio cannot move to NATS for three reasons:</p>
+
+<div class="card">
+  <h4>1. Frame size and throughput</h4>
+  <p>At 24kHz sample rate, 16-bit mono PCM, the bridge handles ~48,000 bytes/sec of continuous audio. Frames are typically sent every 20ms (960 bytes/frame) or accumulated into larger chunks. While each frame is well under NATS's 1 MB max message size, the <em>continuous stream of messages</em> at 50 Hz adds per-message overhead (headers, subject routing, subscription matching) that a raw WebSocket binary frame does not have.</p>
+
+  <h4>2. Latency</h4>
+  <p>Voice audio requires consistent sub-20ms delivery. NATS core pub/sub typically adds 0.1&ndash;1ms of routing latency per message &mdash; acceptable in isolation. But NATS is designed for request-reply and event patterns, not sustained binary streaming. Under load, message coalescing and slow consumer detection can introduce jitter that is imperceptible for chat but audible in audio.</p>
+
+  <h4>3. Binary handling</h4>
+  <p>NATS messages are byte arrays, so binary PCM can be transmitted. However, the <code>nats.ws</code> browser client serializes everything as text over the WebSocket (the NATS protocol is text-based with payload length headers). Binary audio would need base64 encoding for browser transport, adding ~33% overhead on a latency-sensitive stream. A native WebSocket sends raw binary frames with zero encoding overhead.</p>
+</div>
+
+<h3>Recommendation</h3>
+
+<div class="decisions">
+  <ol>
+    <li><strong>Move voice signaling to NATS subjects</strong> (<code>voice.signal.*</code>). Session start/end, transcription results, TTS start/end, state changes. These are JSON messages identical in nature to chat and sysbus events.</li>
+    <li><strong>Keep PCM audio on a dedicated WebSocket.</strong> The bridge remains the audio endpoint. It connects to NATS for signaling but maintains its own WebSocket for the binary audio stream.</li>
+    <li><strong>The bridge shrinks</strong> but does not disappear. It loses chat relay code (the <code>/internal/broadcast</code> handler, bridge-to-browser chat push) and the system state WebSocket. It keeps audio streaming, Realtime API proxy, and STT/TTS provider integration.</li>
+  </ol>
+</div>
+
+<hr>
+
+<!-- ==================== JETSTREAM PERSISTENCE ==================== -->
+
+<h2>4. JetStream for Persistence</h2>
+
+<p>JetStream replaces two persistence mechanisms: the chatbus JSONL file (<code>bus-messages.jsonl</code>, unbounded, currently managed by a compaction cron) and the sysbus in-memory ring buffer (50 events, lost on restart).</p>
+
+<h3>Stream configuration</h3>
+
+<pre><code>// Two JetStream streams: one for chat, one for system events
+
+// CHAT stream — replaces bus-messages.jsonl + ring buffer
+js.CreateStream(ctx, jetstream.StreamConfig{
+    Name:      "CHAT",
+    Subjects:  []string{"chat.>"},                 // All chat subjects
+    Storage:   jetstream.FileStorage,               // Disk-backed (replaces JSONL)
+    Retention: jetstream.LimitsPolicy,
+    MaxAge:    30 * 24 * time.Hour,                 // 30-day retention
+    MaxMsgs:   100_000,                             // Cap at 100K messages
+    MaxBytes:  500 * 1024 * 1024,                   // 500 MB max
+    Replicas:  1,                                    // Single node (bump for HA)
+    Discard:   jetstream.DiscardOld,                // Drop oldest when full
+    Duplicates: 5 * time.Minute,                    // Dedup window (replaces custom dedup)
+})
+
+// SYS stream — replaces sysbus ring buffer
+js.CreateStream(ctx, jetstream.StreamConfig{
+    Name:      "SYS",
+    Subjects:  []string{"sys.>"},
+    Storage:   jetstream.MemoryStorage,             // In-memory (events are ephemeral)
+    Retention: jetstream.LimitsPolicy,
+    MaxMsgs:   500,                                  // Ring buffer equivalent
+    MaxAge:    24 * time.Hour,                       // 1-day retention
+    Discard:   jetstream.DiscardOld,
+})</code></pre>
+
+<h3>Before/after comparison</h3>
+
+<div class="before-after">
+  <div>
+    <h4>Before: JSONL file append</h4>
+<pre><code>// pkg/provider/bus/store.go (287 lines)
+// Append to file, maintain ring buffer,
+// scan file on startup for replay
+
+func (s *Store) Append(env Envelope) {
+  s.mu.Lock()
+  defer s.mu.Unlock()
+  data, _ := json.Marshal(env)
+  s.file.Write(append(data, '\n'))
+  s.file.Sync()
+  s.ring.Push(env)
+  s.notifyWaiters()
+}
+
+// On startup: scan entire JSONL file to
+// rebuild ring buffer — O(n) where n is
+// total messages ever stored.
+// Compaction cron runs to manage file size.
+</code></pre>
+  </div>
+  <div>
+    <h4>After: JetStream publish</h4>
+<pre><code>// ~3 lines per publish
+ack, err := js.Publish(ctx,
+    "chat.atlas.out",
+    messageBytes,
+    jetstream.WithMsgID(uniqueID), // dedup
+)
+
+// No file management. No ring buffer.
+// No startup scan. No compaction cron.
+// JetStream handles:
+//   - Disk persistence
+//   - Retention limits (time/count/size)
+//   - Replay from any sequence number
+//   - Consumer group tracking
+//   - Deduplication
+</code></pre>
+  </div>
+</div>
+
+<h3>Consumer groups for bus-follower</h3>
+
+<p>The bus-follower (<code>cmd/bus-follower/</code>) currently uses <code>busclient.Subscribe(ctx, "", handler)</code> to receive all messages for classification. With JetStream, it becomes a durable consumer on the CHAT stream:</p>
+
+<pre><code>// bus-follower as a JetStream consumer
+stream, _ := js.Stream(ctx, "CHAT")
+cons, _ := stream.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig{
+    Durable:       "bus-follower",
+    FilterSubject: "chat.>",           // All chat messages
+    AckPolicy:     jetstream.AckExplicitPolicy,
+    DeliverPolicy: jetstream.DeliverNewPolicy,
+})
+
+// Process messages — automatically tracks position,
+// survives restarts, replays unacknowledged messages
+cc, _ := cons.Consume(func(msg jetstream.Msg) {
+    var m Message
+    json.Unmarshal(msg.Data(), &m)
+    classify(m)
+    msg.Ack()
+})</code></pre>
+
+<p>If bus-follower crashes and restarts, it resumes from the last acknowledged message. No cursor file, no timestamp tracking, no "did I already see this?" logic.</p>
+
+<h3>Replay capability</h3>
+
+<p>The browser can request history on connect by creating an ephemeral consumer with a <code>DeliverByStartTime</code> policy:</p>
+
+<pre><code>// Browser requests last 24h of chat on connect (via nats.ws JetStream API)
+const js = nc.jetstream();
+const consumer = await js.consumers.get("CHAT", {
+    deliver_policy: "by_start_time",
+    opt_start_time: new Date(Date.now() - 86400000).toISOString(),
+    filter_subject: "chat.supervisor.>",
+});
+for await (const msg of consumer) {
+    displayMessage(JSON.parse(msg.data));
+    msg.ack();
+}</code></pre>
+
+<hr>
+
+<!-- ==================== BROWSER CLIENT ==================== -->
+
+<h2>5. Browser Client &mdash; One Connection Replaces Three</h2>
+
+<p>Currently the browser opens three WebSocket connections. With NATS, it opens one:</p>
+
+<div class="diagram"><span class="label">Current: three WebSocket connections</span>
+
+  Browser ──WS──&gt; /ws/voice          <span class="note">Voice protocol (audio + signaling)</span>
+  Browser ──WS──&gt; /sysbus/ws/events  <span class="note">System events</span>
+  Browser ──WS──&gt; bridge (chat relay) <span class="note">Chat messages (indirect via bridge)</span>
+
+<span class="label">After NATS: one nats.ws connection + one audio WebSocket</span>
+
+  Browser ──WS──&gt; <span class="highlight">nats:9222</span>          <span class="note">One connection for chat + sys + voice signals</span>
+                    │
+                    ├── subscribe("chat.supervisor.>")     <span class="note">Chat messages</span>
+                    ├── subscribe("sys.>")                 <span class="note">System events</span>
+                    ├── subscribe("voice.signal.>")        <span class="note">Voice signaling</span>
+                    └── publish("chat.supervisor.in", ...) <span class="note">Send messages</span>
+
+  Browser ──WS──&gt; /ws/audio           <span class="note">PCM audio only (dedicated)</span>
+</div>
+
+<h3>Browser code savings</h3>
+
+<p>The <code>web/src/eventbus-client.ts</code> file (355 lines) handles sysbus WebSocket connection, reconnection with exponential backoff, ping/pong heartbeat, snapshot replay, agent state tracking, and event buffering. All of this is handled by the NATS client library internally:</p>
+
+<div class="before-after">
+  <div>
+    <h4>Before: eventbus-client.ts (355 lines)</h4>
+<pre><code>// Manual WebSocket management
+const t = createWebSocketTransport({
+  url: proto + '//' + host + '/sysbus/ws/events',
+  createWebSocket: (u) => new WebSocket(u),
+});
+// Manual reconnect with backoff
+t.onClose(() => {
+  reconnectAttempt++;
+  const delay = Math.min(
+    2000 * Math.pow(2, reconnectAttempt - 1),
+    30000
+  );
+  setTimeout(connect, delay);
+});
+// Manual ping/pong
+setInterval(() => {
+  t.send(JSON.stringify({ type: 'ping' }));
+}, 30000);
+// Manual snapshot processing
+// Manual state accumulation
+// Manual event buffering (MAX_EVENTS = 500)
+// ... 355 lines total</code></pre>
+  </div>
+  <div>
+    <h4>After: NATS client (~40 lines)</h4>
+<pre><code>import { connect } from "@nats-io/nats-core";
+
+const nc = await connect({
+  servers: "wss://nats.example.com:9222",
+  token: authToken,
+  reconnect: true,        // Built-in
+  maxReconnectAttempts: -1, // Infinite
+  reconnectTimeWait: 2000,
+  pingInterval: 30000,    // Built-in
+});
+
+// Chat
+const chatSub = nc.subscribe("chat.supervisor.>");
+(async () => {
+  for await (const msg of chatSub) {
+    displayChat(JSON.parse(
+      new TextDecoder().decode(msg.data)
+    ));
+  }
+})();
+
+// System events
+const sysSub = nc.subscribe("sys.>");
+(async () => {
+  for await (const msg of sysSub) {
+    handleEvent(JSON.parse(
+      new TextDecoder().decode(msg.data)
+    ));
+  }
+})();
+
+// Publish
+nc.publish("chat.supervisor.in",
+  JSON.stringify({ text, from: "user" })
+);</code></pre>
+  </div>
+</div>
+
+<h3>Auth: JWT per-user with subject permissions</h3>
+
+<p>The auth server (or the bridge, acting as token issuer) generates a NATS JWT for each browser session. The JWT embeds subject permissions:</p>
+
+<pre><code>// JWT claims for a browser client
+{
+  "sub": "user-session-abc123",
+  "nats": {
+    "pub": {
+      "allow": ["chat.supervisor.in", "chat.*.in"]   // Can send to any agent
+    },
+    "sub": {
+      "allow": ["chat.supervisor.>", "sys.>", "voice.signal.>"]  // Can read
+    },
+    "resp": {
+      "max": 1,
+      "ttl": "5s"     // Can receive request-reply responses
+    }
+  }
+}</code></pre>
+
+<p>The NATS server enforces these permissions without any application code. A browser client cannot subscribe to subjects it is not permitted to access. This replaces the current setup where the bridge manually filters which messages to relay to the browser.</p>
+
+<hr>
+
+<!-- ==================== DELETION INVENTORY ==================== -->
+
+<h2>6. What We Delete</h2>
+
+<p>Complete inventory of code that goes away:</p>
+
+<table>
+  <tr><th>Component</th><th>Files</th><th>Lines</th><th>Notes</th></tr>
+  <tr>
+    <td><code>cmd/chatbus/</code></td>
+    <td><code>main.go</code>, <code>Dockerfile</code></td>
+    <td>398</td>
+    <td>Entire service: dedup, agent routing, publish, subscribe, bridge callback</td>
+  </tr>
+  <tr>
+    <td><code>cmd/sysbus/</code></td>
+    <td><code>main.go</code>, <code>Dockerfile</code></td>
+    <td>199</td>
+    <td>Entire service: event ingestion, WS fan-out, snapshot, legacy endpoints</td>
+  </tr>
+  <tr>
+    <td><code>pkg/busclient/</code></td>
+    <td><code>client.go</code>, <code>client_test.go</code></td>
+    <td>318</td>
+    <td>HTTP client library: Fetch, Subscribe (long-poll), cursor management</td>
+  </tr>
+  <tr>
+    <td><code>pkg/provider/bus/</code></td>
+    <td>6 files</td>
+    <td>1,016</td>
+    <td>Server framework, JSONL store, ring buffer, subscribe endpoint, middleware</td>
+  </tr>
+  <tr>
+    <td><code>pkg/provider/ws/</code></td>
+    <td>2 files</td>
+    <td>339</td>
+    <td>WebSocket hub, connection management, broadcast (used only by sysbus)</td>
+  </tr>
+  <tr>
+    <td><code>web/src/eventbus-client.ts</code></td>
+    <td>1 file</td>
+    <td>355</td>
+    <td>Browser sysbus WebSocket client: reconnect, heartbeat, state, buffering</td>
+  </tr>
+  <tr>
+    <td>Docker Compose entries</td>
+    <td>In <code>docker-compose.yml</code></td>
+    <td>~45</td>
+    <td>chatbus, taskbus, sysbus service definitions + env var references in ~20 other services</td>
+  </tr>
+  <tr>
+    <td>Bridge chat relay</td>
+    <td>In <code>cmd/bridge/main.go</code></td>
+    <td>~80</td>
+    <td><code>/internal/broadcast</code> handler, chat WebSocket push to browser</td>
+  </tr>
+  <tr>
+    <td><code>ops/bus-compact.sh</code></td>
+    <td>1 file</td>
+    <td>~20</td>
+    <td>JSONL compaction cron (JetStream handles retention)</td>
+  </tr>
+  <tr style="font-weight: 600;">
+    <td>Total</td>
+    <td></td>
+    <td>~2,770</td>
+    <td>Two Docker images, two services, three browser WebSocket connections</td>
+  </tr>
+</table>
+
+<hr>
+
+<!-- ==================== ADDITION INVENTORY ==================== -->
+
+<h2>7. What We Add</h2>
+
+<table>
+  <tr><th>Component</th><th>Effort</th><th>Lines (est.)</th><th>Notes</th></tr>
+  <tr>
+    <td>NATS server container</td>
+    <td>Docker Compose entry + <code>nats.conf</code></td>
+    <td>~40</td>
+    <td>Official <code>nats:alpine</code> image (~6 MB). Single config file for WebSocket listener, JetStream store dir, auth.</td>
+  </tr>
+  <tr>
+    <td><code>nats.conf</code></td>
+    <td>Server configuration</td>
+    <td>~30</td>
+    <td>Ports, WebSocket, JetStream storage, auth mode, monitoring endpoint.</td>
+  </tr>
+  <tr>
+    <td><code>pkg/natsbus/</code></td>
+    <td>Thin Go client wrapper</td>
+    <td>~80</td>
+    <td>Connect helper, typed publish/subscribe, stream creation on startup. Replaces <code>pkg/busclient</code>.</td>
+  </tr>
+  <tr>
+    <td>Service migrations (10 services)</td>
+    <td>~5 lines each</td>
+    <td>~50</td>
+    <td>Replace <code>busclient.New()</code> + <code>Subscribe()</code> with <code>nats.Connect()</code> + <code>nc.Subscribe()</code></td>
+  </tr>
+  <tr>
+    <td>Bridge NATS integration</td>
+    <td>Signaling publish/subscribe</td>
+    <td>~60</td>
+    <td>Publish voice signals to NATS, subscribe to chat for browser delivery</td>
+  </tr>
+  <tr>
+    <td>Browser NATS client</td>
+    <td><code>@nats-io/nats-core</code> import + subscriber setup</td>
+    <td>~80</td>
+    <td>Replaces <code>eventbus-client.ts</code> (355 lines) and chat WebSocket code</td>
+  </tr>
+  <tr>
+    <td>Stream init script</td>
+    <td>JetStream stream creation</td>
+    <td>~30</td>
+    <td>Create CHAT and SYS streams on first boot (or in <code>pkg/natsbus</code> init)</td>
+  </tr>
+  <tr>
+    <td>Auth token generation</td>
+    <td>JWT issuance for browser clients</td>
+    <td>~40</td>
+    <td>Generate scoped NATS JWTs from the existing OAuth session</td>
+  </tr>
+  <tr>
+    <td><code>go.mod</code> dependency</td>
+    <td><code>github.com/nats-io/nats.go</code></td>
+    <td>1</td>
+    <td>One new Go dependency</td>
+  </tr>
+  <tr>
+    <td><code>package.json</code> dependency</td>
+    <td><code>@nats-io/nats-core</code></td>
+    <td>1</td>
+    <td>One new npm dependency (replaces <code>nats.ws</code>, which is deprecated and merged into nats.js)</td>
+  </tr>
+  <tr style="font-weight: 600;">
+    <td>Total</td>
+    <td></td>
+    <td>~410</td>
+    <td>One Docker image (6 MB), one config file, thin client wrappers</td>
+  </tr>
+</table>
+
+<h3>Net change</h3>
+
+<div class="card">
+  <p><strong>Deleted:</strong> ~2,770 lines across 2 services, 3 packages, browser client, Dockerfiles, compose entries</p>
+  <p><strong>Added:</strong> ~410 lines across 1 config file, 1 thin client package, service migrations, browser client</p>
+  <p><strong>Net reduction:</strong> ~2,360 lines</p>
+  <p><strong>Docker containers:</strong> -2 custom services, +1 off-the-shelf NATS (net -1 container to maintain)</p>
+  <p><strong>Browser WebSocket connections:</strong> 3 &rarr; 2 (NATS + audio), eventually 2 &rarr; 1 if audio signaling is separated</p>
+</div>
+
+<hr>
+
+<!-- ==================== OPERATIONAL COMPARISON ==================== -->
+
+<h2>8. Operational Comparison</h2>
+
+<table>
+  <tr><th>Property</th><th>Current (chatbus + sysbus)</th><th>NATS</th></tr>
+  <tr>
+    <td>Containers</td>
+    <td>2 custom Go services</td>
+    <td>1 off-the-shelf NATS server</td>
+  </tr>
+  <tr>
+    <td>Docker image size</td>
+    <td>~15 MB each (Go binary + Alpine)</td>
+    <td>~6 MB (<code>nats:alpine</code>)</td>
+  </tr>
+  <tr>
+    <td>Memory (idle)</td>
+    <td>~20 MB combined (Go runtime + ring buffers)</td>
+    <td>~10 MB (NATS base + JetStream metadata)</td>
+  </tr>
+  <tr>
+    <td>Code to maintain</td>
+    <td>~2,500 lines Go + 355 lines TS</td>
+    <td>~0 (NATS is off-the-shelf)</td>
+  </tr>
+  <tr>
+    <td>Monitoring</td>
+    <td>Custom <code>/health</code> endpoints per service</td>
+    <td>Built-in <code>/varz</code> (server stats), <code>/connz</code> (connections), <code>/subsz</code> (subscriptions), <code>/jsz</code> (JetStream). Prometheus endpoint available.</td>
+  </tr>
+  <tr>
+    <td>Persistence</td>
+    <td>JSONL file (manual compaction cron)</td>
+    <td>JetStream (automatic retention, built-in compaction)</td>
+  </tr>
+  <tr>
+    <td>Clustering</td>
+    <td>Not supported (single instance only)</td>
+    <td>Built-in Raft-based clustering (add <code>routes</code> to config). Free scaling when needed.</td>
+  </tr>
+  <tr>
+    <td>Debugging</td>
+    <td><code>curl</code> to HTTP endpoints, <code>docker logs</code></td>
+    <td><code>nats</code> CLI tool (<code>nats sub</code>, <code>nats pub</code>, <code>nats stream ls</code>), <code>/varz</code> HTTP endpoints, <code>docker logs</code></td>
+  </tr>
+  <tr>
+    <td>Message throughput</td>
+    <td>Limited by Go HTTP handlers (~10K msgs/sec)</td>
+    <td>~15M msgs/sec (core NATS, single server). Well beyond our needs.</td>
+  </tr>
+  <tr>
+    <td>Delivery guarantees</td>
+    <td>At-most-once (messages lost if no listener)</td>
+    <td>At-most-once (core) or exactly-once (JetStream with ACK)</td>
+  </tr>
+</table>
+
+<h3>NATS server configuration</h3>
+
+<pre><code># nats.conf — complete server configuration
+listen: 0.0.0.0:4222           # Service-to-service (TCP)
+
+websocket {
+    listen: 0.0.0.0:9222       # Browser clients (WebSocket)
+    no_tls: true               # TLS handled by Caddy/nginx upstream
+}
+
+jetstream {
+    store_dir: /data/jetstream  # Persistent storage
+    max_mem: 128M               # In-memory stream limit
+    max_file: 1G                # Disk stream limit
+}
+
+http_port: 8222                 # Monitoring (/varz, /connz, /subsz)
+
+# Auth — start with token, migrate to JWT later
+authorization {
+    token: $NATS_TOKEN          # Environment variable
+}</code></pre>
+
+<pre><code># Docker Compose entry
+  nats:
+    image: nats:alpine
+    command: ["-c", "/etc/nats/nats.conf", "-js"]
+    ports:
+      - "4222:4222"     # TCP (services)
+      - "9222:9222"     # WebSocket (browser)
+      - "8222:8222"     # Monitoring
+    volumes:
+      - ./config/nats.conf:/etc/nats/nats.conf:ro
+      - ./data/jetstream:/data/jetstream
+    restart: unless-stopped</code></pre>
+
+<hr>
+
+<!-- ==================== MIGRATION PATH ==================== -->
+
+<h2>9. Migration Path</h2>
+
+<p>Three phases, each independently deployable and reversible. Each phase can run in parallel with the system it replaces during transition.</p>
+
+<h3>Phase 1: NATS replaces chatbus</h3>
+
+<div class="card">
+  <p><strong>Risk:</strong> Low &mdash; chatbus is the simplest service, most subscribers are internal Go services.</p>
+  <p><strong>Code savings:</strong> ~1,762 lines deleted.</p>
+  <p><strong>Steps:</strong></p>
+  <ol>
+    <li>Add NATS container to Docker Compose with JetStream enabled.</li>
+    <li>Create <code>pkg/natsbus/</code> with Connect, Publish, Subscribe helpers.</li>
+    <li>Create CHAT JetStream stream on startup.</li>
+    <li>Migrate Go services one at a time: replace <code>busclient.Subscribe()</code> with NATS subscription. Each service change is ~5 lines.</li>
+    <li>Migrate the bridge: subscribe to <code>chat.*.out</code> via NATS instead of receiving <code>POST /internal/broadcast</code>. Delete the broadcast handler.</li>
+    <li>Migrate browser chat publishing: send to NATS via bridge (bridge publishes to NATS on behalf of browser), or directly via <code>nats.ws</code> if Phase 3 is co-deployed.</li>
+    <li>Delete <code>cmd/chatbus/</code>, <code>pkg/busclient/</code>, <code>pkg/provider/bus/</code>, chatbus Docker Compose entry.</li>
+  </ol>
+  <p><strong>Parallel running:</strong> During migration, both chatbus and NATS can run. A bridge adapter publishes to both, subscribers can be migrated one at a time. Remove chatbus once all consumers are on NATS.</p>
+</div>
+
+<h3>Phase 2: NATS replaces sysbus</h3>
+
+<div class="card">
+  <p><strong>Risk:</strong> Low &mdash; sysbus has fewer consumers (browser only) and simpler data (no persistence needed).</p>
+  <p><strong>Code savings:</strong> ~553 lines deleted.</p>
+  <p><strong>Steps:</strong></p>
+  <ol>
+    <li>Create SYS JetStream stream (memory-backed, 500 message limit).</li>
+    <li>Migrate event publishers: bash <code>curl</code> commands switch to <code>nats pub</code>, or keep a thin HTTP adapter that publishes to NATS internally.</li>
+    <li>Migrate browser: subscribe to <code>sys.&gt;</code> via NATS instead of connecting to <code>/sysbus/ws/events</code>.</li>
+    <li>Delete <code>cmd/sysbus/</code>, <code>pkg/provider/ws/</code>, <code>web/src/eventbus-client.ts</code>, sysbus Docker Compose entry.</li>
+  </ol>
+  <p><strong>Backward compatibility:</strong> Keep the HTTP adapter (<code>POST /events</code> &rarr; NATS publish) for bash scripts that use <code>curl</code>. This is ~15 lines in the bridge or a standalone adapter, and can be removed once all publishers switch to the <code>nats</code> CLI.</p>
+</div>
+
+<h3>Phase 3: Voice signaling moves to NATS</h3>
+
+<div class="card">
+  <p><strong>Risk:</strong> Medium &mdash; requires splitting the bridge WebSocket protocol into audio (stays) and signaling (moves).</p>
+  <p><strong>Code savings:</strong> ~80 lines deleted from bridge, plus simplification of the voice WebSocket protocol.</p>
+  <p><strong>Steps:</strong></p>
+  <ol>
+    <li>Define <code>voice.signal.*</code> subject hierarchy.</li>
+    <li>Bridge publishes signaling events (session, transcript, TTS status) to NATS instead of sending them over the voice WebSocket.</li>
+    <li>Browser subscribes to <code>voice.signal.&gt;</code> via its existing NATS connection.</li>
+    <li>The voice WebSocket becomes audio-only: binary PCM frames in both directions, no JSON signaling interleaved.</li>
+  </ol>
+  <p><strong>Audio stays on WebSocket.</strong> The bridge remains as the audio endpoint. It is simpler now: just PCM frames, no JSON protocol multiplexing.</p>
+</div>
+
+<h3>Migration timeline estimate</h3>
+
+<table>
+  <tr><th>Phase</th><th>Effort</th><th>Dependencies</th></tr>
+  <tr>
+    <td>Phase 1 (chatbus)</td>
+    <td>1&ndash;2 days</td>
+    <td>None. Can start immediately.</td>
+  </tr>
+  <tr>
+    <td>Phase 2 (sysbus)</td>
+    <td>0.5&ndash;1 day</td>
+    <td>Phase 1 (NATS container must be running).</td>
+  </tr>
+  <tr>
+    <td>Phase 3 (voice signaling)</td>
+    <td>1&ndash;2 days</td>
+    <td>Phase 1 + 2. Also requires browser NATS client to be working.</td>
+  </tr>
+</table>
+
+<hr>
+
+<!-- ==================== RISK ASSESSMENT ==================== -->
+
+<h2>10. Risk Assessment</h2>
+
+<table>
+  <tr><th>Risk</th><th>Severity</th><th>Mitigation</th></tr>
+  <tr>
+    <td>NATS server crash loses in-flight messages</td>
+    <td><span class="tag tag-partial">Medium</span></td>
+    <td>JetStream with file storage persists to disk. Messages survive server restart. For core NATS (non-JetStream) subjects, at-most-once is the same guarantee we have today.</td>
+  </tr>
+  <tr>
+    <td>Browser <code>nats.ws</code> library compatibility</td>
+    <td><span class="tag tag-partial">Medium</span></td>
+    <td>The <code>nats.ws</code> package was deprecated and merged into <code>@nats-io/nats-core</code> (May 2026). Use the new package. The API is nearly identical. Verify W3C WebSocket compatibility in target browsers before committing.</td>
+  </tr>
+  <tr>
+    <td>JetStream storage grows unbounded</td>
+    <td><span class="tag tag-yes">Low</span></td>
+    <td>Stream configuration has <code>MaxAge</code>, <code>MaxMsgs</code>, and <code>MaxBytes</code> limits. JetStream auto-compacts. No cron needed.</td>
+  </tr>
+  <tr>
+    <td>Auth complexity (JWT token issuance)</td>
+    <td><span class="tag tag-partial">Medium</span></td>
+    <td>Start with simple token auth (one shared token, same as current setup). Migrate to per-user JWTs later when multi-user access matters. Token auth is ~3 lines of config.</td>
+  </tr>
+  <tr>
+    <td>NATS becomes a single point of failure</td>
+    <td><span class="tag tag-partial">Medium</span></td>
+    <td>Currently chatbus and sysbus are each single points of failure too. NATS replaces two SPOFs with one. Built-in clustering is available if HA is needed later.</td>
+  </tr>
+  <tr>
+    <td>Loss of <code>curl</code>-friendly HTTP API</td>
+    <td><span class="tag tag-yes">Low</span></td>
+    <td>Keep a thin HTTP adapter for bash scripts, or use the <code>nats</code> CLI tool. NATS monitoring endpoints (<code>/varz</code>, <code>/connz</code>) are curl-able.</td>
+  </tr>
+  <tr>
+    <td>NATS subject hierarchy design mistakes</td>
+    <td><span class="tag tag-partial">Medium</span></td>
+    <td>Subject hierarchy is hard to change after consumers depend on it. Design carefully in Phase 1. Use wildcard subscriptions to keep flexibility. Subjects proposed in this doc are based on existing channel/agent/direction semantics.</td>
+  </tr>
+  <tr>
+    <td>Service migration causes message loss during cutover</td>
+    <td><span class="tag tag-yes">Low</span></td>
+    <td>Run chatbus and NATS in parallel during migration. Dual-publish to both systems. Migrate consumers one at a time. Remove chatbus only after all consumers are on NATS.</td>
+  </tr>
+  <tr>
+    <td>Debugging becomes harder without HTTP request/response logs</td>
+    <td><span class="tag tag-partial">Medium</span></td>
+    <td><code>nats sub ">"</code> shows all traffic in real-time. <code>nats stream view CHAT</code> shows stored messages. Different from HTTP logs but equally inspectable. JetStream also provides per-consumer metrics (pending, acked, redelivered).</td>
+  </tr>
+</table>
+
+<hr>
+
+<!-- ==================== COMPARISON WITH REDIS STREAMS ==================== -->
+
+<h2>11. NATS vs Redis Streams</h2>
+
+<p>The <a href="redis-streams-migration.html">Redis Streams migration analysis</a> proposed Redis as the persistence backend. Here is why NATS is a stronger fit for this system:</p>
+
+<table>
+  <tr><th>Property</th><th>Redis Streams</th><th>NATS JetStream</th></tr>
+  <tr>
+    <td>Browser connection</td>
+    <td><span class="tag tag-no">No</span> &mdash; needs WebSocket gateway</td>
+    <td><span class="tag tag-yes">Native</span> &mdash; browser connects directly via <code>nats.ws</code></td>
+  </tr>
+  <tr>
+    <td>Services eliminated</td>
+    <td>0 &mdash; chatbus becomes thinner but stays as gateway</td>
+    <td>2 &mdash; chatbus and sysbus both deleted entirely</td>
+  </tr>
+  <tr>
+    <td>Pub/sub</td>
+    <td>Separate system (<code>SUBSCRIBE</code>) from streams (<code>XREADGROUP</code>)</td>
+    <td>Unified &mdash; core pub/sub + JetStream are one system</td>
+  </tr>
+  <tr>
+    <td>Consumer groups</td>
+    <td><span class="tag tag-yes">Yes</span></td>
+    <td><span class="tag tag-yes">Yes</span> &mdash; plus push and pull modes</td>
+  </tr>
+  <tr>
+    <td>Deduplication</td>
+    <td>Manual (application-level)</td>
+    <td>Built-in (<code>Nats-Msg-Id</code> header, configurable window)</td>
+  </tr>
+  <tr>
+    <td>Clustering</td>
+    <td>Redis Cluster (complex, slot-based sharding)</td>
+    <td>Built-in Raft (simple <code>routes</code> config)</td>
+  </tr>
+  <tr>
+    <td>Memory model</td>
+    <td>All data in memory (AOF/RDB for durability)</td>
+    <td>File-backed streams (memory optional per stream)</td>
+  </tr>
+  <tr>
+    <td>Docker image</td>
+    <td>~30 MB (<code>redis:alpine</code>)</td>
+    <td>~6 MB (<code>nats:alpine</code>)</td>
+  </tr>
+  <tr>
+    <td>Auth for browsers</td>
+    <td><span class="tag tag-no">Not suitable</span></td>
+    <td><span class="tag tag-yes">JWT + subject permissions</span></td>
+  </tr>
+  <tr>
+    <td>Request-reply</td>
+    <td>Manual (Lua scripts or application-level)</td>
+    <td>Built-in (<code>nc.Request()</code>)</td>
+  </tr>
+</table>
+
+<p>Redis Streams is the right choice if you already run Redis for caching or other data structures and want to add messaging as an incremental feature. NATS is the right choice when messaging <em>is</em> the primary concern and you want browser clients, subject-based auth, and built-in clustering without running a separate gateway service.</p>
+
+<p>For this system, NATS eliminates more code, more services, and more browser connections than Redis Streams would. The previous analysis recommended Redis because it deferred the "should we adopt NATS" question. This analysis answers it: yes, NATS is the better fit.</p>
+
+<hr>
+
+<p style="margin-top: 2rem; color: var(--text-muted); font-size: 0.9em;">
+  Document created 2026-11-10. Sources:
+  <a href="https://docs.nats.io/reference/faq">NATS FAQ (max message size)</a>,
+  <a href="https://docs.nats.io/concepts/jetstream">NATS JetStream concepts</a>,
+  <a href="https://natsbyexample.com/examples/jetstream/pull-consumer/go/">NATS by Example: Pull Consumers (Go)</a>,
+  <a href="https://pkg.go.dev/github.com/nats-io/nats.go/jetstream">nats.go JetStream API reference</a>,
+  <a href="https://www.npmjs.com/package/nats.ws">nats.ws npm (deprecated, see @nats-io/nats-core)</a>,
+  <a href="https://github.com/nats-io/nats.js/blob/main/migration.md">nats.js migration guide</a>,
+  <a href="https://hub.docker.com/_/nats/">NATS Docker Hub (6 MB alpine image)</a>,
+  <a href="https://docs.nats.io/running-a-nats-service/nats_docker">NATS Docker documentation</a>,
+  <a href="http-vs-websocket-pubsub.html">HTTP vs WebSocket Pub/Sub (internal)</a>,
+  <a href="redis-streams-migration.html">Redis Streams Migration (internal)</a>.
+</p>
+
+</body>
+</html>
