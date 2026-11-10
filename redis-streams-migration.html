@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Redis Streams Migration — Chatbus Replacement Analysis</title>
 <style>
+  .series-nav {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 2rem;
+    font-size: 0.9rem;
+  }
+  .series-nav strong { color: var(--accent2); }
+  .series-nav a { color: var(--link); text-decoration: none; }
+  .series-nav a:hover { text-decoration: underline; }
+  .series-nav .current { color: var(--text); font-weight: 600; }
   :root {
     --bg: #1a1a2e;
     --surface: #16213e;
@@ -183,6 +195,13 @@
 </style>
 </head>
 <body>
+
+<nav class="series-nav">
+  <strong>Messaging Series:</strong>
+  <a href="http-vs-websocket-pubsub.html">HTTP vs WebSocket Pub/Sub</a> ·
+  <span class="current">Redis Streams Migration</span> ·
+  <a href="nats-migration-analysis.html">NATS Migration Analysis</a>
+</nav>
 
 <h1>Redis Streams Migration</h1>
 <p class="subtitle">Chatbus replacement analysis — current architecture, Redis Streams mapping, migration path, and code examples.</p>

@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTTP vs WebSocket Pub/Sub — Architecture Analysis</title>
+<style>
+  .series-nav {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 2rem;
+    font-size: 0.9rem;
+  }
+  .series-nav strong { color: var(--accent2); }
+  .series-nav a { color: var(--link); text-decoration: none; }
+  .series-nav a:hover { text-decoration: underline; }
+  .series-nav .current { color: var(--text); font-weight: 600; }
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --text: #e0e0e0;
+    --text-muted: #a0a0b0;
+    --accent: #e94560;
+    --accent2: #0f9b8e;
+    --link: #5dade2;
+    --code-bg: #0d1b2a;
+    --border: #2a2a4a;
+    --green: #27ae60;
+    --yellow: #f39c12;
+    --red: #e74c3c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #fff;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    color: #fff;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-top: 1.8rem;
+    margin-bottom: 0.6rem;
+    color: #ddd;
+  }
+  h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 1.2rem;
+    margin-bottom: 0.4rem;
+    color: #ccc;
+  }
+  p { margin-bottom: 0.8rem; }
+  code {
+    background: var(--code-bg);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+    font-size: 0.9em;
+    color: var(--accent2);
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    margin-bottom: 1.2rem;
+    line-height: 1.5;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    font-size: 0.85em;
+    color: var(--text);
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem 1.4rem;
+    margin-bottom: 1.2rem;
+  }
+  .card h3 { margin-top: 0; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 0.8rem; }
+  li { margin-bottom: 0.3rem; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.2rem;
+    font-size: 0.92em;
+  }
+  th, td {
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+  th {
+    background: var(--surface2);
+    color: #fff;
+    font-weight: 600;
+  }
+  td {
+    background: var(--surface);
+  }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .decisions {
+    background: var(--surface);
+    border-left: 3px solid var(--accent2);
+    padding: 1rem 1.25rem;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 1.2rem;
+  }
+  .decisions ol { padding-left: 1.2rem; }
+  .decisions li { margin-bottom: 0.5rem; }
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+  .tldr {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.25rem;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 2rem;
+  }
+  .tldr h3 { margin-top: 0; color: var(--accent); }
+  .tldr li { margin-bottom: 0.5rem; }
+  .diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.2rem;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 0.82em;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--text-muted);
+  }
+  .diagram .highlight { color: var(--accent2); }
+  .diagram .label { color: var(--yellow); }
+  .diagram .note { color: #6a9955; }
+  .comment { color: #6a9955; }
+  .tag {
+    display: inline-block;
+    padding: 0.1em 0.5em;
+    border-radius: 4px;
+    font-size: 0.82em;
+    font-weight: 600;
+  }
+  .tag-yes { background: rgba(39,174,96,0.2); color: var(--green); }
+  .tag-no { background: rgba(231,76,60,0.2); color: var(--red); }
+  .tag-partial { background: rgba(243,156,18,0.2); color: var(--yellow); }
+</style>
+</head>
+<body>
+
+<nav class="series-nav">
+  <strong>Messaging Series:</strong>
+  <span class="current">HTTP vs WebSocket Pub/Sub</span> ·
+  <a href="nats-migration-analysis.html">NATS Migration Analysis</a> ·
+  <a href="redis-streams-migration.html">Redis Streams Migration</a>
+</nav>
+
+<h1>HTTP vs WebSocket Pub/Sub</h1>
+<p class="subtitle">Can we replace HTTP-based pub/sub with WebSocket-native messaging? What does Supabase do? Can browsers connect directly to Redis or NATS? Tradeoffs, patterns, and a recommendation.</p>
+
+<!-- ==================== TL;DR ==================== -->
+
+<div class="tldr">
+  <h3>TL;DR</h3>
+  <ol>
+    <li><strong>WebSocket pub/sub eliminates polling overhead</strong> and gives instant push delivery. For our chatbus, switching the browser-facing transport from HTTP long-poll to WebSocket is a clear win. The backend-to-backend transport (Go services subscribing) is a separate question with different tradeoffs.</li>
+    <li><strong>Browsers cannot connect directly to Redis.</strong> Redis speaks a custom TCP protocol, has no authentication model suitable for untrusted clients, and browsers lack raw TCP socket APIs. You always need a proxy/gateway. NATS is the exception &mdash; it has first-class WebSocket support and a browser client, but it is a new dependency with its own operational surface.</li>
+    <li><strong>Supabase Realtime is instructive but not transferable.</strong> It is a globally-distributed Elixir cluster that reads Postgres WAL and fans out via Phoenix Channels. The pattern (database change &rarr; server-side fanout &rarr; WebSocket) is the same pattern everyone uses. The implementation is Supabase-specific and assumes Postgres as source of truth.</li>
+    <li><strong>The universal pattern is: backend bus + WebSocket gateway.</strong> Every production system (Supabase, Socket.IO + Redis adapter, Ably, Pusher, NATS) puts a server-side process between the message bus and the browser. Direct federation does not work for untrusted clients.</li>
+    <li><strong>For our system:</strong> add a WebSocket subscription endpoint to the chatbus (or the bridge, which already has one). Redis Streams migration (separate analysis) handles backend durability. The browser gets push via WebSocket; services keep using HTTP or Redis consumer groups. Two transports, one bus.</li>
+  </ol>
+</div>
+
+<hr>
+
+<!-- ==================== CURRENT STATE ==================== -->
+
+<h2>Current State: How Our Chatbus Works</h2>
+
+<p>The chatbus is an HTTP-based message bus. All message flow &mdash; publishing, subscribing, querying history &mdash; happens over HTTP. The relevant code lives in <code>cmd/chatbus/main.go</code> (383 lines), <code>pkg/provider/bus/</code> (server, store, envelope, subscribe, middleware), and <code>pkg/busclient/client.go</code> (194 lines).</p>
+
+<h3>Message flow today</h3>
+
+<div class="diagram"><span class="label">Publishing (web UI &rarr; agent):</span>
+
+  Browser ──POST /bus/agent/{name}/send──&gt; <span class="highlight">nginx</span> ──&gt; <span class="highlight">chatbus</span> ──&gt; dedup
+                                                           │
+                                                           ├── store (JSONL + ring buffer)
+                                                           ├── POST to agent HTTP endpoint
+                                                           └── POST to bridge /internal/broadcast
+                                                                    │
+                                                                    └── bridge fans out via <span class="highlight">WebSocket</span> to connected clients
+
+<span class="label">Subscribing (service polling for new messages):</span>
+
+  Go service ──GET /subscribe?agent=builder&amp;timeout=30s──&gt; <span class="highlight">chatbus</span>
+                                                                │
+                                                  blocks up to 30s (long-poll)
+                                                                │
+                                                  returns batch of new messages
+                                                                │
+  Go service &lt;── JSON array of envelopes ─────────────────────────
+
+<span class="label">Subscribing (browser receiving messages):</span>
+
+  Browser &lt;── WebSocket ── <span class="highlight">bridge</span> &lt;── POST /internal/broadcast &lt;── <span class="highlight">chatbus</span>
+  <span class="note">// The browser never talks to chatbus directly for subscriptions.</span>
+  <span class="note">// The bridge already pushes via WebSocket.</span>
+</div>
+
+<h3>What this means</h3>
+
+<p>The browser already receives messages via WebSocket (through the bridge). The HTTP pub/sub question is really about two things:</p>
+<ol>
+  <li><strong>Publishing from the browser</strong> &mdash; currently HTTP POST, could be WebSocket</li>
+  <li><strong>Service-to-service subscriptions</strong> &mdash; currently HTTP long-poll, could be WebSocket or Redis consumer groups</li>
+</ol>
+
+<p>The bridge is already a WebSocket gateway. The question is whether to eliminate the HTTP hop between chatbus and bridge, and whether services should subscribe via WebSocket instead of long-poll.</p>
+
+<hr>
+
+<!-- ==================== WEBSOCKET PUB/SUB ANALYSIS ==================== -->
+
+<h2>Analysis: WebSocket Pub/Sub &mdash; What Changes</h2>
+
+<h3>What gets easier</h3>
+
+<div class="card">
+  <ol>
+    <li><strong>Instant delivery.</strong> No 30-second long-poll ceiling. Messages arrive within milliseconds of being published. The long-poll approach has a latency floor of one HTTP round-trip per batch, and a worst case of 30 seconds if the poll just started when the message arrives.</li>
+    <li><strong>No wasted requests.</strong> Long-poll burns one HTTP connection per subscriber, continuously. Even when no messages arrive, the connection is held open for up to 30 seconds, then immediately reopened. WebSocket holds one connection and is idle until data flows.</li>
+    <li><strong>Bidirectional on one connection.</strong> A service that both publishes and subscribes currently needs two code paths (POST for publish, GET for subscribe). Over WebSocket, both directions share one connection.</li>
+    <li><strong>Simpler client code.</strong> The <code>busclient.Subscribe()</code> function is 53 lines of retry-loop, cursor management, and HTTP request construction. A WebSocket subscriber is: connect, receive messages, handle reconnect. The cursor management is pushed to the server.</li>
+    <li><strong>Bridge integration simplifies.</strong> Currently the chatbus POSTs to the bridge's <code>/internal/broadcast</code> endpoint to push outbound messages. If the bridge subscribes to the chatbus via WebSocket, this push-from-chatbus pattern is replaced by pull-from-bridge. One fewer HTTP integration point.</li>
+  </ol>
+</div>
+
+<h3>What gets harder</h3>
+
+<div class="card">
+  <ol>
+    <li><strong>Connection lifecycle management.</strong> HTTP is stateless &mdash; each request is independent. WebSocket connections are stateful. The server must track connected clients, handle disconnects, manage reconnection, and decide what to do about messages missed during disconnection (replay from cursor? drop?).</li>
+    <li><strong>Load balancing.</strong> HTTP requests can be load-balanced per-request. WebSocket connections are pinned to a specific server instance for their lifetime. If you scale to multiple chatbus instances, you need sticky sessions or a shared pub/sub backplane (Redis, NATS) to route messages to the right instance.</li>
+    <li><strong>Backpressure.</strong> HTTP long-poll has natural backpressure &mdash; the client processes a batch, then asks for more. WebSocket push has no built-in flow control. A slow consumer can accumulate unbounded messages in the server's send buffer.</li>
+    <li><strong>Debugging.</strong> HTTP requests show up in logs, curl, browser devtools network tab with clear request/response pairs. WebSocket frames are harder to inspect and replay.</li>
+    <li><strong>Auth and middleware.</strong> HTTP has mature middleware chains (auth, rate limiting, CORS, logging). WebSocket auth typically happens once at handshake time, then the connection is trusted for its lifetime. Mid-connection auth changes (token expiry) require application-level handling.</li>
+  </ol>
+</div>
+
+<h3>Comparison table</h3>
+
+<table>
+  <tr><th>Property</th><th>HTTP long-poll (current)</th><th>WebSocket push</th></tr>
+  <tr><td>Latency</td><td>0&ndash;30s (poll interval)</td><td>&lt;10ms (push)</td></tr>
+  <tr><td>Connection overhead</td><td>New TCP+TLS per poll cycle</td><td>One persistent connection</td></tr>
+  <tr><td>Server state</td><td>Stateless per request</td><td>Stateful per connection</td></tr>
+  <tr><td>Missed messages</td><td>Client manages cursor</td><td>Server must track or client reconnects with cursor</td></tr>
+  <tr><td>Load balancing</td><td>Round-robin works</td><td>Sticky sessions or backplane required</td></tr>
+  <tr><td>Backpressure</td><td>Natural (client pulls)</td><td>Application-level needed</td></tr>
+  <tr><td>Debugging</td><td>curl, logs, devtools</td><td>Requires WebSocket tooling</td></tr>
+  <tr><td>Scaling multiple instances</td><td>Stateless, trivial</td><td>Requires shared state or pub/sub backplane</td></tr>
+  <tr><td>Browser support</td><td>Universal</td><td>Universal (all modern browsers)</td></tr>
+</table>
+
+<hr>
+
+<!-- ==================== SUPABASE DEEP DIVE ==================== -->
+
+<h2>Deep Dive: Supabase Realtime Architecture</h2>
+
+<p>Supabase Realtime is worth studying because it solves a problem close to ours: take changes from a data store and push them to browsers in real time. It is not something to adopt (it is Postgres-specific and Elixir-native), but the pattern is instructive.</p>
+
+<h3>Architecture overview</h3>
+
+<div class="diagram"><span class="label">Supabase Realtime data flow:</span>
+
+  <span class="highlight">Postgres</span> ── WAL (logical replication) ──&gt; <span class="highlight">Realtime Server</span> ── WebSocket ──&gt; <span class="highlight">Browser</span>
+       │                                        (Elixir/Phoenix)          (Phoenix Channels)
+       │                                              │
+       │                                    ┌─────────┴──────────┐
+       │                                    │                    │
+       │                              subscription          subscription
+       │                              matching              matching
+       │                              (append IDs           (append IDs
+       │                               to WAL records)       to WAL records)
+       │                                    │                    │
+       │                                 Client A            Client B
+       │
+  <span class="note">  Replication slot is polled by the Realtime server.</span>
+  <span class="note">  Each WAL record gets subscription IDs appended based on</span>
+  <span class="note">  which clients are listening to that table/filter combo.</span>
+</div>
+
+<h3>How it works internally</h3>
+
+<ol>
+  <li><strong>Postgres WAL as source of truth.</strong> Supabase uses PostgreSQL's logical replication protocol. When a row changes, the change is written to the Write-Ahead Log. The Realtime server acquires a replication slot and polls it for new entries.</li>
+  <li><strong>Elixir/Erlang process model.</strong> The server is a globally-distributed Elixir cluster. Each WebSocket connection is an Erlang lightweight process. Phoenix Channels (built on Phoenix.PubSub with the PG2 adapter) handle subscription matching and fan-out. Erlang's process model means millions of concurrent connections are feasible without OS thread overhead.</li>
+  <li><strong>Subscription matching.</strong> When a WAL record arrives, the server appends globally-unique subscription IDs (one per listening Erlang process/socket) to the record. Erlang's process routing then delivers the record to the right clients.</li>
+  <li><strong>Three features on one transport:</strong>
+    <ul>
+      <li><strong>Postgres Changes</strong> &mdash; subscribe to INSERT/UPDATE/DELETE on specific tables with column filters. Authorization respects Row-Level Security policies.</li>
+      <li><strong>Broadcast</strong> &mdash; arbitrary pub/sub messaging between clients. Uses a <code>realtime.messages</code> table with daily partitions (3-day retention). Changes to this table flow through the same WAL pipeline.</li>
+      <li><strong>Presence</strong> &mdash; distributed key-value store backed by a CRDT, synced across cluster nodes. Tracks who is online, cursor positions, etc.</li>
+    </ul>
+  </li>
+  <li><strong>Authorization.</strong> Broadcast and Postgres Changes use database-level access controls. The client authenticates with a JWT; the server enforces RLS policies before delivering changes.</li>
+</ol>
+
+<h3>What to take from this</h3>
+
+<div class="decisions">
+  <ol>
+    <li><strong>The pattern is universal:</strong> data store &rarr; server-side process &rarr; subscription matching &rarr; WebSocket push. Supabase just happens to use Postgres WAL as the data store and Elixir processes as the routing layer.</li>
+    <li><strong>The browser never touches the database.</strong> All access goes through the Realtime server, which authenticates, filters, and fans out. This is the same gateway pattern every system uses.</li>
+    <li><strong>Presence and broadcast are extras layered on the same WebSocket connection.</strong> Once you have a persistent connection for data changes, adding ephemeral messaging (broadcast) and shared state (presence) is cheap &mdash; same transport, different channel semantics.</li>
+    <li><strong>When to use Supabase Realtime:</strong> when your source of truth is Postgres and you want reactive UIs without building a change-data-capture pipeline. When to replace it: when your source of truth is not Postgres, when you need sub-5ms latency (WAL polling adds latency), or when you need message ordering guarantees across multiple tables.</li>
+  </ol>
+</div>
+
+<hr>
+
+<!-- ==================== DIRECT FEDERATION ==================== -->
+
+<h2>Deep Dive: Direct Backend Federation to Browsers</h2>
+
+<p>The question: can a browser connect directly to Redis, NATS, or another backend bus, skipping the application server entirely?</p>
+
+<h3>Redis: No</h3>
+
+<table>
+  <tr><th>Concern</th><th>Status</th></tr>
+  <tr><td>Browser TCP access</td><td><span class="tag tag-no">Blocked</span> &mdash; browsers have no raw TCP socket API. Cannot speak the Redis protocol (RESP).</td></tr>
+  <tr><td>Redis over WebSocket</td><td><span class="tag tag-no">Not supported</span> &mdash; Redis server has no WebSocket listener. Third-party proxies (webdis, redis-websocket-proxy) exist but are thin wrappers &mdash; you are back to running a gateway.</td></tr>
+  <tr><td>Authentication</td><td><span class="tag tag-no">Unsuitable</span> &mdash; Redis auth is a single password or ACL username/password. Not per-user, not token-based, not revocable per session. Designed for trusted internal services, not untrusted browser clients.</td></tr>
+  <tr><td>Authorization</td><td><span class="tag tag-no">Coarse</span> &mdash; Redis ACLs can restrict commands and key patterns, but cannot express "this user can only read messages where agent=X". Application-level filtering is required.</td></tr>
+  <tr><td>Exposure risk</td><td><span class="tag tag-no">Critical</span> &mdash; 39,000+ unauthenticated Redis instances found on the public internet; ~50% show signs of compromise. Redis explicitly documents it is not designed for untrusted network exposure.</td></tr>
+</table>
+
+<p>Redis is a backend data store. Exposing it to browsers &mdash; even through a WebSocket proxy &mdash; means every connected browser has a Redis client with whatever permissions the proxy grants. There is no safe way to do per-user, per-channel authorization at the Redis level. You always need application-level gating.</p>
+
+<h3>NATS: Yes, with caveats</h3>
+
+<table>
+  <tr><th>Concern</th><th>Status</th></tr>
+  <tr><td>Browser WebSocket access</td><td><span class="tag tag-yes">Native</span> &mdash; NATS server has built-in WebSocket listener. Official <code>nats.ws</code> client library for browsers.</td></tr>
+  <tr><td>Pub/sub from browser</td><td><span class="tag tag-yes">Full</span> &mdash; subscribe, publish, request-reply, JetStream (persistent streams with replay) all work from the browser.</td></tr>
+  <tr><td>Authentication</td><td><span class="tag tag-yes">Token/JWT</span> &mdash; NATS supports token auth, NKey auth, and JWT-based decentralized auth. Per-user credentials are possible.</td></tr>
+  <tr><td>Authorization</td><td><span class="tag tag-partial">Subject-based</span> &mdash; NATS can restrict which subjects (topics) a user can publish/subscribe to. But filtering within a subject (e.g., only messages where <code>agent=X</code>) requires application logic.</td></tr>
+  <tr><td>Operational cost</td><td><span class="tag tag-partial">New dependency</span> &mdash; NATS is a separate server process. Lightweight (~20MB binary, ~10MB memory), but it is a new thing to run, monitor, and understand.</td></tr>
+  <tr><td>JetStream (persistence)</td><td><span class="tag tag-yes">Built-in</span> &mdash; JetStream provides persistent streams with replay, consumer groups, exactly-once delivery. Comparable to Redis Streams but with native WebSocket access.</td></tr>
+</table>
+
+<p>NATS is the closest thing to "direct browser federation" that actually works. The browser connects via WebSocket to the NATS server and speaks the NATS protocol natively. No application-layer proxy needed for basic pub/sub. However:</p>
+
+<ul>
+  <li>Subject-level authorization means you need to design your topic hierarchy carefully. <code>chat.supervisor.in</code> vs <code>chat.builder.out</code> &mdash; the subject structure becomes your access control model.</li>
+  <li>Any filtering finer than subject matching (e.g., "only messages from user X") still requires application logic, either server-side or client-side.</li>
+  <li>Browser clients can publish to any subject they have permissions for. If your authorization model is "browsers can only read," you need to configure that explicitly per credential.</li>
+</ul>
+
+<h3>NATS deep dive: what it is and how it works</h3>
+
+<p>NATS is a message bus built by Synadia (originally by Derek Collison, who also built the messaging system inside Cloud Foundry and Apcera). It is written in Go, single-binary, and designed for cloud-native infrastructure. The name stands for nothing &mdash; it is just "NATS."</p>
+
+<h4>Core concepts</h4>
+
+<p>NATS has three layers, each building on the previous:</p>
+
+<div class="card">
+  <h4>1. Core NATS &mdash; fire-and-forget pub/sub</h4>
+  <p>The simplest layer. Publishers send messages to <strong>subjects</strong> (string-based topic names like <code>chat.supervisor.in</code>). Subscribers listen to subjects, optionally with wildcards. Messages are delivered at most once &mdash; if no subscriber is listening when a message is published, it is gone.</p>
+  <ul>
+    <li><strong>Subjects</strong> are dot-separated hierarchies: <code>chat.atlas.out</code>, <code>system.scheduler.idle</code></li>
+    <li><strong><code>*</code></strong> matches one token: <code>chat.*.out</code> matches <code>chat.atlas.out</code> and <code>chat.builder.out</code></li>
+    <li><strong><code>&gt;</code></strong> matches one or more tokens: <code>chat.&gt;</code> matches everything under <code>chat.</code></li>
+    <li><strong>Request-reply</strong>: a publisher sends a message with a reply subject. The subscriber responds to that subject. NATS routes the response back. This is how synchronous RPC works over an async bus.</li>
+    <li><strong>Queue groups</strong>: multiple subscribers can join a named group. NATS delivers each message to exactly one member of the group (load balancing). Similar to Redis consumer groups but without persistence.</li>
+  </ul>
+  <p>Core NATS has no persistence, no replay, no delivery guarantees beyond "if someone is listening right now, they get it." It is fast (~15 million msgs/sec on a single server) because it does almost nothing besides routing.</p>
+</div>
+
+<div class="card">
+  <h4>2. JetStream &mdash; persistent streams with replay</h4>
+  <p>JetStream adds durability on top of core NATS. It is NATS's answer to Kafka, Redis Streams, and Pulsar. JetStream stores messages in <strong>streams</strong> and delivers them to <strong>consumers</strong>.</p>
+  <ul>
+    <li><strong>Streams</strong> capture messages published to one or more subjects. They persist to disk (or memory) with configurable retention (by time, count, or size). A stream is like a Redis Stream or a Kafka topic.</li>
+    <li><strong>Consumers</strong> read from a stream with a cursor. They can be <strong>durable</strong> (survive restarts, track position) or <strong>ephemeral</strong> (disappear when the client disconnects). Durable consumers are like Redis consumer groups.</li>
+    <li><strong>Delivery policies</strong>: start from the beginning, start from a specific sequence, start from a timestamp, or "new messages only." This is how replay works &mdash; a reconnecting client can resume from where it left off.</li>
+    <li><strong>Acknowledgment</strong>: consumers ACK messages. Unacknowledged messages are redelivered after a timeout. This gives at-least-once delivery (or exactly-once with dedup).</li>
+    <li><strong>Deduplication</strong>: publishers can set a <code>Nats-Msg-Id</code> header. JetStream deduplicates within a configurable window, giving effectively exactly-once publishing.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h4>3. Key-Value and Object Store &mdash; state on the bus</h4>
+  <p>Built on top of JetStream, NATS also provides:</p>
+  <ul>
+    <li><strong>Key-Value store</strong>: a distributed, replicated KV with watch (subscribe to changes on a key). Like etcd but lighter. Could replace our agent state tracking.</li>
+    <li><strong>Object store</strong>: for large blobs (chunked into JetStream messages). Less relevant for us.</li>
+  </ul>
+</div>
+
+<h4>WebSocket support</h4>
+
+<p>NATS server has a built-in WebSocket listener (configurable port, TLS, compression). The <code>nats.ws</code> npm package is the official browser client. From the browser's perspective, connecting to NATS looks like this:</p>
+
+<pre><code>import { connect } from 'nats.ws';
+
+const nc = await connect({
+  servers: 'wss://nats.example.com:9222',
+  user: 'browser-client',
+  token: 'jwt-token-here',
+});
+
+// Subscribe to messages for a specific agent
+const sub = nc.subscribe('chat.atlas.out');
+for await (const msg of sub) {
+  const data = JSON.parse(new TextDecoder().decode(msg.data));
+  console.log('Message:', data.text);
+}
+
+// Publish a message
+nc.publish('chat.atlas.in', JSON.stringify({ text: 'hello' }));
+
+// Request-reply (synchronous RPC over async bus)
+const reply = await nc.request('agent.atlas.status', '', { timeout: 5000 });
+console.log('Agent status:', new TextDecoder().decode(reply.data));</code></pre>
+
+<p>The browser speaks the full NATS protocol &mdash; not a subset, not a translation layer. Every feature available to Go/Rust/Python clients is available to the browser, including JetStream consumers with replay.</p>
+
+<h4>Authentication and authorization</h4>
+
+<p>NATS has three auth models, each progressively more sophisticated:</p>
+
+<table>
+  <tr><th>Model</th><th>How it works</th><th>Suitable for browsers</th></tr>
+  <tr>
+    <td>Token auth</td>
+    <td>Single token per connection. Server validates against config.</td>
+    <td><span class="tag tag-partial">Basic</span> &mdash; works but all browsers share one identity</td>
+  </tr>
+  <tr>
+    <td>NKey auth</td>
+    <td>Ed25519 key pairs. Client signs a nonce; server verifies. No secret transmitted.</td>
+    <td><span class="tag tag-partial">Possible</span> &mdash; requires key management in the browser</td>
+  </tr>
+  <tr>
+    <td>JWT + NKey (decentralized)</td>
+    <td>Operator issues account JWTs. Accounts issue user JWTs. Permissions are embedded in the JWT. Server validates the chain without contacting an auth server.</td>
+    <td><span class="tag tag-yes">Best fit</span> &mdash; your auth server issues a NATS JWT with scoped permissions per user session</td>
+  </tr>
+</table>
+
+<p>With JWT auth, you can issue a browser-specific JWT that says: "this user can subscribe to <code>chat.supervisor.*</code> and <code>system.status.&gt;</code>, can publish to <code>chat.supervisor.in</code>, and nothing else." The NATS server enforces this without any application code. Permissions are embedded in the signed JWT &mdash; the NATS server never calls back to your auth server.</p>
+
+<h4>How it compares to what we have</h4>
+
+<div class="diagram"><span class="label">Our chatbus today vs NATS replacement:</span>
+
+  <span class="label">Today:</span>
+  Browser ── HTTP POST ──&gt; nginx ──&gt; <span class="highlight">chatbus</span> (Go, 383 lines)
+                                         │
+                                    JSONL store (113MB, growing)
+                                    ring buffer (in-memory)
+                                    long-poll subscribers
+                                    HTTP callback to bridge
+                                         │
+  Services ── HTTP long-poll ──&gt; chatbus ─┘
+  Browser  &lt;── WebSocket ── bridge &lt;── chatbus HTTP POST
+
+  <span class="label">With NATS:</span>
+  Browser  ── WebSocket ──&gt; <span class="highlight">NATS</span> ── subject: chat.atlas.in
+  Browser  &lt;── WebSocket ── <span class="highlight">NATS</span> ── subject: chat.atlas.out
+  Services ── TCP ──&gt; <span class="highlight">NATS</span>
+  <span class="note">// No chatbus. No bridge relay. No HTTP callbacks.</span>
+  <span class="note">// JetStream stream replaces JSONL file.</span>
+  <span class="note">// Consumer groups replace long-poll.</span>
+  <span class="note">// Subject permissions replace application-level auth.</span>
+
+  <span class="label">What you lose:</span>
+  <span class="note">// Custom dedup logic (NATS has its own)</span>
+  <span class="note">// JSONL file you can grep (JetStream is binary)</span>
+  <span class="note">// HTTP API you can curl (NATS has a monitoring API, different format)</span>
+  <span class="note">// Full control over storage format (JetStream manages its own)</span>
+</div>
+
+<h4>Operational profile</h4>
+
+<ul>
+  <li><strong>Binary size</strong>: ~20MB single binary. No runtime dependencies.</li>
+  <li><strong>Memory</strong>: ~10MB base. JetStream streams use memory or disk (configurable per stream).</li>
+  <li><strong>Docker image</strong>: <code>nats:alpine</code> is ~10MB. Add to <code>docker-compose.yml</code> as one service.</li>
+  <li><strong>Configuration</strong>: single <code>nats.conf</code> file. WebSocket listener, JetStream storage dir, auth config.</li>
+  <li><strong>Monitoring</strong>: built-in HTTP monitoring endpoint (<code>/varz</code>, <code>/connz</code>, <code>/subsz</code>). Prometheus endpoint available. CLI tool <code>nats</code> for inspection.</li>
+  <li><strong>Clustering</strong>: built-in. Add <code>routes</code> to config and NATS servers form a mesh. JetStream uses Raft for leader election and replication. Not needed for single-node, but trivial to add later.</li>
+  <li><strong>Client libraries</strong>: Go (<code>nats.go</code>), TypeScript/Node (<code>nats.js</code>), browser (<code>nats.ws</code>), Rust, Python, C, .NET, Java, Ruby, Elixir, Zig. All officially maintained by Synadia.</li>
+</ul>
+
+<p>The key difference from Redis: NATS is purpose-built for messaging. Redis is a general-purpose data structure server that added Streams as one of many features. NATS does one thing &mdash; message routing &mdash; and does it with less operational surface than Redis (no AOF, no RDB snapshots, no memory fragmentation concerns, no Lua scripting, no 20+ data types to reason about).</p>
+
+<h3>The universal pattern</h3>
+
+<div class="diagram"><span class="label">Every production real-time system:</span>
+
+  Browser &lt;── WebSocket ── <span class="highlight">Gateway / Proxy</span> &lt;── <span class="highlight">Backend Bus</span> &lt;── Services
+                                │
+                          ┌─────┴──────┐
+                          │            │
+                     Auth/Authz    Filtering
+                     (JWT, RLS)    (per-user,
+                                    per-channel)
+
+<span class="label">Supabase:</span>    Browser &lt;── WS ── Realtime (Elixir) &lt;── Postgres WAL
+<span class="label">Socket.IO:</span>  Browser &lt;── WS ── Node.js server &lt;── Redis Pub/Sub adapter
+<span class="label">Ably:</span>       Browser &lt;── WS ── Ably edge ── Ably core &lt;── publisher
+<span class="label">Our bridge:</span> Browser &lt;── WS ── bridge (Go) &lt;── chatbus HTTP POST
+<span class="label">NATS:</span>       Browser &lt;── WS ── NATS server (native) &lt;── services
+                                <span class="note">// NATS is the only one where the gateway IS the bus</span>
+</div>
+
+<p>NATS collapses the gateway and bus into one process. Everything else separates them. The reason: the gateway handles concerns the bus should not &mdash; per-user auth, fine-grained filtering, rate limiting, protocol translation. NATS handles some of these (subject-level auth, token-based credentials) but not all (field-level filtering, rate limiting per user).</p>
+
+<hr>
+
+<!-- ==================== SCENARIO DIAGRAMS ==================== -->
+
+<h2>Scenario Diagrams: Message Flow Comparison</h2>
+
+<h3>Scenario 1: User sends a chat message to an agent</h3>
+
+<div class="diagram"><span class="label">Current (HTTP):</span>
+
+  Browser ──<span class="highlight">HTTP POST</span>──&gt; nginx ──&gt; chatbus /agent/atlas/send
+                                          │
+                               ┌──────────┼──────────┐
+                               │          │          │
+                            dedup     store msg   POST to agent
+                                      (JSONL)    HTTP endpoint
+                                                      │
+                                                  agent reply
+                                                      │
+                                          store reply + POST to bridge
+                                                      │
+                                          bridge ──<span class="highlight">WebSocket</span>──&gt; Browser
+
+  <span class="note">Hops: Browser &rarr; nginx &rarr; chatbus &rarr; agent &rarr; chatbus &rarr; bridge &rarr; Browser</span>
+  <span class="note">Protocols: HTTP, HTTP, HTTP, HTTP, WebSocket</span>
+
+<span class="label">WebSocket-native (proposed):</span>
+
+  Browser ──<span class="highlight">WebSocket</span>──&gt; bridge ──&gt; chatbus (internal)
+                                          │
+                               ┌──────────┼──────────┐
+                               │          │          │
+                            dedup     store msg   route to agent
+                                                      │
+                                                  agent reply
+                                                      │
+                                          store reply + push to subscribers
+                                                      │
+                                          bridge &lt;── subscriber notification
+                                                      │
+                                          bridge ──<span class="highlight">WebSocket</span>──&gt; Browser
+
+  <span class="note">Hops: Browser &rarr; bridge &rarr; chatbus &rarr; agent &rarr; chatbus &rarr; bridge &rarr; Browser</span>
+  <span class="note">Protocols: WebSocket, internal, internal, internal, WebSocket</span>
+  <span class="note">Net change: browser publish goes over existing WS connection instead of new HTTP request</span>
+</div>
+
+<h3>Scenario 2: Service subscribes to bus messages</h3>
+
+<div class="diagram"><span class="label">Current (HTTP long-poll):</span>
+
+  builder ──GET /subscribe?agent=builder&amp;timeout=30s──&gt; <span class="highlight">chatbus</span>
+                                                            │
+                                              blocks up to 30s
+                                              (Go channel Wait())
+                                                            │
+                                              new message arrives
+                                                            │
+  builder &lt;── JSON [{...}, {...}] ──────────────────────────
+                                                            │
+  builder processes messages, then immediately re-polls ────┘
+
+  <span class="note">Latency: 0-30s depending on when message arrives relative to poll start</span>
+  <span class="note">Connection overhead: new HTTP request every 30s even with no messages</span>
+
+<span class="label">WebSocket-native:</span>
+
+  builder ──<span class="highlight">WebSocket connect</span>──&gt; chatbus
+                                      │
+               subscribe(agent=builder, since=last_id)
+                                      │
+                         connection stays open
+                                      │
+                         new message arrives
+                                      │
+  builder &lt;── push: {...} ────────────
+                                      │
+                         another message
+                                      │
+  builder &lt;── push: {...} ────────────
+
+  <span class="note">Latency: &lt;10ms (push on arrival)</span>
+  <span class="note">Connection overhead: one persistent connection, idle when no messages</span>
+
+<span class="label">Redis consumer group (alternative):</span>
+
+  builder ──<span class="highlight">XREADGROUP</span> GROUP builder builder-1 BLOCK 30000 STREAMS bus:work &gt;──&gt; <span class="highlight">Redis</span>
+                                                                                        │
+                                                                          blocks until message
+                                                                                        │
+  builder &lt;── stream entry ────────────────────────────────────────────────────────────
+                                                                                        │
+  builder ──XACK bus:work builder &lt;id&gt;────────────────────────────────────────────────
+
+  <span class="note">Latency: &lt;1ms (Redis is in-memory)</span>
+  <span class="note">Bonus: exactly-once delivery via consumer groups, pending message tracking</span>
+</div>
+
+<h3>Scenario 3: Fan-out &mdash; message reaches multiple subscribers</h3>
+
+<div class="diagram"><span class="label">Current (HTTP):</span>
+
+  chatbus receives published message
+       │
+       ├── store to JSONL + ring buffer
+       ├── POST to bridge /internal/broadcast  <span class="note">// for browser clients</span>
+       └── wake all Go channel waiters         <span class="note">// for long-poll subscribers</span>
+            │
+            ├── bus-follower poll returns with message
+            ├── builder poll returns with message
+            ├── scheduler poll returns with message
+            └── (each re-polls immediately after)
+
+  <span class="note">Problem: all waiters wake on every message, then each re-queries and filters.</span>
+  <span class="note">A message for builder wakes follower and scheduler too.</span>
+
+<span class="label">WebSocket-native:</span>
+
+  chatbus receives published message
+       │
+       ├── store
+       └── iterate connected subscribers
+            │
+            ├── bus-follower: matches filter? yes &rarr; push
+            ├── builder: matches filter? yes &rarr; push
+            └── scheduler: matches filter? no &rarr; skip
+
+  <span class="note">Server-side filtering. No wasted wakeups.</span>
+
+<span class="label">Redis Streams:</span>
+
+  XADD bus:work ...
+       │
+       └── Redis delivers to consumer groups:
+            ├── builder-group &rarr; builder-1 gets message (XREADGROUP unblocks)
+            ├── follower-group &rarr; follower-1 gets message
+            └── scheduler-group &rarr; scheduler-1 gets message (if subscribed to bus:work)
+
+  <span class="note">Redis handles fan-out natively. No custom dispatch code.</span>
+</div>
+
+<hr>
+
+<!-- ==================== TRADEOFFS ==================== -->
+
+<h2>Tradeoffs Summary</h2>
+
+<table>
+  <tr>
+    <th>Concern</th>
+    <th>HTTP long-poll</th>
+    <th>WebSocket push</th>
+    <th>Redis Streams</th>
+    <th>NATS native</th>
+  </tr>
+  <tr>
+    <td>Browser delivery latency</td>
+    <td>0&ndash;30s</td>
+    <td>&lt;10ms</td>
+    <td>&lt;10ms (via WS gateway)</td>
+    <td>&lt;10ms (direct)</td>
+  </tr>
+  <tr>
+    <td>Service delivery latency</td>
+    <td>0&ndash;30s</td>
+    <td>&lt;10ms</td>
+    <td>&lt;1ms</td>
+    <td>&lt;1ms</td>
+  </tr>
+  <tr>
+    <td>Delivery guarantee</td>
+    <td>At-most-once</td>
+    <td>At-most-once (unless cursor replay)</td>
+    <td>Exactly-once (consumer groups)</td>
+    <td>Exactly-once (JetStream)</td>
+  </tr>
+  <tr>
+    <td>Persistence / replay</td>
+    <td>JSONL file (custom)</td>
+    <td>None (needs backing store)</td>
+    <td>Built-in (MAXLEN trim)</td>
+    <td>JetStream (built-in)</td>
+  </tr>
+  <tr>
+    <td>Browser can connect directly</td>
+    <td><span class="tag tag-yes">Yes</span> (HTTP)</td>
+    <td><span class="tag tag-yes">Yes</span></td>
+    <td><span class="tag tag-no">No</span> (needs gateway)</td>
+    <td><span class="tag tag-yes">Yes</span></td>
+  </tr>
+  <tr>
+    <td>Auth model</td>
+    <td>HTTP headers/cookies</td>
+    <td>Handshake token</td>
+    <td>Redis ACL (coarse)</td>
+    <td>JWT/NKey (per-user)</td>
+  </tr>
+  <tr>
+    <td>New dependencies</td>
+    <td>None (current)</td>
+    <td>None (add to existing Go server)</td>
+    <td>Redis container</td>
+    <td>NATS container</td>
+  </tr>
+  <tr>
+    <td>Code complexity</td>
+    <td>~450 lines custom store/subscribe</td>
+    <td>~200 lines WS connection manager</td>
+    <td>~30 lines Redis calls</td>
+    <td>~50 lines NATS client</td>
+  </tr>
+  <tr>
+    <td>Horizontal scaling</td>
+    <td>Stateless, trivial</td>
+    <td>Sticky sessions + backplane</td>
+    <td>Redis cluster (complex)</td>
+    <td>NATS cluster (built-in)</td>
+  </tr>
+  <tr>
+    <td>Operational surface</td>
+    <td>Just the Go process</td>
+    <td>Just the Go process</td>
+    <td>Redis monitoring, AOF, memory</td>
+    <td>NATS monitoring, JetStream storage</td>
+  </tr>
+</table>
+
+<hr>
+
+<!-- ==================== RECOMMENDATION ==================== -->
+
+<h2>Recommendation</h2>
+
+<h3>What we should do</h3>
+
+<div class="decisions">
+  <ol>
+    <li><strong>Add WebSocket subscriptions to the bridge for browser clients.</strong> The bridge already has a WebSocket connection to every browser. Extend it to deliver chatbus messages in real time instead of relying on the chatbus-to-bridge HTTP POST callback. The bridge becomes the WebSocket gateway. This is the highest-value, lowest-risk change.</li>
+    <li><strong>Keep HTTP POST for browser publishing.</strong> The browser sends messages infrequently (user-initiated). HTTP POST is simpler to auth, log, and rate-limit than a WebSocket message. No reason to change this.</li>
+    <li><strong>Migrate service subscriptions to Redis Streams consumer groups</strong> (per the <a href="redis-streams-migration.html">Redis Streams migration analysis</a>). This gives exactly-once delivery, pending message tracking, and eliminates the long-poll overhead for Go services. This is a backend change, invisible to browsers.</li>
+    <li><strong>Do not adopt NATS at this time.</strong> NATS is technically superior for the "browser connects directly to bus" use case, but it is a new operational dependency that replaces both Redis and our custom chatbus. The current system does not need that level of change. If we ever need multi-region distribution or cross-cluster messaging, NATS becomes the right answer.</li>
+    <li><strong>Do not expose Redis to browsers.</strong> Not now, not ever. Redis is a backend store. The gateway pattern exists for good reasons: per-user auth, field-level filtering, rate limiting, and protocol translation.</li>
+  </ol>
+</div>
+
+<h3>Target architecture</h3>
+
+<div class="diagram"><span class="label">After changes:</span>
+
+  Browser ──HTTP POST──&gt; nginx ──&gt; chatbus /agent/{name}/send  <span class="note">// publish (unchanged)</span>
+  Browser &lt;── WebSocket ── <span class="highlight">bridge</span>                               <span class="note">// subscribe (enhanced)</span>
+                              │
+                    subscribes to <span class="highlight">Redis Streams</span>
+                    via XREADGROUP
+                              │
+  Go services ──────── <span class="highlight">Redis Streams</span> ────────── chatbus           <span class="note">// service subscriptions</span>
+                    XREADGROUP BLOCK            XADD             <span class="note">// (new: Redis-backed)</span>
+                    consumer groups
+
+  <span class="note">Two transports serving two audiences:</span>
+  <span class="note">  - Browser: HTTP POST to publish, WebSocket to receive</span>
+  <span class="note">  - Services: Redis Streams consumer groups for both</span>
+  <span class="note">  - Chatbus: thin HTTP wrapper + Redis Streams backend</span>
+</div>
+
+<h3>Migration order</h3>
+
+<table>
+  <tr><th>Phase</th><th>Change</th><th>Risk</th><th>Value</th></tr>
+  <tr>
+    <td>1</td>
+    <td>Bridge subscribes to chatbus internally instead of receiving POSTs. Eliminates the <code>OnPublished</code> callback that POSTs to <code>/internal/broadcast</code>.</td>
+    <td>Low &mdash; internal refactor, no client changes</td>
+    <td>Removes one HTTP integration point, simplifies chatbus</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>Add Redis Streams as chatbus storage backend (per Redis Streams analysis). Services migrate from HTTP long-poll to Redis consumer groups.</td>
+    <td>Medium &mdash; new dependency (Redis container)</td>
+    <td>Exactly-once delivery, ~450 lines of Go deleted, no startup JSONL scan</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>Bridge subscribes to Redis Streams directly instead of going through chatbus HTTP API. The chatbus HTTP API becomes optional (for debugging/admin only).</td>
+    <td>Low &mdash; bridge already connects to Redis after Phase 2</td>
+    <td>Eliminates the chatbus as a bottleneck in the delivery path</td>
+  </tr>
+</table>
+
+<h3>When to reconsider NATS</h3>
+
+<p>NATS becomes the right choice if any of these become true:</p>
+<ul>
+  <li>We need multi-region deployment with message routing across clusters</li>
+  <li>We want browsers to subscribe to arbitrary topics without a custom gateway</li>
+  <li>We need request-reply patterns from the browser (not just pub/sub)</li>
+  <li>We want to replace both Redis and the chatbus with a single system</li>
+  <li>We need JetStream's stream processing capabilities (dedup, flow control, consumer push/pull modes)</li>
+</ul>
+
+<p>For current scale (~15 services, ~1 browser client, single-node deployment), Redis Streams + the existing bridge is sufficient. NATS is the right answer at a larger scale or for a greenfield project without an existing WebSocket gateway.</p>
+
+<hr>
+
+<h2>Advising Others: When to Use What</h2>
+
+<p>If someone asks "should I use Supabase Realtime / Redis pub/sub / NATS / custom WebSocket?", here is the decision framework:</p>
+
+<table>
+  <tr><th>If your situation is...</th><th>Use</th><th>Why</th></tr>
+  <tr>
+    <td>Postgres is your source of truth, you want reactive UIs</td>
+    <td><strong>Supabase Realtime</strong></td>
+    <td>Zero custom code. WAL &rarr; WebSocket is built-in. RLS for auth. Works until you need non-Postgres events or sub-5ms latency.</td>
+  </tr>
+  <tr>
+    <td>You already have Redis, services need reliable message passing</td>
+    <td><strong>Redis Streams</strong> + WebSocket gateway</td>
+    <td>Consumer groups for exactly-once delivery. No new dependency. Browser access via your existing server.</td>
+  </tr>
+  <tr>
+    <td>You need browser-native pub/sub without a custom gateway</td>
+    <td><strong>NATS</strong></td>
+    <td>Only system with first-class WebSocket support and browser client. JetStream for persistence. Built-in clustering.</td>
+  </tr>
+  <tr>
+    <td>You need global scale, edge delivery, SLA guarantees</td>
+    <td><strong>Managed service</strong> (Ably, Pusher, etc.)</td>
+    <td>Connection management, presence, history, auth, edge nodes &mdash; all handled. Cost scales with connections.</td>
+  </tr>
+  <tr>
+    <td>Simple app, few clients, just need real-time updates</td>
+    <td><strong>Server-Sent Events (SSE)</strong></td>
+    <td>One-way push, works over HTTP/2, no WebSocket complexity. Add POST endpoint for client &rarr; server messages.</td>
+  </tr>
+  <tr>
+    <td>You have a custom WebSocket server already</td>
+    <td><strong>Add pub/sub to it</strong></td>
+    <td>No new dependency. Use Redis/NATS as backplane only if you need multi-instance fan-out.</td>
+  </tr>
+</table>
+
+<p style="margin-top: 2rem; color: var(--text-muted); font-size: 0.9em;">
+  Document created 2026-11-10. Sources:
+  <a href="https://supabase.com/docs/guides/realtime/architecture">Supabase Realtime Architecture</a>,
+  <a href="https://ably.com/blog/scaling-pub-sub-with-websockets-and-redis">Ably: Scaling Pub/Sub with WebSockets and Redis</a>,
+  <a href="https://nats.io/blog/getting-started-nats-ws/">NATS WebSocket Getting Started</a>,
+  <a href="https://github.com/nats-io/nats.ws">nats.ws GitHub</a>,
+  <a href="https://github.com/supabase/realtime">Supabase Realtime GitHub</a>,
+  <a href="redis-streams-migration.html">Redis Streams Migration (internal)</a>.
+</p>
+
+</body>
+</html>
