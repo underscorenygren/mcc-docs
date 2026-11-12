@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taskmaster Design</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+</nav>
+
+<h1>Taskmaster</h1>
+<p class="subtitle">Procedural task reconciliation — snapshot + delta → new snapshot.</p>
+
+<h2>TL;DR</h2>
+
+<p>A Claude oneshot that reads evidence (git, PRs, chat), applies deterministic rules, then uses an LLM for ambiguous cases. Outputs a compressed project snapshot and a structured decision log. Runs on a schedule, independent of any Claude session.</p>
+
+<p><strong>Repo:</strong> <a href="https://github.com/underscorenygren/mcc-taskmaster">mcc-taskmaster</a><br>
+<strong>Task store:</strong> <a href="https://github.com/underscorenygren/mcc-tasks">mcc-tasks</a></p>
+
+<h2>Problem</h2>
+
+<p>Task tracking depends on the supervisor agent being active. If the supervisor isn't running, tasks go stale. The session review only runs at midnight when the supervisor is up. This is best-effort, not procedural.</p>
+
+<h2>Model</h2>
+
+<pre style="background: var(--surface); padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem;">
+previous snapshot + delta (git, PRs, issues, chat)
+  → deterministic rules (PR merged → done, inactivity → forgotten)
+  → LLM oneshot (ambiguous: chat intent, new tasks, cross-project)
+  → new snapshot + decision log + unknowns queue + run metadata
+</pre>
+
+<h2>Snapshot: projects with three buckets</h2>
+
+<p>Projects are the organizing unit. Each project has three buckets:</p>
+
+<table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+<tr style="border-bottom: 1px solid var(--surface2);">
+  <td style="padding: 0.5rem; font-weight: 600; color: #6ee7b7;">now</td>
+  <td style="padding: 0.5rem;">What's actively being worked on. Recent commits, open PRs, recent chat.</td>
+</tr>
+<tr style="border-bottom: 1px solid var(--surface2);">
+  <td style="padding: 0.5rem; font-weight: 600; color: #fde68a;">forgotten</td>
+  <td style="padding: 0.5rem;">Half-done work nobody's watching. Stale branches, abandoned PRs, idle tasks. <em>The most valuable bucket.</em></td>
+</tr>
+<tr>
+  <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8;">done</td>
+  <td style="padding: 0.5rem;">Completed work. Merged PRs, closed issues, user confirmation.</td>
+</tr>
+</table>
+
+<p>The snapshot is <strong>compressed knowledge</strong>. An agent loads it and gets the full picture without reading hundreds of commits. Evidence refs point back to raw data for drill-down.</p>
+
+<h2>Decisions: structured audit trail</h2>
+
+<p>Every state change is a structured entry with action, evidence, reason, and confidence level. Two confidence levels:</p>
+
+<ul>
+<li><strong>deterministic</strong> — rule matched, no LLM (PR merged → done)</li>
+<li><strong>llm_judged</strong> — LLM interpreted evidence (chat message → task done)</li>
+</ul>
+
+<p>Goal: maximize deterministic, minimize LLM. Rules handle the obvious cases before the LLM sees anything.</p>
+
+<h2>Chat as command interface</h2>
+
+<p>User messages are the primary reason things happen. Raw messages cluster into logical segments:</p>
+
+<pre style="background: var(--surface); padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem;">
+Messages (many, small):          Segment (one, compressed):
+────────────────────             ───────────────────────────
+"lets make a new repo"           project: taskmaster
+"mcc-taskmaster"                 type: command
+"add deploy docs"                outcome: "Created mcc-taskmaster repo"
+"write a test post"              duration: 6 min
+</pre>
+
+<p>Segment types: <strong>command</strong> (do X), <strong>brainstorm</strong> (think about X), <strong>status check</strong>, <strong>feedback</strong>, <strong>noise</strong>.</p>
+
+<h2>Learning</h2>
+
+<p>Human triage decisions become rules in <code>learned-rules.yaml</code>:</p>
+
+<ul>
+<li><strong>Dismiss unknown</strong> → ignore rule ("FEMA alerts are noise")</li>
+<li><strong>Link to project</strong> → topic map ("convex talk maps to ablog project")</li>
+<li><strong>Correct decision</strong> → override rule</li>
+</ul>
+
+<p>The system starts dumb and gets smarter. First runs produce many unknowns. After a few triage cycles, most routine evidence is handled automatically.</p>
+
+<h2>Architecture</h2>
+
+<pre style="background: var(--surface); padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem;">
+[scripts — parallel, no LLM]
+┌─ git-collector    → delta.git.json
+├─ github-collector → delta.github.json
+└─ chat-collector   → delta.chat.json
+
+[deterministic rules — no LLM]
+── rule-engine      → pre-decisions + remaining evidence
+
+[LLM oneshot — sees full context]
+── synthesizer      → new snapshot + decisions + unknowns + run_meta
+</pre>
+
+<p>If context grows past ~50k tokens, split into per-project oneshots. Run metadata tracks token cost per run to make this data-driven.</p>
+
+<h2>Implementation: seed → collect → rules → LLM</h2>
+
+<h3>1. Seed</h3>
+<p>One-time bootstrap from <code>mcc-tasks/tasks.md</code>. Parse existing markdown into <code>snapshot.json</code>. Deterministic — no LLM. Map tasks to projects by repo context.</p>
+
+<p><strong>What we seed from:</strong> tasks.md (6 active, 30+ done), projects/ (2 folders), history.tsv, GitHub issues/PRs.</p>
+
+<h3>2. Collectors</h3>
+<p>Shell scripts. <code>git log</code> per repo, GitHub REST API for PRs/issues, read mcc-messages archive. All output JSON to <code>delta/</code>.</p>
+
+<h3>3. Rule engine</h3>
+<p>Deterministic. PR merged → done. Inactivity → forgotten. Learned patterns → ignore/classify. Outputs what it handled and what's left.</p>
+
+<h3>4. LLM oneshot</h3>
+<p>Single <code>claude --print</code> call. Sees previous snapshot + pre-decisions + remaining evidence + learned rules. Outputs strict JSON: updated snapshot, new decisions, unknowns.</p>
+
+<h3>5. Write + publish</h3>
+<p>Merge decisions, write snapshot, generate tasks.md, commit + push to mcc-tasks. Rendered at tasks.mushroomcloudcomputing.com.</p>
+
+<h2>Evaluating success</h2>
+
+<table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+<tr style="border-bottom: 1px solid var(--surface2);">
+  <td style="padding: 0.5rem; font-weight: 600;">Run 1</td>
+  <td style="padding: 0.5rem;">Does the seed snapshot match reality? Compare to tasks.md by hand. Are the project mappings right?</td>
+</tr>
+<tr style="border-bottom: 1px solid var(--surface2);">
+  <td style="padding: 0.5rem; font-weight: 600;">Run 2-5</td>
+  <td style="padding: 0.5rem;">Unknown rate should decrease. Deterministic decisions should increase. Snapshot should stay accurate (spot-check against git).</td>
+</tr>
+<tr style="border-bottom: 1px solid var(--surface2);">
+  <td style="padding: 0.5rem; font-weight: 600;">Ongoing</td>
+  <td style="padding: 0.5rem;">Token cost stable or decreasing. Forgotten bucket surfaces real missed work. New sessions orient faster from snapshot.</td>
+</tr>
+<tr>
+  <td style="padding: 0.5rem; font-weight: 600;">Failure modes</td>
+  <td style="padding: 0.5rem;">Snapshot drift (says X, reality is Y). Over-classification (too aggressive). Context blowup (tokens growing unbounded).</td>
+</tr>
+</table>
+
+<h2>Quick iteration path</h2>
+
+<ol>
+<li><strong>Seed</strong> — parse tasks.md → snapshot.json. Review by hand.</li>
+<li><strong>Collectors only</strong> — run collectors, inspect delta JSON. Is the data there?</li>
+<li><strong>Rules only</strong> — collectors + rules. Are obvious cases handled?</li>
+<li><strong>Full run</strong> — add LLM. Inspect snapshot + decisions. Triage unknowns.</li>
+<li><strong>Schedule</strong> — daily trigger. Monitor run_meta for cost and accuracy.</li>
+</ol>
+
+<p>Each phase is independently testable. Don't move to the next until the current one looks right.</p>
+
+<p style="color: var(--text-muted); margin-top: 3rem; font-size: 0.85rem;">2026-11-12 — Design session, pre-implementation.</p>
+
+</body>
+</html>
