@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taskmaster Seed</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .project { background: var(--surface); border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1rem; }
+  .project h3 { color: #fff; margin-bottom: 0.3rem; font-size: 1.1rem; }
+  .project .meta { color: var(--text-muted); font-size: 0.82rem; margin-bottom: 0.4rem; }
+  .project .meta a { color: var(--link); }
+  .task { padding: 0.3rem 0 0.3rem 1rem; border-left: 2px solid var(--surface2); margin: 0.4rem 0; font-size: 0.9rem; }
+  .task.active { border-left-color: #6ee7b7; }
+  .task.forgotten { border-left-color: #fde68a; }
+  .task.done { border-left-color: #94a3b8; }
+  .task.idea { border-left-color: #c084fc; }
+  .bucket { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-top: 0.8rem; margin-bottom: 0.3rem; }
+  .bucket.now { color: #6ee7b7; }
+  .bucket.forgotten { color: #fde68a; }
+  .bucket.done { color: #94a3b8; }
+  .bucket.idea { color: #c084fc; }
+  .section-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-top: 2rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--surface2); padding-bottom: 0.3rem; }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+</nav>
+
+<h1>Taskmaster Seed</h1>
+<p class="subtitle">Everything we know, organized by project. Review and triage — keep, park, or ignore.</p>
+<p style="color: var(--text-muted); font-size: 0.85rem;">Generated 2026-11-12 from local files, GitHub, tasks, and docs.</p>
+
+<div class="section-label">Active Projects</div>
+
+<div class="project">
+  <h3>Voice Bridge</h3>
+  <div class="meta">Repo: <a href="https://github.com/underscorenygren/claude-by-voice">claude-by-voice</a> &middot; 45 open issues &middot; daily commits</div>
+  <p style="font-size: 0.9rem;">Voice-first AI workspace — multi-agent system, chat bridge, web UI, ambient sounds. The primary project.</p>
+  <div class="bucket now">Now</div>
+  <div class="task active">Voice orchestrator async rewrite — PR #270, event-driven state machine</div>
+  <div class="task active">Chat-bridge MCP delivery reliability — serialized queue fix landed, needs validation</div>
+  <div class="task active">OAuth token refresh — cron every 4h, needs overnight validation</div>
+  <div class="bucket forgotten">Forgotten</div>
+  <div class="task forgotten">Remote branch cleanup — local done (139→22), ~100 remote branches still pending (Nov 5)</div>
+  <div class="task forgotten">VoIP-style realtime connection — #253, no recent activity</div>
+  <div class="task forgotten">Universal chat widget — #223, designed but not built</div>
+  <div class="task forgotten">Voice interruption smarter replay — #229, no activity</div>
+  <div class="task forgotten">Classifier prompt tuning — bus follower missed 18/28 tasks</div>
+  <div class="bucket done">Recent done</div>
+  <div class="task done">Mute TTS fix — PR #262 merged Nov 6</div>
+  <div class="task done">Auth visibility tests — PR #264 merged Nov 6</div>
+  <div class="task done">JS to TS migration — PR #265 merged, all 5 root-level files</div>
+  <div class="task done">Singleton audio engine — PR #236, prevents double voice playback</div>
+  <div class="task done">TTS queue overflow fix — AgentSpeech extraction, PR #261</div>
+  <div class="task done">Session review skill + daily cron</div>
+</div>
+
+<div class="project">
+  <h3>Mobile App</h3>
+  <div class="meta">In: claude-by-voice/mobile/ &middot; Expo / React Native &middot; iOS + Android</div>
+  <p style="font-size: 0.9rem;">Native voice bridge client. Separate build pipeline (EAS), own test cycle.</p>
+  <div class="bucket now">Now</div>
+  <div class="task active">Mobile auth crash fix + iOS double-space period — PR #272</div>
+  <div class="bucket forgotten">Forgotten</div>
+  <div class="task forgotten">Chat not scrolled to bottom + no scroll button — #251</div>
+  <div class="task forgotten">Missing recent messages on reconnect — #255</div>
+  <div class="task forgotten">Debug info on silent failures — #235</div>
+  <div class="task forgotten">Auto-trigger EAS build on mobile changes — #216</div>
+  <div class="task forgotten">Sysbus activity stream on mobile — #214</div>
+  <div class="bucket done">Recent done</div>
+  <div class="task done">Text input fix — memoize, stable callbacks (#221)</div>
+  <div class="task done">Deep link URL scheme, warm mic, TTS deferral (Oct 14)</div>
+  <div class="task done">Keep screen awake while recording</div>
+</div>
+
+<div class="project">
+  <h3>Taskmaster</h3>
+  <div class="meta">Repo: <a href="https://github.com/underscorenygren/mcc-taskmaster">mcc-taskmaster</a> &middot; started today</div>
+  <p style="font-size: 0.9rem;">Procedural task reconciliation — snapshot + delta model. This project.</p>
+  <div class="bucket now">Now</div>
+  <div class="task active">Design: schema, learning loop, chat classification — done</div>
+  <div class="task active">Implementation plan written</div>
+  <div class="task active">Seed: manual inventory compiled, awaiting human triage</div>
+</div>
+
+<div class="project">
+  <h3>Private Blog (ablog)</h3>
+  <div class="meta">Repo: <a href="https://github.com/underscorenygren/mcc-ablog-convex">mcc-ablog-convex</a> &middot; Live: <a href="https://ablog.mushroomcloudcomputing.com">ablog.mcc.com</a></div>
+  <p style="font-size: 0.9rem;">Private markdown document store. Convex backend, Google OAuth, React frontend.</p>
+  <div class="bucket now">Now</div>
+  <div class="task active">Deployed and working — Google login functional</div>
+  <div class="bucket idea">Ideas</div>
+  <div class="task idea">CI/CD — GitHub Actions for Convex deploy + Vite build</div>
+  <div class="task idea">Agent API — service token for agents to create docs</div>
+  <div class="task idea">Search, tag filtering, RSS feed</div>
+</div>
+
+<div class="project">
+  <h3>Docs Site</h3>
+  <div class="meta">Repo: <a href="https://github.com/underscorenygren/mcc-docs">mcc-docs</a> &middot; Live: <a href="https://docs.mushroomcloudcomputing.com">docs.mcc.com</a></div>
+  <p style="font-size: 0.9rem;">Public documentation — research, design docs, explorations. Static HTML on GitHub Pages.</p>
+  <div class="bucket now">Now</div>
+  <div class="task active">Taskmaster design doc published (today)</div>
+  <div class="task active">15+ docs across 6 topic sections</div>
+</div>
+
+<div class="project">
+  <h3>Tasks Site</h3>
+  <div class="meta">Repo: <a href="https://github.com/underscorenygren/mcc-tasks">mcc-tasks</a> &middot; Live: <a href="https://tasks.mushroomcloudcomputing.com">tasks.mcc.com</a></div>
+  <p style="font-size: 0.9rem;">Task tracking and project context. Being rethought as taskmaster's output surface.</p>
+  <div class="bucket now">Now</div>
+  <div class="task active">projects/ structure with brainstorming + taskmaster folders</div>
+  <div class="task active">Will become generated from snapshot.json</div>
+</div>
+
+<div class="project">
+  <h3>Stream Library</h3>
+  <div class="meta">Repo: <a href="https://github.com/underscorenygren/stream">stream</a> (private)</div>
+  <p style="font-size: 0.9rem;">Typed TypeScript stream library on Redis Streams. Six layers (L0-L5).</p>
+  <div class="bucket forgotten">Forgotten</div>
+  <div class="task forgotten">Go vs TS-only stack decision pending — #239</div>
+  <div class="task forgotten">Code written, research published, but blocked on stack decision</div>
+  <div class="bucket done">Done</div>
+  <div class="task done">Stream library research + Redis Streams migration doc published</div>
+  <div class="task done">NATS migration analysis published</div>
+</div>
+
+<div class="section-label">Collaborations</div>
+
+<div class="project">
+  <h3>Lisa (with Celmuun)</h3>
+  <div class="meta">Repo: <a href="https://github.com/underscorenygren/lisa">lisa</a> (private) &middot; Last active: Nov 6</div>
+  <p style="font-size: 0.9rem;">Collaborative workspace prototype — bus-connected worker, shared contexts.</p>
+  <div class="bucket forgotten">Status</div>
+  <div class="task forgotten">16 session transcripts, recent activity but unclear current state</div>
+</div>
+
+<div class="project">
+  <h3>Reyes (with Dimitri)</h3>
+  <div class="meta">Repo: reyes-ui (private) &middot; Agent: Vanya</div>
+  <p style="font-size: 0.9rem;">Containerized agent, weekly UI deliverables.</p>
+  <div class="bucket forgotten">Status</div>
+  <div class="task forgotten">Agent suspended, last active ~Apr 2026</div>
+</div>
+
+<div class="project">
+  <h3>David</h3>
+  <div class="meta">Repo: david (private) &middot; Created Jun 2026</div>
+  <p style="font-size: 0.9rem;">Agentic collaboration.</p>
+  <div class="bucket forgotten">Status</div>
+  <div class="task forgotten">No recent signals</div>
+</div>
+
+<div class="project">
+  <h3>Birthday</h3>
+  <div class="meta">Repo: birthday (private) &middot; Created Apr 2026</div>
+  <p style="font-size: 0.9rem;">40th birthday invite system.</p>
+  <div class="bucket forgotten">Status</div>
+  <div class="task forgotten">Presumably completed or parked</div>
+</div>
+
+<div class="section-label">Ideas &amp; Explorations</div>
+
+<div class="project">
+  <h3>Game — To the Lighthouse</h3>
+  <div class="meta">Repo: <a href="https://github.com/underscorenygren/to-the-lighthouse">to-the-lighthouse</a> (public)</div>
+  <p style="font-size: 0.9rem;">Lovecraftian pixel art game. Godot 4, SpriteLab, parallax scene experiments.</p>
+  <div class="task idea">Sprite experiments done, playground built, no game mechanics yet</div>
+</div>
+
+<div class="project">
+  <h3>Workout App</h3>
+  <div class="meta">No repo &middot; Ideas at docs/projects/workout/</div>
+  <p style="font-size: 0.9rem;">Gym motivation + beginner guidance. Levander method, photo calorie counting.</p>
+  <div class="task idea">Ideas written, no code, no MVP defined</div>
+</div>
+
+<div class="project">
+  <h3>Writing / Newsletter</h3>
+  <div class="meta">No repo &middot; Ideas at docs/projects/writing/</div>
+  <p style="font-size: 0.9rem;">Personal newsletter — considered pieces. First idea: what silence sounds like to a machine.</p>
+  <div class="task idea">Ideas only</div>
+</div>
+
+<div class="project">
+  <h3>MTG Sealed Deck Builder</h3>
+  <div class="meta">No repo &middot; Spec in mcc-tasks/ideas.md</div>
+  <p style="font-size: 0.9rem;">Card scanner + deck builder for sealed events. Claude vision API for OCR.</p>
+  <div class="task idea">Spec written Nov 7, no code</div>
+</div>
+
+<div class="project">
+  <h3>Kill Team</h3>
+  <div class="meta">Repo: <a href="https://github.com/underscorenygren/kill-team">kill-team</a> (private)</div>
+  <p style="font-size: 0.9rem;">Warhammer Kill Team game module.</p>
+  <div class="task idea">Issue #242 to consolidate code into own repo</div>
+</div>
+
+<div class="project">
+  <h3>Tic-Tac-Total</h3>
+  <div class="meta">Repo: <a href="https://github.com/underscorenygren/tic-tac-total">tic-tac-total</a> (private) &middot; Created Oct 2026</div>
+  <p style="font-size: 0.9rem;">A tic tac toe game.</p>
+  <div class="task idea">Created recently, status unclear</div>
+</div>
+
+<div class="project">
+  <h3>Operatic</h3>
+  <div class="meta">Repo: operatic (private) &middot; Created Jul 2026</div>
+  <p style="font-size: 0.9rem;">An Opera App for the Digital Age.</p>
+  <div class="task idea">Context unclear — needs review</div>
+</div>
+
+<div class="project">
+  <h3>Clauder</h3>
+  <div class="meta">Repo: <a href="https://github.com/underscorenygren/clauder">clauder</a> (public) &middot; Created Mar 2026</div>
+  <p style="font-size: 0.9rem;">Supercharging Claude Code.</p>
+  <div class="task idea">Public repo, unclear how active</div>
+</div>
+
+<div class="section-label">Unknown</div>
+
+<div class="project">
+  <h3>Unknown</h3>
+  <div class="meta">Catch-all for unclassified items</div>
+  <p style="font-size: 0.9rem;">Things that don't clearly belong to a project yet. Triage into projects or dismiss.</p>
+  <div class="task forgotten">Agent infrastructure — chatbus/sysbus/NATS migration. Part of Voice Bridge or its own thing?</div>
+  <div class="task forgotten">Named agents (Porter, Marcel, Vanya, Roberto, Runa, Atlas) — one project or per-agent?</div>
+  <div class="task forgotten">Superpowers / brainstorming skills — part of taskmaster or its own exploration?</div>
+  <div class="task forgotten">Ambient sound filtering — #230, Voice Bridge task or mobile task?</div>
+  <div class="task forgotten">Component showcase page — #71, UI infrastructure or Voice Bridge?</div>
+  <div class="task forgotten">Context extraction skill — #101, tooling or Voice Bridge?</div>
+  <div class="task forgotten">Typed state events — #70, architecture or Voice Bridge?</div>
+  <div class="task forgotten">GrahamBox — demo project from Oct, parked?</div>
+  <div class="task forgotten">Maison Janvier, Cinephile, Edward — older private repos, status?</div>
+</div>
+
+<p style="color: var(--text-muted); margin-top: 3rem; font-size: 0.85rem;">
+  Review this page. For each item: keep (track), park (not now), or ignore (noise). Voice or type your triage and the taskmaster will build snapshot.json from your decisions.
+</p>
+
+</body>
+</html>
