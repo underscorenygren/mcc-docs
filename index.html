@@ -259,6 +259,47 @@
   </div>
 </section>
 
+<section class="topic" data-updated="2026-11-06">
+  <div class="topic-header" onclick="toggleSection(this)">
+    <h2>Uncategorized</h2>
+    <span class="updated">Updated Nov 6, 2026</span>
+    <span class="toggle">collapse</span>
+  </div>
+  <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.8rem;">
+    Standalone articles not yet grouped into a topic series.
+  </p>
+  <div class="topic-body">
+    <div class="card">
+      <div class="title"><a href="nats-migration-analysis.html">NATS Migration Analysis</a></div>
+      <div class="desc">
+        <span class="tag standalone">Research</span>
+        Full replacement mapping — how NATS could replace the current chatbus layer.
+      </div>
+    </div>
+    <div class="card">
+      <div class="title"><a href="redis-streams-migration.html">Redis Streams Migration</a></div>
+      <div class="desc">
+        <span class="tag standalone">Research</span>
+        Chatbus replacement analysis using Redis Streams — ordering, consumer groups, persistence.
+      </div>
+    </div>
+    <div class="card">
+      <div class="title"><a href="http-vs-websocket-pubsub.html">HTTP vs WebSocket Pub/Sub</a></div>
+      <div class="desc">
+        <span class="tag standalone">Research</span>
+        Architecture analysis comparing HTTP polling and WebSocket pub/sub for the message bus.
+      </div>
+    </div>
+    <div class="card">
+      <div class="title"><a href="session-review-2026-11-06.html">Session Review — Nov 6</a></div>
+      <div class="desc">
+        <span class="tag standalone">Review</span>
+        Daily session review capturing git activity, decisions, and learnings.
+      </div>
+    </div>
+  </div>
+</section>
+
 <script>
 function toggleSection(header) {
   const section = header.closest('.topic');
