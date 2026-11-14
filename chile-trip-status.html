@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chile &amp; Patagonia — Trip Status</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --card: #1e2a47;
+    --border: #2a3a5c;
+    --text: #e0e0e0;
+    --muted: #8892a8;
+    --accent: #e2b340;
+    --green: #4ade80;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --orange: #fb923c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 2rem 1rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 1.8rem;
+    color: var(--accent);
+    margin-bottom: 0.25rem;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+  h2 {
+    font-size: 1.2rem;
+    color: var(--accent);
+    margin: 2rem 0 1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.4rem;
+  }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .summary-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+  }
+  .summary-card .label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .summary-card .value {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-top: 0.2rem;
+  }
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .badge-done { background: rgba(74,222,128,0.15); color: var(--green); }
+  .badge-todo { background: rgba(251,146,60,0.15); color: var(--orange); }
+  .badge-urgent { background: rgba(248,113,113,0.15); color: var(--red); }
+  .badge-info { background: rgba(96,165,250,0.15); color: var(--blue); }
+  .badge-decided { background: rgba(226,179,64,0.15); color: var(--accent); }
+
+  .callout {
+    background: var(--card);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 0.8rem 1rem;
+    margin: 0.6rem 0;
+    font-size: 0.95rem;
+  }
+  .callout .who {
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .item-list {
+    list-style: none;
+    padding: 0;
+  }
+  .item-list li {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    margin: 0.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .item-list li .detail {
+    flex: 1;
+  }
+  .item-list li .detail .title {
+    font-weight: 600;
+  }
+  .item-list li .detail .note {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 0.2rem;
+  }
+
+  .itinerary {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 0;
+  }
+  .itin-date {
+    font-weight: 600;
+    color: var(--accent);
+    padding: 0.6rem 0;
+    font-size: 0.9rem;
+    border-right: 2px solid var(--border);
+    padding-right: 1rem;
+    text-align: right;
+  }
+  .itin-desc {
+    padding: 0.6rem 0 0.6rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .itin-desc:last-child { border-bottom: none; }
+  .itin-city {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .itin-detail {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    margin: 1rem 0;
+  }
+  th {
+    text-align: left;
+    color: var(--muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.5rem 0.8rem;
+    border-bottom: 2px solid var(--border);
+  }
+  td {
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+  }
+  tr:last-child td { border-bottom: none; }
+  .price { font-weight: 600; color: var(--green); white-space: nowrap; }
+
+  .budget-tiers {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .tier-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+  }
+  .tier-card .tier-name {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .tier-card .tier-price {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0.3rem 0;
+  }
+  .tier-card .tier-note {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .tier-low .tier-price { color: var(--green); }
+  .tier-mid .tier-price { color: var(--blue); }
+  .tier-high .tier-price { color: var(--orange); }
+
+  .priority-note {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-style: italic;
+    margin: 1rem 0;
+  }
+
+  .footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+
+<h1>Chile &amp; Patagonia</h1>
+<p class="subtitle">Lisa &amp; Sten &mdash; Dec 29, 2026 &ndash; Jan 6, 2027 (9 days)</p>
+
+<div class="summary-grid">
+  <div class="summary-card">
+    <div class="label">Status</div>
+    <div class="value" style="color:var(--orange)">Booking</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">Research</div>
+    <div class="value" style="color:var(--green)">Done</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">Bookings Made</div>
+    <div class="value">0 of 8</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">Budget (excl. flights)</div>
+    <div class="value">$6k&ndash;$21k</div>
+  </div>
+</div>
+
+<!-- WHAT'S BEEN DONE -->
+<h2>What's Been Done</h2>
+
+<div class="callout">
+  <span class="who">Lisa</span> researched the full trip in a planning session: destinations, hotels, flights, excursions, and budget tiers. This is the basis for everything below.
+</div>
+<div class="callout">
+  <span class="who">Lisa</span> identified that Atacama is sold out for NYE and pivoted the plan to focus entirely on Patagonia &mdash; a stronger trip that avoids wasted travel days.
+</div>
+<div class="callout">
+  <span class="who">Lisa</span> researched 6 Patagonia lodges with pricing, checked availability (some already sold out), and mapped out excursion costs for the self-guided option.
+</div>
+<div class="callout">
+  <span class="who">Lisa</span> found the United nonstop route via Houston (UA 847/846) and identified domestic flight options on LATAM and Sky Airline.
+</div>
+<div class="callout">
+  <span class="who">Lisa</span> designed the 9-day itinerary: Santiago &rarr; wine country &rarr; Valparaiso NYE &rarr; 4 days Patagonia &rarr; Santiago &rarr; home.
+</div>
+
+<!-- DECISIONS LOCKED -->
+<h2>Decisions Locked In</h2>
+
+<ul class="item-list">
+  <li>
+    <div class="detail">
+      <div class="title">Skip Atacama</div>
+      <div class="note">Every luxury lodge sold out over NYE. Atacama works year-round &mdash; save for a separate trip.</div>
+    </div>
+    <span class="badge badge-decided">Decided</span>
+  </li>
+  <li>
+    <div class="detail">
+      <div class="title">New Year's Eve in Valparaiso</div>
+      <div class="note">One of South America's biggest fireworks shows, right over the bay.</div>
+    </div>
+    <span class="badge badge-decided">Decided</span>
+  </li>
+  <li>
+    <div class="detail">
+      <div class="title">Fly United via Houston (IAH)</div>
+      <div class="note">Only nonstop United route to Santiago. Free cancel within 24 hours.</div>
+    </div>
+    <span class="badge badge-decided">Decided</span>
+  </li>
+  <li>
+    <div class="detail">
+      <div class="title">Skip Argentina side</div>
+      <div class="note">El Calafate requires routing through Buenos Aires &mdash; costs a full travel day each way.</div>
+    </div>
+    <span class="badge badge-decided">Decided</span>
+  </li>
+  <li>
+    <div class="detail">
+      <div class="title">Focus: Patagonia is the centerpiece</div>
+      <div class="note">Peak summer, 17-hour days, best weather window. Torres del Paine is the singular experience.</div>
+    </div>
+    <span class="badge badge-decided">Decided</span>
+  </li>
+</ul>
+
+<!-- ITINERARY -->
+<h2>Itinerary</h2>
+
+<div class="itinerary">
+  <div class="itin-date">Dec 29</div>
+  <div class="itin-desc">
+    <div class="itin-city">Santiago</div>
+    <div class="itin-detail">Arrive ~9am. Slow day: Lastarria, Cerro San Cristobal, dinner in Vitacura.</div>
+  </div>
+  <div class="itin-date">Dec 30</div>
+  <div class="itin-desc">
+    <div class="itin-city">Casablanca &rarr; Valparaiso</div>
+    <div class="itin-detail">Morning wine tasting, afternoon in the hillside neighborhoods.</div>
+  </div>
+  <div class="itin-date">Dec 31</div>
+  <div class="itin-desc">
+    <div class="itin-city">Valparaiso NYE</div>
+    <div class="itin-detail">Explore by day, long dinner, midnight fireworks over the bay.</div>
+  </div>
+  <div class="itin-date">Jan 1</div>
+  <div class="itin-desc">
+    <div class="itin-city">Fly to Patagonia</div>
+    <div class="itin-detail">Midday to airport, afternoon flight to Puerto Natales (~3h20m).</div>
+  </div>
+  <div class="itin-date">Jan 2</div>
+  <div class="itin-desc">
+    <div class="itin-city">Base of the Towers</div>
+    <div class="itin-detail">The big hike. Do it while fresh, on the clearest-forecast day.</div>
+  </div>
+  <div class="itin-date">Jan 3</div>
+  <div class="itin-desc">
+    <div class="itin-city">Grey Glacier</div>
+    <div class="itin-detail">Boat to the ice face, then walk the lakes and Salto Grande.</div>
+  </div>
+  <div class="itin-date">Jan 4</div>
+  <div class="itin-desc">
+    <div class="itin-city">Cuernos / Puma Tracking</div>
+    <div class="itin-detail">Mirador Cuernos, or horseback riding, or puma tracking with a guide.</div>
+  </div>
+  <div class="itin-date">Jan 5</div>
+  <div class="itin-desc">
+    <div class="itin-city">Fly back to Santiago</div>
+    <div class="itin-detail">Morning flight. Relaxed dinner in Santiago.</div>
+  </div>
+  <div class="itin-date">Jan 6</div>
+  <div class="itin-desc">
+    <div class="itin-city">Santiago &rarr; Home</div>
+    <div class="itin-detail">Free day. Depart 10:45pm United to Houston (arrive 5:25am Jan 7).</div>
+  </div>
+</div>
+
+<!-- BOOKING TODOS -->
+<h2>Bookings To Do</h2>
+
+<p class="priority-note">
+  These are listed in the order Lisa prioritized them by urgency, but priorities can shift &mdash;
+  re-order as needed based on what matters most to you right now.
+</p>
+
+<ul class="item-list">
+  <li>
+    <div class="detail">
+      <div class="title">Valparaiso hotel for NYE (Dec 30&ndash;Jan 1)</div>
+      <div class="note">Hardest booking &mdash; NYE rooms sell out a year in advance. Palacio Astoreca is one option. Fallback: Vi&ntilde;a del Mar.</div>
+    </div>
+    <span class="badge badge-urgent">Urgent</span>
+  </li>
+  <li>
+    <div class="detail">
+      <div class="title">Patagonia lodge (Jan 1&ndash;5, 4 nights)</div>
+      <div class="note">Need to recheck availability for updated dates (research was for Jan 3&ndash;7). Awasi and Explora already sold out.</div>
+    </div>
+    <span class="badge badge-urgent">Urgent</span>
+  </li>
+  <li>
+    <div class="detail">
+      <div class="title">Domestic flight: Santiago &rarr; Puerto Natales (Jan 1)</div>
+      <div class="note">Holiday flights are thinner. LATAM or Sky Airline, noon&ndash;2pm departure. Backup: fly to Punta Arenas (PUQ).</div>
+    </div>
+    <span class="badge badge-todo">Todo</span>
+  </li>
+  <li>
+    <div class="detail">
+      <div class="title">International flights: United via Houston</div>
+      <div class="note">UA 847 outbound, UA 846 return. Set a Google Flights price alert. Free cancel within 24 hours.</div>
+    </div>
+    <span class="badge badge-todo">Todo</span>
+  </li>
+  <li>
+    <div class="detail">
+      <div class="title">Santiago hotel (Dec 29 + Jan 5, 2 nights)</div>
+      <div class="note">Singular Santiago or Ritz-Carlton. Prices not yet checked. Less urgent.</div>
+    </div>
+    <span class="badge badge-todo">Todo</span>
+  </li>
+  <li>
+    <div class="detail">
+      <div class="title">Domestic flight: Patagonia &rarr; Santiago (Jan 5)</div>
+      <div class="note">Morning flight from PNT or PUQ. Book with the outbound domestic.</div>
+    </div>
+    <span class="badge badge-todo">Todo</span>
+  </li>
+  <li>
+    <div class="detail">
+      <div class="title">Park entry passes</div>
+      <div class="note">Buy at pasesparques.cl at least 1 day before each visit.</div>
+    </div>
+    <span class="badge badge-info">Later</span>
+  </li>
+  <li>
+    <div class="detail">
+      <div class="title">Puma tracking guide</div>
+      <div class="note">If doing it, book in advance. Sightings are on private ranches.</div>
+    </div>
+    <span class="badge badge-info">Later</span>
+  </li>
+</ul>
+
+<!-- OPEN QUESTIONS -->
+<h2>Open Questions</h2>
+
+<ul class="item-list">
+  <li>
+    <div class="detail">
+      <div class="title">Which Patagonia lodge?</div>
+      <div class="note">All-inclusive (meals + excursions + transfers included) vs breakfast-only + self-guided? See comparison below.</div>
+    </div>
+    <span class="badge badge-todo">Decide</span>
+  </li>
+  <li>
+    <div class="detail">
+      <div class="title">Rent a car in Patagonia?</div>
+      <div class="note">Only relevant if staying at a breakfast-only hotel. Flexible but gravel roads, wind, and automatics book out fast.</div>
+    </div>
+    <span class="badge badge-todo">Decide</span>
+  </li>
+  <li>
+    <div class="detail">
+      <div class="title">Travel insurance</div>
+      <div class="note">Not yet researched.</div>
+    </div>
+    <span class="badge badge-todo">Decide</span>
+  </li>
+</ul>
+
+<!-- LODGE COMPARISON -->
+<h2>Patagonia Lodge Options</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Lodge</th>
+      <th>Style</th>
+      <th>4 nights / 2 ppl</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Tierra Patagonia</strong></td>
+      <td>All-inclusive</td>
+      <td class="price">~$18,584</td>
+      <td>At the park, Lake Sarmiento. Small-group excursions. Was available Jan 3&ndash;7.</td>
+    </tr>
+    <tr>
+      <td><strong>The Singular Patagonia</strong></td>
+      <td>All-inclusive</td>
+      <td class="price">~$13,700</td>
+      <td>Puerto Natales (1.5h from park). Free cancel ~59 days out. 1&ndash;2 rooms left.</td>
+    </tr>
+    <tr>
+      <td><strong>Hotel Las Torres</strong></td>
+      <td>All-inclusive</td>
+      <td class="price">~$12,060</td>
+      <td>At the towers trailhead. Best location for the big hike.</td>
+    </tr>
+    <tr>
+      <td><strong>Rio Serrano</strong></td>
+      <td>All-inclusive</td>
+      <td class="price">~$9,600</td>
+      <td>At the park. Rated 9.5, lake and towers views.</td>
+    </tr>
+    <tr>
+      <td><strong>Kau Rio Serrano</strong></td>
+      <td>Breakfast only</td>
+      <td class="price">~$4,680</td>
+      <td>Near the park. Small, design-forward. Add ~$1,300 for shared excursions.</td>
+    </tr>
+    <tr>
+      <td><strong>Pampa Lodge</strong></td>
+      <td>Breakfast only</td>
+      <td class="price">~$2,776</td>
+      <td>Budget option. Add ~$1,300 for shared excursions or ~$4,000 private guide.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="color:var(--muted);font-size:0.85rem;margin-top:0.5rem;">
+  <strong>Sold out:</strong> Awasi Patagonia, Explora Patagonia (checked for Jan 3&ndash;7, may differ for Jan 1&ndash;5).
+</p>
+
+<!-- BUDGET -->
+<h2>Budget (excluding flights)</h2>
+
+<div class="budget-tiers">
+  <div class="tier-card tier-low">
+    <div class="tier-name">Budget</div>
+    <div class="tier-price">$6&ndash;7k</div>
+    <div class="tier-note">Pampa Lodge + shared tours + simple Santiago/Valparaiso hotels</div>
+  </div>
+  <div class="tier-card tier-mid">
+    <div class="tier-name">Mid-range</div>
+    <div class="tier-price">$10&ndash;12k</div>
+    <div class="tier-note">Rio Serrano or Las Torres all-inclusive</div>
+  </div>
+  <div class="tier-card tier-high">
+    <div class="tier-name">Premium</div>
+    <div class="tier-price">$20&ndash;21k</div>
+    <div class="tier-note">Tierra Patagonia all-inclusive + nicer city hotels</div>
+  </div>
+</div>
+
+<p style="color:var(--muted);font-size:0.85rem;">
+  Flights TBD &mdash; set a Google Flights alert for IAH&ndash;SCL and Santiago&ndash;Puerto Natales.
+</p>
+
+<div class="footer">
+  Generated Nov 14, 2026 &mdash; based on Lisa's planning research. Priorities are suggestions, not fixed &mdash; re-order based on what matters most right now.
+</div>
+
+</body>
+</html>
