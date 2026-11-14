@@ -222,6 +222,25 @@
     color: var(--muted);
     font-size: 0.8rem;
   }
+  details {
+    margin: 1rem 0;
+  }
+  details summary {
+    cursor: pointer;
+    list-style: none;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary h2 {
+    display: inline;
+  }
+  details summary::before {
+    content: '▸ ';
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  details[open] summary::before {
+    content: '▾ ';
+  }
 </style>
 </head>
 <body>
@@ -247,26 +266,26 @@
     <div class="value" style="color:var(--green)">Done</div>
   </div>
   <div class="summary-card">
-    <div class="label">Bookings Made</div>
-    <div class="value">0 of 8</div>
+    <div class="label"><a href="#bookings" style="color:inherit;text-decoration:none;">Bookings Made</a></div>
+    <div class="value"><a href="#bookings" style="color:inherit;text-decoration:none;">0 of 8</a></div>
   </div>
   <div class="summary-card">
-    <div class="label">Grand Total (2 ppl)</div>
-    <div class="value">$12k&ndash;$26k</div>
+    <div class="label"><a href="#budget" style="color:inherit;text-decoration:none;">Grand Total (2 ppl)</a></div>
+    <div class="value"><a href="#budget" style="color:inherit;text-decoration:none;">$12k&ndash;$26k</a></div>
   </div>
   <div class="summary-card">
-    <div class="label">Waiting On</div>
-    <div class="value" style="font-size:1rem;color:var(--orange);">2 emails</div>
+    <div class="label"><a href="#lodges" style="color:inherit;text-decoration:none;">Waiting On</a></div>
+    <div class="value" style="font-size:1rem;color:var(--orange);"><a href="#lodges" style="color:inherit;text-decoration:none;">2 emails</a></div>
     <div style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Awasi + Tierra Patagonia</div>
   </div>
   <div class="summary-card">
-    <div class="label">Lisa&rsquo;s Input</div>
-    <div class="value" style="font-size:1rem;color:var(--orange);">3 decisions</div>
+    <div class="label"><a href="#questions" style="color:inherit;text-decoration:none;">Lisa&rsquo;s Input</a></div>
+    <div class="value" style="font-size:1rem;color:var(--orange);"><a href="#questions" style="color:inherit;text-decoration:none;">3 decisions</a></div>
     <div style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Lodge, puma, dining</div>
   </div>
   <div class="summary-card">
-    <div class="label">Next Action</div>
-    <div class="value" style="font-size:1rem;color:var(--red);">Book flights</div>
+    <div class="label"><a href="#bookings" style="color:inherit;text-decoration:none;">Next Action</a></div>
+    <div class="value" style="font-size:1rem;color:var(--red);"><a href="#bookings" style="color:inherit;text-decoration:none;">Book flights</a></div>
     <div style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Holiday pricing, book soon</div>
   </div>
   <div class="summary-card">
@@ -276,8 +295,8 @@
   </div>
 </div>
 
-<!-- WHAT'S BEEN DONE -->
-<h2>What's Been Done</h2>
+<details open>
+<summary><h2>What's Been Done</h2></summary>
 
 <div class="callout">
   <span class="who">Lisa</span> researched the full trip in a planning session: destinations, hotels, flights, excursions, and budget tiers. This is the basis for everything below.
@@ -313,8 +332,10 @@
   <span class="who">Erik</span> emailed Tierra Patagonia (cc'd Lisa) about Jan 1&ndash;5 availability and the blackout window. Waiting for reply.
 </div>
 
-<!-- DECISIONS LOCKED -->
-<h2>Decisions Locked In</h2>
+</details>
+
+<details open>
+<summary><h2>Decisions Locked In</h2></summary>
 
 <ul class="item-list">
   <li>
@@ -354,8 +375,10 @@
   </li>
 </ul>
 
-<!-- ITINERARY -->
-<h2>Itinerary</h2>
+</details>
+
+<details open>
+<summary><h2>Itinerary</h2></summary>
 
 <div class="itinerary">
   <div class="itin-date">Dec 29</div>
@@ -405,8 +428,10 @@
   </div>
 </div>
 
-<!-- WEATHER -->
-<h2>Expected Weather</h2>
+</details>
+
+<details open>
+<summary><h2>Expected Weather</h2></summary>
 
 <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;">
   Historical averages for late Dec / early Jan. Patagonia weather changes fast &mdash; pack for all conditions regardless.
@@ -493,8 +518,10 @@
   <strong>Key takeaway:</strong> Santiago is summer heat (80s&deg;F). Patagonia is brisk hiking weather (40s&ndash;60s&deg;F) with serious wind. The temperature swing on Jan 1 travel day is dramatic &mdash; dress in layers you can shed or add.
 </p>
 
-<!-- BOOKING TODOS -->
-<h2>Bookings To Do</h2>
+</details>
+
+<details open>
+<summary><h2 id="bookings">Bookings To Do</h2></summary>
 
 <ul class="item-list">
   <li>
@@ -574,8 +601,10 @@
   </li>
 </ul>
 
-<!-- OPEN QUESTIONS -->
-<h2>Open Questions</h2>
+</details>
+
+<details open>
+<summary><h2 id="questions">Open Questions</h2></summary>
 
 <ul class="item-list">
   <li>
@@ -616,8 +645,10 @@
   </li>
 </ul>
 
-<!-- LODGE COMPARISON -->
-<h2>Patagonia Lodge Options</h2>
+</details>
+
+<details open>
+<summary><h2 id="lodges">Patagonia Lodge Options</h2></summary>
 
 <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem;">
   Availability checked Nov 14 for <strong>Jan 1&ndash;5, 2027</strong> (4 nights, 2 adults). All prices are web-search estimates &mdash; contact lodges to confirm.
@@ -755,8 +786,10 @@
   </li>
 </ul>
 
-<!-- BUDGET -->
-<h2>Estimated Budget</h2>
+</details>
+
+<details open>
+<summary><h2 id="budget">Estimated Budget</h2></summary>
 
 <style>
   .confidence-tag {
@@ -885,6 +918,8 @@
 <p class="priority-note">
   Flights and misc are estimates &mdash; not yet checked by a human. Lodge prices are from Lisa's research session and need rechecking for Jan 1&ndash;5. Travel insurance covered by credit card. Budget data source: <code>lisa/trips/chile-budget.md</code>.
 </p>
+
+</details>
 
 <div class="footer">
   Generated Nov 14, 2026 &mdash; based on Lisa's planning research + Erik's input. Budget data source: <code>lisa/trips/chile-budget.md</code>. Priorities are suggestions, not fixed.
