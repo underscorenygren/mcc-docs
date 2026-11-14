@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slack Integration Setup</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .step {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    border-left: 3px solid var(--accent);
+  }
+  .step h3 {
+    color: var(--accent);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+  .step a { color: var(--accent2, #5dade2); }
+  .step code {
+    background: var(--code-bg, #1a1a2e);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+    font-size: 0.88rem;
+  }
+  .step ul { padding-left: 1.2rem; margin-top: 0.5rem; }
+  .step li { margin-bottom: 0.3rem; }
+  .arch {
+    background: var(--code-bg, #1a1a2e);
+    border-radius: 8px;
+    padding: 1.2rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    white-space: pre;
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+    color: var(--text-muted);
+  }
+  .secret-table td:first-child {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+</nav>
+
+<h1>Slack Integration Setup</h1>
+<p class="subtitle">Wire Slack as an I/O channel for the supervisor via chatbus.</p>
+<p class="meta">November 2026 &middot; Ref: <a href="https://github.com/underscorenygren/claude-by-voice/pull/286">PR #286</a></p>
+
+<h2>Architecture</h2>
+
+<div class="arch">Slack workspace
+  #supervisor channel
+    User posts message
+      &rarr; Slack Events API
+      &rarr; /webhook/slack (our server)
+      &rarr; chatbus (supervisor/chat/in)
+      &rarr; supervisor processes
+
+    Supervisor replies
+      &rarr; chatbus (supervisor/chat/out)
+      &rarr; Slack connector polls
+      &rarr; Slack Incoming Webhook
+      &rarr; #supervisor channel</div>
+
+<p>
+  Slack is a thin transport layer. The Slack service (<code>cmd/slack/</code>) translates between Slack's API format
+  and chatbus messages. No special Slack handling in the supervisor.
+</p>
+
+<h2>Setup Steps</h2>
+
+<div class="step">
+  <h3>Step 1: Create Slack App</h3>
+  <p><a href="https://api.slack.com/apps?new_app=1">Create new app</a> &rarr; "From scratch" &rarr; Name: <code>MCC Supervisor</code> &rarr; Select your workspace.</p>
+</div>
+
+<div class="step">
+  <h3>Step 2: Incoming Webhooks (outbound)</h3>
+  <p>App Settings &rarr; <strong>Incoming Webhooks</strong> &rarr; Toggle On &rarr; "Add New Webhook to Workspace" &rarr; Select <code>#supervisor</code> channel.</p>
+  <p>Copy the webhook URL. It looks like <code>https://hooks.slack.com/services/T.../B.../xxx</code></p>
+</div>
+
+<div class="step">
+  <h3>Step 3: Event Subscriptions (inbound)</h3>
+  <p>App Settings &rarr; <strong>Event Subscriptions</strong> &rarr; Toggle On.</p>
+  <ul>
+    <li>Request URL: <code>https://mushroomcloudcomputing.com/webhook/slack</code></li>
+    <li>Subscribe to bot events: <code>message.channels</code></li>
+  </ul>
+  <p>Slack will send a verification challenge to our endpoint. The handler responds automatically.</p>
+</div>
+
+<div class="step">
+  <h3>Step 4: OAuth &amp; Permissions</h3>
+  <p>App Settings &rarr; <strong>OAuth &amp; Permissions</strong> &rarr; Add Bot Token Scopes:</p>
+  <ul>
+    <li><code>chat:write</code> &mdash; send messages</li>
+    <li><code>channels:history</code> &mdash; read channel messages</li>
+    <li><code>channels:read</code> &mdash; list channels</li>
+  </ul>
+  <p>Install (or reinstall) to workspace. Copy the <strong>Bot User OAuth Token</strong> (<code>xoxb-...</code>).</p>
+</div>
+
+<div class="step">
+  <h3>Step 5: Get Signing Secret</h3>
+  <p>App Settings &rarr; <strong>Basic Information</strong> &rarr; App Credentials &rarr; Copy <strong>Signing Secret</strong>.</p>
+</div>
+
+<div class="step">
+  <h3>Step 6: Submit Secrets</h3>
+  <p>Submit these three values via the secrets form at <code>/admin/secrets</code>:</p>
+  <table class="secret-table" style="margin-top: 0.5rem;">
+    <tr><td>SLACK_WEBHOOK_URL</td><td>The incoming webhook URL from step 2</td></tr>
+    <tr><td>SLACK_BOT_TOKEN</td><td>The xoxb-... token from step 4</td></tr>
+    <tr><td>SLACK_SIGNING_SECRET</td><td>The signing secret from step 5</td></tr>
+  </table>
+</div>
+
+<div class="step">
+  <h3>Step 7: Invite Lisa</h3>
+  <p>Workspace Settings &rarr; Invite People &rarr; Add Lisa &rarr; Add to <code>#supervisor</code> channel.</p>
+</div>
+
+<h2>After Setup</h2>
+
+<p>Once secrets are submitted, merge <a href="https://github.com/underscorenygren/claude-by-voice/pull/286">PR #286</a>
+and deploy the Slack connector service. Messages in <code>#supervisor</code> will reach the supervisor via chatbus,
+and supervisor replies will appear in the channel.</p>
+
+<h2>Future</h2>
+
+<ul>
+  <li><code>#annotate</code> &rarr; voice annotation agent</li>
+  <li><code>#notes</code> &rarr; mcc-notes</li>
+  <li>Agent routing based on Slack channel name</li>
+</ul>
+
+</body>
+</html>
