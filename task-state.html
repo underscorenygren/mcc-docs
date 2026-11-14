@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task State — Where We're At</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .snapshot { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+  .stat-card .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-card .value { font-size: 1.8rem; font-weight: 700; color: var(--text); margin: 0.25rem 0; }
+  .stat-card .detail { font-size: 0.8rem; color: var(--text-muted); }
+  .action-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+  .action-table th { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid var(--border); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; }
+  .action-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  .action-table tr:hover { background: var(--surface-hover); }
+  .tag-machine { background: #1a3a5c; color: #5dade2; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
+  .tag-erik { background: #3a1a5c; color: #bb86fc; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
+  .tag-lisa { background: #5c3a1a; color: #ffb74d; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
+  .tag-blocked { background: #5c1a1a; color: #ef5350; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
+  .tag-ready { background: #1a5c3a; color: #66bb6a; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
+  .tag-pr { background: #1a4a3a; color: #4db6ac; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
+  .priority-p1 { color: #ef5350; font-weight: 600; }
+  .priority-p2 { color: #ffb74d; }
+  .priority-p3 { color: var(--text-muted); }
+  .section-delta { background: var(--surface); border-left: 3px solid #5dade2; padding: 0.75rem 1rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+  .section-delta h4 { margin: 0 0 0.5rem 0; color: #5dade2; font-size: 0.9rem; }
+  .section-delta ul { margin: 0; padding-left: 1.25rem; }
+  .section-delta li { font-size: 0.85rem; margin: 0.25rem 0; }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+</nav>
+
+<h1>Task State</h1>
+<p class="subtitle">Project snapshot and delegation recommendations. Last updated: 2026-11-14.</p>
+
+<div class="section-delta">
+  <h4>Delta since last session</h4>
+  <ul>
+    <li>Chile trip planning: 3 HTML reports published, Linear project created (MCC-19 to MCC-29)</li>
+    <li>Slack integration shipped: multi-channel bot, lisabot live</li>
+    <li>Linear integration: 18 issues synced, webhook handler deployed</li>
+    <li>Mobile liveness check: PR #290 ready for review</li>
+  </ul>
+</div>
+
+<h2>Snapshot</h2>
+
+<div class="snapshot">
+  <div class="stat-card">
+    <div class="label">Open Issues</div>
+    <div class="value">51</div>
+    <div class="detail">30 draft, 2 human-review, 19 actionable</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Open PRs</div>
+    <div class="value">1</div>
+    <div class="detail">#290 mobile liveness check</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Active Workstreams</div>
+    <div class="value">3</div>
+    <div class="detail">Slack, Linear sync, Lisabot</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Blocked</div>
+    <div class="value">2</div>
+    <div class="detail">Convex (#281), Login (#283)</div>
+  </div>
+</div>
+
+<h2>Recommended Next Actions</h2>
+<p>Ordered by impact. Each row shows what, who should do it, and why now.</p>
+
+<table class="action-table">
+<thead>
+<tr><th>Action</th><th>Assign</th><th>Priority</th><th>Why Now</th></tr>
+</thead>
+<tbody>
+<tr>
+  <td>Merge PR #290 — mobile liveness check</td>
+  <td><span class="tag-erik">Erik</span></td>
+  <td class="priority-p1">P1</td>
+  <td>Ready for review. Unblocks mobile stability testing.</td>
+</tr>
+<tr>
+  <td>Voice WS stability (#287, #280)</td>
+  <td><span class="tag-machine">Machine</span></td>
+  <td class="priority-p1">P1</td>
+  <td>Root cause of most user-visible failures. Liveness check is band-aid; need real fix.</td>
+</tr>
+<tr>
+  <td>Book Chile flights</td>
+  <td><span class="tag-erik">Erik</span></td>
+  <td class="priority-p1">P1</td>
+  <td>Most urgent booking per trip timeline. MCC-19, MCC-20.</td>
+</tr>
+<tr>
+  <td>Lisa: lodge choice + puma tracking decision</td>
+  <td><span class="tag-lisa">Lisa</span></td>
+  <td class="priority-p1">P1</td>
+  <td>Blocks Patagonia lodge booking (MCC-21). Erik leans Las Torres, no puma.</td>
+</tr>
+<tr>
+  <td>Linear bidirectional sync (MCC-6)</td>
+  <td><span class="tag-machine">Machine</span></td>
+  <td class="priority-p1">P1</td>
+  <td>Webhook handler deployed. Next: webhook → tasks.md, tasks.md → Linear.</td>
+</tr>
+<tr>
+  <td>Mobile build with liveness check</td>
+  <td><span class="tag-machine">Machine</span></td>
+  <td class="priority-p2">P2</td>
+  <td>After PR merge — trigger EAS build so Erik can test on device.</td>
+</tr>
+<tr>
+  <td>Email → mcc-notes pipeline (MCC-8)</td>
+  <td><span class="tag-machine">Machine</span></td>
+  <td class="priority-p2">P2</td>
+  <td>Both halves work separately. Wiring is the last step.</td>
+</tr>
+<tr>
+  <td>Lisabot: stateful memory + skills</td>
+  <td><span class="tag-machine">Machine</span></td>
+  <td class="priority-p2">P2</td>
+  <td>Live but stateless. Lisa needs persistent context for trip planning.</td>
+</tr>
+<tr>
+  <td>Lisa: dining preferences + NYE dinner</td>
+  <td><span class="tag-lisa">Lisa</span></td>
+  <td class="priority-p2">P2</td>
+  <td>Dining guide published, needs Lisa's picks. MCC-24.</td>
+</tr>
+<tr>
+  <td>Formalize GitHub issues in Linear (MCC-17)</td>
+  <td><span class="tag-machine">Machine</span></td>
+  <td class="priority-p2">P2</td>
+  <td>51 open issues, only 18 in Linear. Single source needed for PM reports.</td>
+</tr>
+<tr>
+  <td>Stale branch cleanup (#288)</td>
+  <td><span class="tag-machine">Machine</span></td>
+  <td class="priority-p3">P3</td>
+  <td>~100 stale branches. Low urgency, good background task.</td>
+</tr>
+<tr>
+  <td>Consolidate GitHub tokens (#93)</td>
+  <td><span class="tag-erik">Erik</span></td>
+  <td class="priority-p3">P3</td>
+  <td>Needs human review. Two tokens is confusing.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Workstream Status</h2>
+
+<details open>
+<summary><h3 style="display:inline">Voice Bridge (primary)</h3></summary>
+<table class="action-table">
+<thead><tr><th>Item</th><th>Status</th><th>Next Step</th></tr></thead>
+<tbody>
+<tr><td>Mobile liveness check</td><td><span class="tag-pr">PR #290</span></td><td>Review + merge + EAS build</td></tr>
+<tr><td>Voice WS dropping (#287)</td><td><span class="tag-blocked">Open</span></td><td>Investigate heartbeat + auth expiry</td></tr>
+<tr><td>Chat reconnect dedup (#255)</td><td><span class="tag-blocked">Human Review</span></td><td>Erik to review</td></tr>
+<tr><td>Transcription bubble delay (#252)</td><td><span class="tag-blocked">Open</span></td><td>Investigate timing</td></tr>
+</tbody>
+</table>
+</details>
+
+<details open>
+<summary><h3 style="display:inline">Slack + Lisa</h3></summary>
+<table class="action-table">
+<thead><tr><th>Item</th><th>Status</th><th>Next Step</th></tr></thead>
+<tbody>
+<tr><td>Multi-channel Slack</td><td><span class="tag-ready">Shipped</span></td><td>Post as user identity (cosmetic)</td></tr>
+<tr><td>Lisabot</td><td><span class="tag-ready">Live</span></td><td>Stateful memory, skill tools</td></tr>
+<tr><td>Chile trip reports</td><td><span class="tag-ready">Published</span></td><td>Auto-publish watcher running</td></tr>
+</tbody>
+</table>
+</details>
+
+<details open>
+<summary><h3 style="display:inline">Infrastructure</h3></summary>
+<table class="action-table">
+<thead><tr><th>Item</th><th>Status</th><th>Next Step</th></tr></thead>
+<tbody>
+<tr><td>Linear integration</td><td><span class="tag-ready">Connected</span></td><td>Bidirectional sync</td></tr>
+<tr><td>mcc-notes pipeline</td><td><span class="tag-blocked">Half-wired</span></td><td>Connect email → transcribe → action</td></tr>
+<tr><td>Convex docs (#281)</td><td><span class="tag-blocked">Blocked</span></td><td>ownerId type mismatch</td></tr>
+<tr><td>Login control (#283)</td><td><span class="tag-blocked">Blocked</span></td><td>Auth recovery UI needed</td></tr>
+</tbody>
+</table>
+</details>
+
+<details>
+<summary><h3 style="display:inline">Backlog Highlights (draft issues)</h3></summary>
+<p>These are tagged <code>draft</code> — not ready for execution. Grouped by theme:</p>
+<ul>
+<li><strong>Audio/Voice:</strong> #266 sound controller refactor, #229 smart TTS replay, #268 disconnect sounds, #188 TTS timeout</li>
+<li><strong>Mobile:</strong> #271 ambient noise test, #251 scroll-to-bottom, #221 text input, #214 sysbus on mobile</li>
+<li><strong>Architecture:</strong> #239 Go vs TS decision, #237 typed audio provider, #108 chat WS migration, #70 typed state events</li>
+<li><strong>Agent/AI:</strong> #215 shared contexts, #219 collaborative contexts, #212 proactive idle work, #103 voice attention switching</li>
+<li><strong>Ops:</strong> #216 auto EAS build, #191 latency analyzer, #73 test gap analysis</li>
+</ul>
+</details>
+
+<h2>Waiting On</h2>
+<ul>
+<li><strong>Awasi Patagonia</strong> — email sent 2026-11-14, asking about Jan 1-5 availability + activities</li>
+<li><strong>Tierra Patagonia</strong> — email sent 2026-11-14, asking about Jan 1 blackout + pricing</li>
+<li><strong>Erik</strong> — PR #290 review, #255 review, Chile flight booking</li>
+<li><strong>Lisa</strong> — Lodge decision, puma tracking, dining picks, NYE dinner</li>
+</ul>
+
+<footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--text-muted);">
+  Generated by supervisor · 2026-11-14
+  <span data-published-by="supervisor" data-published-reason="Initial task state report with delegation recommendations"></span>
+</footer>
+
+</body>
+</html>
