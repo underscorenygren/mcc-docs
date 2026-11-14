@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chile &amp; Patagonia — Dining Guide</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --card: #1e2a47;
+    --border: #2a3a5c;
+    --text: #e0e0e0;
+    --muted: #8892a8;
+    --accent: #e2b340;
+    --green: #4ade80;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --orange: #fb923c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 2rem 1rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 1.8rem; color: var(--accent); margin-bottom: 0.25rem; }
+  .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 2rem; }
+  h2 {
+    font-size: 1.2rem;
+    color: var(--accent);
+    margin: 2rem 0 1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.4rem;
+  }
+  h3 { font-size: 1rem; color: var(--text); margin: 1.5rem 0 0.8rem; }
+  .nav { margin-bottom: 1.5rem; font-size: 0.85rem; }
+  .nav a { color: var(--blue); text-decoration: none; }
+  .nav a:hover { text-decoration: underline; }
+
+  .callout {
+    background: var(--card);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 0.8rem 1rem;
+    margin: 0.6rem 0;
+    font-size: 0.95rem;
+  }
+  .callout .who { font-weight: 600; color: var(--accent); }
+  .callout-lisa {
+    border-left-color: var(--orange);
+  }
+  .callout-lisa .who { color: var(--orange); }
+
+  .restaurant-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin: 0.6rem 0;
+  }
+  .restaurant-card .name {
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+  .restaurant-card .meta {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 0.2rem;
+  }
+  .restaurant-card .price {
+    color: var(--green);
+    font-weight: 600;
+    margin-top: 0.3rem;
+  }
+  .restaurant-card .note {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+  }
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    vertical-align: middle;
+    margin-left: 0.4rem;
+  }
+  .badge-splurge { background: rgba(226,179,64,0.15); color: var(--accent); }
+  .badge-mid { background: rgba(96,165,250,0.15); color: var(--blue); }
+  .badge-casual { background: rgba(74,222,128,0.15); color: var(--green); }
+  .badge-erik { background: rgba(96,165,250,0.15); color: var(--blue); }
+  .badge-lisa { background: rgba(251,146,60,0.15); color: var(--orange); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    margin: 1rem 0;
+  }
+  th {
+    text-align: left;
+    color: var(--muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.5rem 0.8rem;
+    border-bottom: 2px solid var(--border);
+  }
+  td {
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+  }
+  tr:last-child td { border-bottom: none; }
+
+  .summary-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+    margin: 1rem 0;
+  }
+  .summary-card .label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .summary-card .value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--green);
+    margin-top: 0.2rem;
+  }
+  .summary-card .detail {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+  }
+
+  .footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+
+<p class="nav"><a href="/chile-trip-status.html">&larr; Back to trip status</a></p>
+
+<h1>Food &amp; Dining Guide</h1>
+<p class="subtitle">Chile &amp; Patagonia &mdash; Dec 29, 2026 &ndash; Jan 6, 2027</p>
+
+<div class="summary-card">
+  <div class="label">Estimated dining budget (2 people, all non-hotel meals)</div>
+  <div class="value">$1,200&ndash;1,800</div>
+  <div class="detail">Includes Santiago dinners, Casablanca wine day, Valparaiso, NYE, Patagonia transit meals. Lodge meals (Jan 1&ndash;5) are included in all-inclusive.</div>
+</div>
+
+<div class="callout">
+  <span class="who">Erik</span> has eaten at Borago (Michelin star, Vitacura) and recommends it for the consideration set. Also knows the Cerro Alegre dining scene in Valparaiso.
+</div>
+<div class="callout callout-lisa">
+  <span class="who">Lisa</span> &mdash; preferences needed: How many fine dining nights? Wine tour style? NYE dinner plans? Any dietary restrictions?
+</div>
+
+<!-- SANTIAGO -->
+<h2>Santiago (Dec 29, Jan 5&ndash;6)</h2>
+
+<p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;">
+  3 dinner opportunities: arrival night (Dec 29), return evening (Jan 5), final day (Jan 6). Santiago has South America's strongest fine dining scene.
+</p>
+
+<h3>Fine Dining <span class="badge badge-splurge">Splurge</span></h3>
+
+<div class="restaurant-card">
+  <div class="name">Borago <span class="badge badge-erik">Erik has been</span></div>
+  <div class="meta">Vitacura &middot; Michelin star &middot; Endemic Chilean tasting menu</div>
+  <div class="price">$580&ndash;700 for 2 (tasting menu + wine pairing)</div>
+  <div class="note">
+    Endemica menu: CLP 155,000&ndash;200,000 pp + wine pairing CLP 90,000&ndash;100,000 pp. Chef Rodolfo Guzman.
+    Book well ahead &mdash; NYE/New Year week is peak season.
+    <a href="https://www.borago.cl" target="_blank" rel="noopener" style="color:var(--blue);">borago.cl</a>
+  </div>
+</div>
+
+<div class="restaurant-card">
+  <div class="name">99 Restaurante</div>
+  <div class="meta">Vitacura &middot; 9-course tasting &middot; ~12 seats</div>
+  <div class="price">$300&ndash;400 for 2</div>
+  <div class="note">
+    Intimate, avant-garde. Harder to get a table than Borago due to size.
+    <a href="https://www.99restaurante.cl" target="_blank" rel="noopener" style="color:var(--blue);">99restaurante.cl</a>
+  </div>
+</div>
+
+<div class="restaurant-card">
+  <div class="name">Yum Cha</div>
+  <div class="meta">Providencia &middot; 6 or 10-course pescatarian</div>
+  <div class="price">$250&ndash;350 for 2</div>
+  <div class="note">Creative seafood-focused tasting menu. Good alternative if Borago is booked.</div>
+</div>
+
+<h3>Upper Mid-Range <span class="badge badge-mid">Excellent</span></h3>
+
+<div class="restaurant-card">
+  <div class="name">Ambrosia</div>
+  <div class="meta">Las Condes &middot; Seasonal contemporary Chilean</div>
+  <div class="price">$150&ndash;200 for 2 with wine</div>
+</div>
+
+<div class="restaurant-card">
+  <div class="name">Karai by Mitsuharu</div>
+  <div class="meta">Las Condes (W Hotel) &middot; Nikkei (Japanese-Peruvian fusion)</div>
+  <div class="price">$150&ndash;220 for 2 with wine</div>
+</div>
+
+<div class="restaurant-card">
+  <div class="name">The Singular Santiago</div>
+  <div class="meta">Lastarria &middot; French-Chilean, restored building</div>
+  <div class="price">$120&ndash;180 for 2 with wine</div>
+</div>
+
+<div class="restaurant-card">
+  <div class="name">Bocanariz</div>
+  <div class="meta">Lastarria &middot; Chilean small plates + wine flights</div>
+  <div class="price">$100&ndash;150 for 2</div>
+  <div class="note">Great for a wine-focused meal without full tasting menu commitment.</div>
+</div>
+
+<div class="restaurant-card">
+  <div class="name">Peumayan Ancestral Food</div>
+  <div class="meta">Barrio Italia &middot; Mapuche/indigenous Chilean cuisine</div>
+  <div class="price">$100&ndash;150 for 2</div>
+  <div class="note">Unique cultural experience. Ingredients foraged from Patagonia to Atacama.</div>
+</div>
+
+<h3>Casual Meals <span class="badge badge-casual">Everyday</span></h3>
+
+<table>
+  <thead>
+    <tr><th>Meal</th><th>Per person</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Specialty coffee</td><td>$2.50&ndash;4</td><td>Lastarria, Providencia have good cafes</td></tr>
+    <tr><td>Breakfast (cafe)</td><td>$5&ndash;10</td><td>Eggs, sandwich + coffee</td></tr>
+    <tr><td>Menu del dia (lunch)</td><td>$6&ndash;9</td><td>Set lunch: starter + main + drink + dessert</td></tr>
+    <tr><td>Sit-down lunch</td><td>$12&ndash;20</td><td>A la carte at a proper restaurant</td></tr>
+  </tbody>
+</table>
+
+<!-- CASABLANCA -->
+<h2>Casablanca Wine Day (Dec 30)</h2>
+
+<p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;">
+  Morning drive from Santiago (~1h). Hit 2&ndash;3 wineries, lunch at one. Continue to Valparaiso in the afternoon.
+</p>
+
+<div class="callout callout-lisa">
+  <span class="who">Lisa</span> &mdash; preference needed: self-drive to 2&ndash;3 wineries, or book a guided private tour ($385 for 3 wineries)?
+</div>
+
+<h3>Wineries &amp; Tastings</h3>
+
+<div class="restaurant-card">
+  <div class="name">Kingston Family Vineyards</div>
+  <div class="meta">Boutique, family-run &middot; Pinot Noir &amp; Chardonnay focus</div>
+  <div class="price">Essentials: $55 pp &middot; Premium: $75 pp &middot; Wine lunch: $115 pp</div>
+  <div class="note">
+    Essentials includes 5-wine tasting + cheese board. Add charcuterie platter for $42.
+    <a href="https://www.kingstonvineyards.com/visit-us/" target="_blank" rel="noopener" style="color:var(--blue);">kingstonvineyards.com</a>
+  </div>
+</div>
+
+<div class="restaurant-card">
+  <div class="name">Casas del Bosque</div>
+  <div class="meta">Established estate &middot; Wide range of experiences</div>
+  <div class="price">Aromas tasting: $27 pp &middot; La Trampa Premium: $48 pp &middot; Icon tour: $75 pp</div>
+  <div class="note">
+    Private tasting for 2&ndash;5 people: $30 pp. Restaurant on site for lunch.
+    <a href="https://casasdelbosque.cl/en/content/86-enotourism" target="_blank" rel="noopener" style="color:var(--blue);">casasdelbosque.cl</a>
+  </div>
+</div>
+
+<div class="restaurant-card">
+  <div class="name">Emiliana Organic Vineyards</div>
+  <div class="meta">Organic &amp; biodynamic &middot; Beautiful grounds</div>
+  <div class="price">Basic tour: $10&ndash;21 pp &middot; Organic Ge tour: $48 pp &middot; Premium + charcuterie: $50 pp</div>
+  <div class="note">
+    Largest organic vineyard in the world. Good first stop for the scenic grounds.
+    <a href="https://www.emiliana.cl/en/" target="_blank" rel="noopener" style="color:var(--blue);">emiliana.cl</a>
+  </div>
+</div>
+
+<h3>Wine Day Budget (2 people)</h3>
+
+<table>
+  <thead>
+    <tr><th>Option</th><th>Cost for 2</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Self-drive, 2 tastings + winery lunch</td><td>$250&ndash;400</td></tr>
+    <tr><td>Self-drive, 3 premium tastings + lunch</td><td>$350&ndash;500</td></tr>
+    <tr><td>Private guided tour (3 wineries, all-in)</td><td>$385&ndash;500</td></tr>
+    <tr><td>Add: private driver for the day</td><td>+$150&ndash;200</td></tr>
+  </tbody>
+</table>
+
+<!-- VALPARAISO -->
+<h2>Valparaiso (Dec 30&ndash;31)</h2>
+
+<p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;">
+  2 dinners here: arrival evening (Dec 30) and NYE (Dec 31). Valparaiso is notably cheaper than Santiago &mdash; a nice dinner for 2 with wine runs $45&ndash;70.
+</p>
+
+<div class="restaurant-card">
+  <div class="name">Pasta e Vino</div>
+  <div class="meta">Cerro Concepcion &middot; Italian-Chilean, handmade pasta</div>
+  <div class="price">$45&ndash;60 for 2 with wine</div>
+  <div class="note">Consistently rated top in Valparaiso. Small, book ahead for NYE weekend.</div>
+</div>
+
+<div class="restaurant-card">
+  <div class="name">Restaurant Aramburu</div>
+  <div class="meta">Cerro Alegre &middot; Seafood, terrace with harbor views</div>
+  <div class="price">$28&ndash;38 for 2 (lunch) &middot; $50&ndash;70 dinner</div>
+</div>
+
+<div class="restaurant-card">
+  <div class="name">El Japones</div>
+  <div class="meta">Cerro Alegre &middot; Sushi with local ingredients</div>
+  <div class="price">$30&ndash;44 for 2</div>
+</div>
+
+<div class="restaurant-card">
+  <div class="name">Cafe Vinilo</div>
+  <div class="meta">Cerro Alegre &middot; Brunch / casual dining</div>
+  <div class="price">$18&ndash;25 for 2</div>
+  <div class="note">Good for a relaxed Dec 31 brunch before the evening.</div>
+</div>
+
+<h3>NYE Dinner (Dec 31)</h3>
+
+<div class="callout callout-lisa">
+  <span class="who">Lisa</span> &mdash; NYE dinner: book somewhere special in town, or eat at the hotel rooftop? Expect NYE surcharges at restaurants. A long multi-course dinner with champagne: ~$100&ndash;150 for 2.
+</div>
+
+<!-- PATAGONIA TRANSIT -->
+<h2>Patagonia Transit Days</h2>
+
+<p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;">
+  Lodge meals are included Jan 1&ndash;5 (all-inclusive). These are the travel-day meals only. Patagonia is 30&ndash;50% more expensive than Santiago.
+</p>
+
+<h3>Jan 1 &mdash; Arrival</h3>
+<table>
+  <thead><tr><th>Meal</th><th>Where</th><th>Cost for 2</th></tr></thead>
+  <tbody>
+    <tr><td>Airport breakfast/lunch</td><td>Santiago SCL</td><td>$20&ndash;30</td></tr>
+    <tr><td>Lunch stop</td><td>Puerto Natales or en route</td><td>$25&ndash;40</td></tr>
+  </tbody>
+</table>
+
+<h3>Jan 5 &mdash; Departure</h3>
+<table>
+  <thead><tr><th>Meal</th><th>Where</th><th>Cost for 2</th></tr></thead>
+  <tbody>
+    <tr><td>Lunch</td><td>Puerto Natales</td><td>$30&ndash;50</td></tr>
+    <tr><td>Airport snack</td><td>Punta Arenas</td><td>$20&ndash;35</td></tr>
+  </tbody>
+</table>
+
+<h3>Puerto Natales Restaurants (if time allows)</h3>
+
+<div class="restaurant-card">
+  <div class="name">Afrigonia</div>
+  <div class="meta">Fusion, spicy flavors &middot; Best-rated in town</div>
+  <div class="price">$90&ndash;160 for 2</div>
+</div>
+
+<div class="restaurant-card">
+  <div class="name">Santolla</div>
+  <div class="meta">Seafood specialist &middot; King crab (centolla)</div>
+  <div class="price">$90&ndash;160 for 2</div>
+  <div class="note">Signature: whole centolla (king crab), $20&ndash;40 per crab. Cordero al palo (roast lamb), $18&ndash;25.</div>
+</div>
+
+<!-- BUDGET SUMMARY -->
+<h2>Budget Summary</h2>
+
+<table>
+  <thead>
+    <tr><th>Category</th><th>Days</th><th>Range (2 ppl)</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Santiago upscale dinners</td><td>2&ndash;3</td><td>$400&ndash;1,200</td></tr>
+    <tr><td>Santiago casual meals</td><td>3</td><td>$80&ndash;150</td></tr>
+    <tr><td>Casablanca wine day</td><td>1</td><td>$300&ndash;500</td></tr>
+    <tr><td>Valparaiso dinners (incl. NYE)</td><td>2</td><td>$120&ndash;220</td></tr>
+    <tr><td>Valparaiso casual meals</td><td>1</td><td>$30&ndash;60</td></tr>
+    <tr><td>Patagonia transit meals</td><td>2</td><td>$80&ndash;200</td></tr>
+    <tr><td>Lodge meals (included)</td><td>4</td><td style="color:var(--muted);">$0</td></tr>
+    <tr style="border-top:2px solid var(--border);">
+      <td style="font-weight:700;">Total dining</td>
+      <td></td>
+      <td style="font-weight:700;color:var(--green);font-size:1.1rem;">$1,000&ndash;2,300</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;">
+  <strong>Comfortable mid-range:</strong> 1 splurge dinner (Borago or 99) + 2 upper-mid-range Santiago dinners + premium wine day = ~$1,200&ndash;1,800.
+  The old estimate of $500&ndash;800 was too low &mdash; that would barely cover Santiago dinners alone.
+</p>
+
+<!-- DECISIONS NEEDED -->
+<h2>Decisions for Lisa</h2>
+
+<ul style="list-style:none;padding:0;">
+  <li style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:0.8rem 1rem;margin:0.5rem 0;">
+    <strong style="color:var(--orange);">1.</strong> How many fine dining nights? (1 Borago-tier splurge + 1&ndash;2 upper-mid, or all upper-mid?)
+  </li>
+  <li style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:0.8rem 1rem;margin:0.5rem 0;">
+    <strong style="color:var(--orange);">2.</strong> Wine tour style: self-drive to 2&ndash;3 wineries, or guided private tour?
+  </li>
+  <li style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:0.8rem 1rem;margin:0.5rem 0;">
+    <strong style="color:var(--orange);">3.</strong> NYE dinner: book a restaurant in Valparaiso, or eat at the hotel?
+  </li>
+  <li style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:0.8rem 1rem;margin:0.5rem 0;">
+    <strong style="color:var(--orange);">4.</strong> Any dietary restrictions or cuisine preferences?
+  </li>
+</ul>
+
+<div class="footer">
+  Generated Nov 14, 2026 &mdash; based on web research of restaurant pricing and Erik's input.
+  Data source: <code>lisa/trips/chile-dining.md</code>.
+  <br><a href="/chile-trip-status.html" style="color:var(--blue);">Back to trip status</a> &middot;
+  <a href="/chile-lodge-comparison.html" style="color:var(--blue);">Lodge comparison</a>
+</div>
+
+</body>
+</html>
