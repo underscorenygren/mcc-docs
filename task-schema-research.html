@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Schema Research</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .tldr {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.25rem;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 2rem;
+  }
+  .tldr strong {
+    color: var(--accent);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .field-table td:first-child {
+    white-space: nowrap;
+    font-weight: 600;
+    color: #fff;
+  }
+  .field-table td:nth-child(2) {
+    color: var(--accent);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+  }
+  .example {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 3px solid var(--accent2);
+  }
+  .example .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent2);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .compare > div {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+  }
+  .compare .col-title {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.6rem;
+  }
+  .compare .now .col-title { color: var(--text-muted); }
+  .compare .next .col-title { color: var(--accent2); }
+  @media (max-width: 600px) {
+    .compare { grid-template-columns: 1fr; }
+  }
+  .verdict {
+    display: inline-block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.1em 0.5em;
+    border-radius: 3px;
+    font-weight: 600;
+    margin-left: 0.4rem;
+  }
+  .verdict.adopt { background: #064e3b; color: #6ee7b7; }
+  .verdict.avoid { background: #4a1d1d; color: #fca5a5; }
+  .verdict.partial { background: #3b2f06; color: #fcd34d; }
+  .lifecycle {
+    background: var(--code-bg);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    line-height: 1.8;
+    white-space: pre;
+    overflow-x: auto;
+    color: var(--text-muted);
+  }
+  .lifecycle .state { color: var(--accent2); font-weight: 600; }
+  .lifecycle .arrow { color: var(--accent); }
+  .lifecycle .note { color: var(--text-muted); font-style: italic; }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+</nav>
+
+<h1>Task Schema Research</h1>
+<p class="subtitle">A canonical task format for solo-developer + AI agent workflows.</p>
+<p class="meta">November 2026</p>
+
+<div class="tldr">
+<strong>TL;DR</strong>
+<p style="margin-top: 0.5rem; margin-bottom: 0;">
+  Each task is a markdown heading with a YAML-style front matter block. Seven fields:
+  <code>id</code> (short slug), <code>status</code> (open/active/blocked/done/dropped),
+  <code>priority</code> (p1/p2/p3), <code>owner</code> (human/agent/unassigned),
+  <code>repo</code>, <code>ref</code> (issue/PR/commit), and <code>depends</code> (list of IDs).
+  Agent dispatch adds <code>branch</code>, <code>accept</code>, and <code>test</code> as optional fields.
+  The markdown file is the source of truth. A parser extracts JSON for reports and agent consumption.
+  GitHub issues are the backlog; tasks.md is the active sprint.
+</p>
+</div>
+
+<h2>1. Survey of Existing Schemas</h2>
+
+<h3>GitHub Issues / Projects <span class="verdict partial">Partial</span></h3>
+<p>
+  GitHub Issues provide: title, body (markdown), labels, assignees, milestone, and a state machine (open/closed).
+  GitHub Projects (v2) adds custom fields (single-select, date, number, iteration) and board/table views.
+</p>
+<p>
+  <strong>What works:</strong> Labels for categorization. Milestone for grouping. The body is freeform markdown
+  that agents can read. The API is stable and well-documented. Projects v2 custom fields can model priority and status.
+</p>
+<p>
+  <strong>What doesn't:</strong> No native priority field (labels are stringly-typed). No blocking/dependency model.
+  Projects v2 requires GraphQL for writes, which is verbose for automation. Cross-repo references are manual.
+  The issue body has no structured schema — you get markdown, not typed fields.
+</p>
+<p>
+  <strong>Verdict:</strong> Good as a backlog store and public interface. Not sufficient as the sole canonical format
+  because it lacks machine-parseable structure in the body and has no dependency model.
+</p>
+
+<h3>Linear <span class="verdict partial">Partial</span></h3>
+<p>
+  Linear's data model: Issue (title, description, state, priority 0-4, estimate, assignee, team, project, cycle, label[]).
+  States are team-configurable but default to: Backlog, Todo, In Progress, Done, Cancelled.
+  Sub-issues supported. Relations: blocks, is-blocked-by, relates-to, duplicate.
+</p>
+<p>
+  <strong>What works:</strong> Priority as a number (0=urgent, 4=none). Named states with transitions. Relations.
+  Cycles (time-boxed sprints). The API is clean — everything is a flat object with typed fields.
+</p>
+<p>
+  <strong>What doesn't:</strong> Designed for teams of 5-50. Cycles, teams, projects, views — all overhead for a solo developer.
+  The UI is the product; the data model alone is overkill when your "UI" is a markdown file.
+</p>
+<p>
+  <strong>Verdict:</strong> The field set is a good reference. Priority-as-number and explicit state machine are worth adopting.
+  Drop cycles, teams, estimates, and the SaaS dependency.
+</p>
+
+<h3>Todoist / Things / OmniFocus <span class="verdict avoid">Avoid</span></h3>
+<p>
+  Personal task managers. Todoist: task, project, section, priority (1-4), due date, labels, parent task.
+  Things: area, project, heading, task, checklist, tags, deadline, when (schedule). OmniFocus: perspectives,
+  contexts, forecast, review cycles.
+</p>
+<p>
+  <strong>What works:</strong> Simplicity of Todoist's model. The concept of "when" (scheduled start) vs "deadline" in Things.
+</p>
+<p>
+  <strong>What doesn't:</strong> No concept of code artifacts (branches, PRs, commits). No agent dispatch. No cross-repo.
+  No blocking relationships. These are consumption-tracking tools, not production-tracking tools.
+</p>
+<p>
+  <strong>Verdict:</strong> Wrong domain. These track personal errands, not software development with AI agents.
+</p>
+
+<h3>TaskWarrior <span class="verdict partial">Partial</span></h3>
+<p>
+  CLI task manager. Fields: description, project, priority (H/M/L), tags[], due, depends (list of UUIDs),
+  status (pending/completed/deleted/waiting/recurring), urgency (computed score). Stores as line-delimited JSON.
+</p>
+<p>
+  <strong>What works:</strong> <code>depends</code> as a first-class field. Computed urgency score.
+  CLI-first (agents can shell out). Tags as freeform annotations.
+  The JSON storage is trivially parseable. UDA (user-defined attributes) for extension.
+</p>
+<p>
+  <strong>What doesn't:</strong> UUIDs are not human-readable. No concept of repos, branches, or PRs.
+  The urgency formula is clever but opaque — hard to debug why something is ranked where it is.
+</p>
+<p>
+  <strong>Verdict:</strong> The <code>depends</code> model and JSON-line storage are directly applicable.
+  Short slugs instead of UUIDs. Skip the urgency formula — with &lt;50 tasks, manual priority is fine.
+</p>
+
+<h3>todo.txt <span class="verdict partial">Partial</span></h3>
+<p>
+  One line per task: <code>(A) 2026-11-14 Call plumber +home @phone</code>.
+  Priority is (A)-(Z). Projects are <code>+project</code>. Contexts are <code>@context</code>.
+  Completion: prepend <code>x 2026-11-14</code>. Metadata via <code>key:value</code> pairs.
+</p>
+<p>
+  <strong>What works:</strong> Radically simple. Human-readable. Parseable with a regex.
+  The <code>key:value</code> extension mechanism is exactly what we need for custom fields.
+</p>
+<p>
+  <strong>What doesn't:</strong> One-line-per-task breaks down when tasks need context, acceptance criteria,
+  or multi-line descriptions. No hierarchy. No blocking. Designed for personal productivity, not software.
+</p>
+<p>
+  <strong>Verdict:</strong> The <code>key:value</code> inline metadata pattern is worth stealing.
+  The one-line constraint is too tight for development tasks.
+</p>
+
+<h3>Org-mode <span class="verdict partial">Partial</span></h3>
+<p>
+  Emacs Org-mode: headings are tasks. States: TODO, DONE, plus custom (IN-PROGRESS, WAITING, CANCELLED).
+  Properties drawer for typed metadata. Tags on headings. Priority [#A]/[#B]/[#C]. Agenda views.
+  Clock-in/clock-out for time tracking. Links to files, URLs, other headings.
+</p>
+<p>
+  <strong>What works:</strong> Headings-as-tasks maps directly to markdown sections. The properties drawer
+  (key-value pairs under a heading) is the exact pattern: human-readable, machine-parseable, extensible.
+  Custom state sequences. Priority letters.
+</p>
+<p>
+  <strong>What doesn't:</strong> Org-mode is an Emacs ecosystem. The syntax (<code>:PROPERTIES:</code> drawers,
+  <code>#+</code> directives) is idiosyncratic. We're in markdown, not org.
+</p>
+<p>
+  <strong>Verdict:</strong> The properties-drawer pattern — structured metadata under a heading — is the
+  core design we should adopt, translated to markdown-compatible syntax (YAML-style <code>- **Key:** value</code>).
+</p>
+
+<h3>JIRA <span class="verdict avoid">Avoid</span></h3>
+<p>
+  Issue types (Epic, Story, Task, Sub-task, Bug), 50+ built-in fields, custom fields, workflows with conditions
+  and validators, components, versions, sprints, boards, filters, dashboards, permissions, schemes.
+</p>
+<p>
+  <strong>What works:</strong> Nothing, for a solo developer. The lesson from JIRA is that schema complexity
+  grows monotonically and never shrinks. Every optional field becomes mandatory in someone's workflow.
+  Every custom field becomes load-bearing. Every workflow transition needs a validator.
+</p>
+<p>
+  <strong>Verdict:</strong> Cautionary tale. Keep the field count under 10. Make extension possible but not encouraged.
+</p>
+
+<h3>Agent Task Formats (SWE-bench, Devin, AutoGPT) <span class="verdict partial">Partial</span></h3>
+<p>
+  <strong>SWE-bench:</strong> Structured JSON — repo, base_commit, problem_statement (natural language),
+  hints (optional), test_patch (diff that validates the fix). The test_patch is the acceptance criterion.
+</p>
+<p>
+  <strong>Devin:</strong> Natural language task description + repo URL + branch. No formal schema beyond that.
+  The agent infers structure from the description.
+</p>
+<p>
+  <strong>AutoGPT/OpenDevin:</strong> Task as a goal string + constraints list. Minimal structure —
+  the agent is expected to decompose the task itself.
+</p>
+<p>
+  <strong>What works from SWE-bench:</strong> The concept of a test command as acceptance criteria.
+  <code>test_patch</code> or <code>test_cmd</code> — something the agent can run to verify its own work.
+  Also: pinning to a specific commit/branch so the agent starts from a known state.
+</p>
+<p>
+  <strong>What works from practice:</strong> In the MCC dispatch workflow, the supervisor already compresses
+  a plan into: what to change, which files, acceptance criteria, branch name, test command. This is the
+  agent dispatch metadata that belongs in the schema.
+</p>
+<p>
+  <strong>Verdict:</strong> Add optional agent dispatch fields: <code>branch</code>, <code>accept</code> (criteria text),
+  <code>test</code> (shell command). These only appear on tasks actively dispatched to agents.
+</p>
+
+<h2>2. Design Principles</h2>
+
+<p>Constraints derived from how MCC actually works:</p>
+
+<ul>
+  <li><strong>Markdown is the source of truth.</strong> The developer reads tasks.md in a terminal or browser.
+    If the schema isn't readable as plain markdown, it fails.</li>
+  <li><strong>Machine-parseable without a build step.</strong> A simple parser (regex or line-by-line) should
+    extract structured data. No AST required.</li>
+  <li><strong>Under 10 fields.</strong> Every field must earn its place. If a field is empty on &gt;50% of tasks,
+    it should be optional or removed.</li>
+  <li><strong>GitHub issues are the backlog, tasks.md is the sprint.</strong> Not everything in GitHub issues
+    appears in tasks.md. When something moves to active work, it gets a tasks.md entry. The <code>ref</code> field
+    links back to the issue.</li>
+  <li><strong>One canonical ID per task.</strong> Short slugs (e.g., <code>slack-setup</code>, <code>ws-reconnect</code>).
+    Not UUIDs, not auto-incrementing numbers. Human-typeable, greppable.</li>
+  <li><strong>Status drives the view.</strong> The PM report, the tasks.md sections, and agent queries all
+    filter by status. Status must be a closed enum, not freeform text.</li>
+</ul>
+
+<h2>3. The Proposed Schema</h2>
+
+<h3>Field Definitions</h3>
+
+<table class="field-table">
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>id</td>
+      <td>string</td>
+      <td>Yes</td>
+      <td>Short slug. Lowercase, hyphens. Unique across active tasks. E.g., <code>slack-setup</code>, <code>ws-reconnect</code>.</td>
+    </tr>
+    <tr>
+      <td>status</td>
+      <td>enum</td>
+      <td>Yes</td>
+      <td>One of: <code>open</code>, <code>active</code>, <code>blocked</code>, <code>done</code>, <code>dropped</code>.</td>
+    </tr>
+    <tr>
+      <td>priority</td>
+      <td>enum</td>
+      <td>Yes</td>
+      <td><code>p1</code> (do now), <code>p2</code> (do soon), <code>p3</code> (backlog).</td>
+    </tr>
+    <tr>
+      <td>owner</td>
+      <td>string</td>
+      <td>No</td>
+      <td><code>human</code>, agent name (e.g., <code>octocat</code>), or omitted (unassigned).</td>
+    </tr>
+    <tr>
+      <td>repo</td>
+      <td>string</td>
+      <td>No</td>
+      <td>Repository short name. Defaults to <code>claude-by-voice</code>. E.g., <code>mcc-notes</code>, <code>mcc-realtime</code>.</td>
+    </tr>
+    <tr>
+      <td>ref</td>
+      <td>string</td>
+      <td>No</td>
+      <td>GitHub issue, PR, or commit. E.g., <code>#283</code>, <code>PR #286</code>, <code>8a0d79b</code>.</td>
+    </tr>
+    <tr>
+      <td>depends</td>
+      <td>string[]</td>
+      <td>No</td>
+      <td>List of task IDs this is blocked by. E.g., <code>slack-setup</code>.</td>
+    </tr>
+    <tr>
+      <td>added</td>
+      <td>date</td>
+      <td>No</td>
+      <td>When the task was created. ISO date: <code>2026-11-14</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Agent Dispatch Fields (optional, only when dispatching)</h3>
+
+<table class="field-table">
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>branch</td>
+      <td>string</td>
+      <td>Git branch name. E.g., <code>auto/slack-setup</code>.</td>
+    </tr>
+    <tr>
+      <td>accept</td>
+      <td>string</td>
+      <td>Acceptance criteria in plain English. What "done" looks like.</td>
+    </tr>
+    <tr>
+      <td>test</td>
+      <td>string</td>
+      <td>Shell command to verify. E.g., <code>cd web && npx vitest run</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Status Lifecycle</h3>
+
+<div class="lifecycle">
+<span class="state">open</span> <span class="arrow">--&gt;</span> <span class="state">active</span> <span class="arrow">--&gt;</span> <span class="state">done</span>
+  <span class="arrow">|</span>           <span class="arrow">|</span>
+  <span class="arrow">|</span>           <span class="arrow">+-&gt;</span> <span class="state">blocked</span> <span class="arrow">--&gt;</span> <span class="state">active</span>
+  <span class="arrow">|</span>
+  <span class="arrow">+-&gt;</span> <span class="state">dropped</span>
+
+<span class="note">open      task exists, not started</span>
+<span class="note">active    someone (human or agent) is working on it</span>
+<span class="note">blocked   waiting on an external dependency or another task</span>
+<span class="note">done      completed, ref points to the commit/PR</span>
+<span class="note">dropped   abandoned, kept for history (not deleted)</span></div>
+
+<p>
+  Rules: <code>blocked</code> can only transition to <code>active</code> (unblocked) or <code>dropped</code>.
+  <code>done</code> and <code>dropped</code> are terminal. A task can move from <code>active</code> back to
+  <code>open</code> if deprioritized. There is no "in review" state — reviews happen within <code>active</code>.
+</p>
+
+<h3>Priority Model</h3>
+
+<p>Three levels. No more.</p>
+
+<table>
+  <thead>
+    <tr><th>Priority</th><th>Meaning</th><th>Action</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>p1</code></td><td>Do now</td><td>Current session work. At most 3 p1 tasks at a time.</td></tr>
+    <tr><td><code>p2</code></td><td>Do soon</td><td>Next session or when a p1 clears. The default for new work.</td></tr>
+    <tr><td><code>p3</code></td><td>Backlog</td><td>Worth tracking, not worth scheduling. Lives in tasks.md or GitHub issues.</td></tr>
+  </tbody>
+</table>
+
+<p>
+  If everything is p1, nothing is p1. The constraint of "at most 3 p1s" forces prioritization.
+  Agents should only pick up p1 or p2 tasks unless explicitly told otherwise.
+</p>
+
+<h3>Dependencies</h3>
+
+<p>
+  The <code>depends</code> field lists task IDs. A task with <code>depends: [slack-setup]</code> cannot move to
+  <code>active</code> until <code>slack-setup</code> is <code>done</code>. This is enforced by convention
+  (the parser can warn) not by hard locks.
+</p>
+<p>
+  Keep dependency chains short. If A depends on B depends on C depends on D, something is wrong — decompose differently.
+  In practice, most tasks in a solo project have zero or one dependency.
+</p>
+
+<h2>4. Markdown Format (Human View)</h2>
+
+<p>
+  The format extends the current tasks.md pattern. Each task is an h3 heading followed by
+  metadata lines. The metadata uses the existing <code>- **Key:** value</code> pattern for
+  backward compatibility.
+</p>
+
+<div class="example">
+<div class="label">Example: tasks.md</div>
+<pre><code>## Active
+
+### Slack integration
+- **ID:** slack-setup
+- **Status:** blocked
+- **Priority:** p1
+- **Owner:** human
+- **Ref:** PR #286
+- **Depends:** —
+- **Context:** Code complete. Waiting on human to create Slack workspace,
+  add tokens to .env, invite Lisa.
+
+### JSONL WebSocket reconnect
+- **ID:** ws-reconnect
+- **Status:** active
+- **Priority:** p2
+- **Owner:** octocat
+- **Repo:** claude-by-voice
+- **Ref:** #280
+- **Branch:** auto/ws-reconnect
+- **Accept:** JSONL WS reconnects within 5s after disconnect, no message loss
+- **Test:** cd web && npx vitest run
+- **Context:** Voice WS reconnect done. JSONL WS still drops on disconnect.
+
+### mcc-realtime skeleton
+- **ID:** realtime-skeleton
+- **Status:** open
+- **Priority:** p3
+- **Repo:** mcc-realtime
+- **Context:** Whisper realtime STT first, ElevenLabs fast follow.
+
+## Done
+
+### Completed 2026-11-13
+- **slack-connector** — Slack connector service (PR #286, 43c2c36)
+- **tts-reconnect** — TTS reconnect fix (PR #285, 8a0d79b)</code></pre>
+</div>
+
+<p>
+  The <code>## Active</code> / <code>## Done</code> sections remain. Within Active, tasks are ordered by priority
+  (p1 first, then p2, then p3). Done entries are compressed to one line with ID, description, and ref.
+</p>
+
+<h2>5. JSON Format (Machine View)</h2>
+
+<p>
+  A parser reads tasks.md and emits a JSON array. Each task becomes an object. This powers the PM report,
+  agent task queries, and any future automation.
+</p>
+
+<div class="example">
+<div class="label">Example: tasks.json (generated)</div>
+<pre><code>[
+  {
+    "id": "slack-setup",
+    "title": "Slack integration",
+    "status": "blocked",
+    "priority": "p1",
+    "owner": "human",
+    "repo": "claude-by-voice",
+    "ref": "PR #286",
+    "depends": [],
+    "added": "2026-11-13",
+    "context": "Code complete. Waiting on human to create Slack workspace."
+  },
+  {
+    "id": "ws-reconnect",
+    "title": "JSONL WebSocket reconnect",
+    "status": "active",
+    "priority": "p2",
+    "owner": "octocat",
+    "repo": "claude-by-voice",
+    "ref": "#280",
+    "added": "2026-11-12",
+    "dispatch": {
+      "branch": "auto/ws-reconnect",
+      "accept": "JSONL WS reconnects within 5s after disconnect, no message loss",
+      "test": "cd web && npx vitest run"
+    },
+    "context": "Voice WS reconnect done. JSONL WS still drops on disconnect."
+  }
+]</code></pre>
+</div>
+
+<p>
+  The parser is trivial: split on <code>### </code> headings, extract <code>- **Key:** value</code> lines with a regex,
+  map keys to the schema. Unknown keys go into an <code>extra</code> object. Context is everything after the
+  structured fields that isn't a recognized key.
+</p>
+
+<h2>6. How It Integrates</h2>
+
+<h3>tasks.md (canonical)</h3>
+<p>
+  Human-edited. The source of truth for active work. Agents can read and propose edits via PR.
+  The supervisor updates it after each work session.
+</p>
+
+<h3>GitHub Issues (backlog)</h3>
+<p>
+  Issues that aren't in active work stay in GitHub only. When an issue is promoted to active work,
+  the supervisor creates a tasks.md entry with <code>ref: #NNN</code>. When the task is done,
+  the issue is closed. One-directional flow: GitHub issue &rarr; tasks.md entry &rarr; done.
+</p>
+<p>
+  No bidirectional sync. That way lies madness and stale data. The tasks.md entry is always
+  more current than the GitHub issue body.
+</p>
+
+<h3>PM Report (generated)</h3>
+<p>
+  The PM report (pm.html) reads the JSON output of the parser. It groups by status, sorts by priority,
+  and renders a dashboard. No hand-editing of pm.html. Change tasks.md, run the build, pm.html updates.
+</p>
+
+<h3>Agent Dispatch</h3>
+<p>
+  When the supervisor dispatches work to an agent:
+</p>
+<ol>
+  <li>Add/update the task in tasks.md with <code>status: active</code>, <code>owner: &lt;agent&gt;</code>,
+    and the dispatch fields (<code>branch</code>, <code>accept</code>, <code>test</code>).</li>
+  <li>The agent receives the compressed plan (from the Context field or a separate prompt).</li>
+  <li>When the agent finishes, the supervisor updates: <code>status: done</code>, <code>ref: PR #NNN</code>.</li>
+</ol>
+
+<h3>history.tsv (append-only log)</h3>
+<p>
+  Each status transition appends a row. The TSV format gets one new column: <code>id</code>.
+</p>
+<pre><code>date	action	id	task	ref
+2026-11-14	active	ws-reconnect	JSONL WebSocket reconnect	auto/ws-reconnect
+2026-11-14	done	slack-connector	Slack connector service	43c2c36</code></pre>
+
+<h2>7. Migration</h2>
+
+<p>
+  The current tasks.md is close to the proposed format. Migration is incremental, not a rewrite.
+</p>
+
+<div class="compare">
+  <div class="now">
+    <div class="col-title">Current</div>
+    <p style="font-size: 0.88rem; color: var(--text-muted);">
+      <code>### Task name</code><br>
+      <code>- **Status:** in progress</code><br>
+      <code>- **Added:** 2026-11-13</code><br>
+      <code>- **Ref:** PR #286</code><br>
+      <code>- **Context:** description</code>
+    </p>
+  </div>
+  <div class="next">
+    <div class="col-title">Proposed</div>
+    <p style="font-size: 0.88rem; color: var(--text-muted);">
+      <code>### Task name</code><br>
+      <code>- **ID:** slug</code> <em>(new)</em><br>
+      <code>- **Status:** active</code> <em>(enum)</em><br>
+      <code>- **Priority:** p2</code> <em>(new)</em><br>
+      <code>- **Owner:** human</code> <em>(new)</em><br>
+      <code>- **Added:** 2026-11-13</code><br>
+      <code>- **Ref:** PR #286</code><br>
+      <code>- **Context:** description</code>
+    </p>
+  </div>
+</div>
+
+<p>Steps:</p>
+<ol>
+  <li><strong>Add IDs.</strong> Go through each active task, assign a short slug. 5 minutes of work.</li>
+  <li><strong>Normalize status values.</strong> Replace "in progress" with <code>active</code>, "pending" with <code>open</code>,
+    "waiting on human setup" with <code>blocked</code>. Use the five-value enum.</li>
+  <li><strong>Add priority.</strong> Tag each active task as p1/p2/p3. Default everything to p2.</li>
+  <li><strong>Add owner where known.</strong> Most tasks are <code>human</code> or unassigned. Agent-dispatched tasks get the agent name.</li>
+  <li><strong>Write the parser.</strong> A ~50 line script (bash, python, or node) that reads tasks.md and emits JSON.
+    Wire it into build.sh so pm.html is generated from JSON, not hand-authored.</li>
+  <li><strong>Update history.tsv.</strong> Add the <code>id</code> column. Old rows get a blank id (backward compatible).</li>
+</ol>
+
+<p>
+  Total effort: under an hour. No data loss, no format break. The existing tasks.md
+  is already 80% of the way there.
+</p>
+
+<h2>8. Open Questions</h2>
+
+<ul>
+  <li><strong>Should the parser live in mcc-tasks or be a shared tool?</strong>
+    If other repos need to read/write task format, it should be a standalone script or package.
+    For now, living in mcc-tasks alongside build.sh is simplest.</li>
+
+  <li><strong>How to handle multi-repo tasks?</strong>
+    A task like "deploy Convex frontend" spans mcc-ablog-convex and claude-by-voice.
+    The proposed <code>repo</code> field is singular. Options: comma-separated repos, or
+    decompose into two linked tasks. Recommendation: decompose. Multi-repo tasks are
+    usually two tasks pretending to be one.</li>
+
+  <li><strong>Should the Done section use the full schema or stay compressed?</strong>
+    Current Done entries are one-liners. The proposed format could expand them, but that
+    would make tasks.md grow fast. Recommendation: keep Done compressed (one line with ID + description + ref),
+    let the history.tsv carry the full transition log.</li>
+
+  <li><strong>Time estimates?</strong>
+    Linear and JIRA have story points or time estimates. For a solo dev + agents, estimates
+    are usually wrong and create guilt. Recommendation: skip them. If needed later, add an
+    optional <code>effort</code> field (small/medium/large) — but don't start with it.</li>
+
+  <li><strong>Should agents edit tasks.md directly?</strong>
+    Currently only the supervisor edits tasks.md. Agents could propose changes via PR.
+    Risk: merge conflicts if multiple agents edit simultaneously. Recommendation: supervisor
+    remains the sole writer. Agents report status via chat-bridge; the supervisor updates tasks.md.</li>
+
+  <li><strong>Due dates?</strong>
+    Not in the initial schema. Most solo-dev tasks don't have hard deadlines. If collaboration
+    repos need deadlines (e.g., "demo for Dimitri by Friday"), add an optional <code>due</code> field later.
+    The priority field handles urgency without calendar coupling.</li>
+</ul>
+
+<hr>
+
+<p style="color: var(--text-muted); font-size: 0.85rem;">
+  Related: <a href="agent-task-management.html">Agent Task Management</a> (dispatch board design),
+  <a href="taskmaster-design.html">Taskmaster Design</a> (procedural reconciliation).
+</p>
+
+</body>
+</html>
