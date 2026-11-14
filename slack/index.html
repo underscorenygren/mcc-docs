@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slack Integration — MCC Docs</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+  .status-card {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    border-left: 3px solid #6ee7b7;
+  }
+  .flow {
+    background: var(--code-bg, #1a1a2e);
+    border-radius: 8px;
+    padding: 1.2rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    line-height: 1.8;
+    white-space: pre;
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+    color: var(--text-muted);
+  }
+  .doc-link {
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    margin-bottom: 0.5rem;
+    display: block;
+    text-decoration: none;
+    color: var(--text);
+    border-left: 3px solid var(--accent, #8b5cf6);
+  }
+  .doc-link:hover { background: #253045; }
+  .doc-link .title { font-weight: 600; }
+  .doc-link .desc { color: var(--text-muted); font-size: 0.85rem; }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="../index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a> &rsaquo; Slack
+</nav>
+
+<h1>Slack Integration</h1>
+<p class="subtitle">Bidirectional bridge between Slack and the MCC supervisor via chatbus.</p>
+<p class="meta">Live since November 2026</p>
+
+<h2>Current Setup</h2>
+
+<div class="status-card">
+  <p><strong>Status: live.</strong> The Slack connector service (<code>cmd/slack/</code>) is deployed and connected to the MCC workspace.</p>
+</div>
+
+<p>The system has three components:</p>
+
+<h3>1. Slack Connector Service (Go)</h3>
+<p>
+  A lightweight Go service (<code>cmd/slack/main.go</code>, port 9093) that bridges Slack's API with the chatbus.
+  It runs as a Docker container in the prod profile.
+</p>
+
+<h3>2. Inbound: Slack &rarr; Supervisor</h3>
+<div class="flow">User posts in #supervisor
+  &rarr; Slack Events API sends POST to /webhook/slack
+  &rarr; Signature verified (HMAC-SHA256 with signing secret)
+  &rarr; Message published to chatbus: {agent: "supervisor", channel: "chat", direction: "in"}
+  &rarr; Supervisor receives via chat-bridge, processes normally</div>
+
+<p>
+  The connector verifies every request using Slack's signing secret (HMAC-SHA256 of <code>v0:timestamp:body</code>).
+  It handles the <code>url_verification</code> challenge automatically. Bot messages and edits are filtered out
+  to prevent echo loops.
+</p>
+
+<h3>3. Outbound: Supervisor &rarr; Slack</h3>
+<div class="flow">Supervisor sends reply via chat-bridge
+  &rarr; Chatbus stores message (supervisor/chat/out)
+  &rarr; Slack connector polls chatbus every 2 seconds
+  &rarr; New messages POSTed to Slack Incoming Webhook
+  &rarr; Appears in #supervisor channel</div>
+
+<p>
+  The outbound poller skips messages that originated from Slack (prefix <code>slack:</code>) to prevent loops.
+  It tracks the last-seen message ID to avoid duplicates.
+</p>
+
+<h2>What Lisa Sees</h2>
+<p>
+  Lisa (and any workspace member) can post in <code>#supervisor</code> and the message reaches the supervisor
+  as if it were typed in the web chat. The supervisor's replies appear in the channel. From Lisa's perspective,
+  she's chatting with the supervisor in Slack.
+</p>
+
+<h2>Secrets</h2>
+<table>
+  <thead><tr><th>Key</th><th>Purpose</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>SLACK_WEBHOOK_URL</code></td><td>Post messages to #supervisor</td><td>App &rarr; Incoming Webhooks</td></tr>
+    <tr><td><code>SLACK_BOT_TOKEN</code></td><td>Bot API access (future use)</td><td>App &rarr; OAuth &amp; Permissions</td></tr>
+    <tr><td><code>SLACK_SIGNING_SECRET</code></td><td>Verify inbound webhook signatures</td><td>App &rarr; Basic Information</td></tr>
+  </tbody>
+</table>
+
+<h2>Limitations</h2>
+<ul>
+  <li><strong>One channel only.</strong> Currently hardwired to #supervisor. Multi-channel routing (e.g., #annotate &rarr; voice annotation agent) is planned but not built.</li>
+  <li><strong>No threading.</strong> All messages are flat in the channel. Slack threads are not supported.</li>
+  <li><strong>Outbound polls every 2s.</strong> Not real-time — there's up to a 2-second delay on supervisor replies appearing in Slack.</li>
+  <li><strong>No rich formatting.</strong> Messages are plain text. Slack block kit / attachments not supported yet.</li>
+  <li><strong>Historical replay on restart.</strong> The poller has no persistent cursor — on service restart it may replay recent chatbus messages.</li>
+</ul>
+
+<h2>Future</h2>
+<ul>
+  <li>Multi-channel routing: <code>#annotate</code> &rarr; annotation agent, <code>#notes</code> &rarr; mcc-notes</li>
+  <li>Persistent outbound cursor to prevent replay on restart</li>
+  <li>Dedicated bot for Lisa — direct messages to a named bot rather than channel messages</li>
+  <li>Rich message formatting for structured responses (task lists, status cards)</li>
+</ul>
+
+<h2>Docs</h2>
+
+<a href="setup.html" class="doc-link">
+  <div class="title">Setup Guide</div>
+  <div class="desc">Step-by-step Slack app creation, webhooks, OAuth, and secret submission.</div>
+</a>
+
+</body>
+</html>
