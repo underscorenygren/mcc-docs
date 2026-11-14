@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Las Torres vs Rio Serrano — Lodge Comparison</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --card: #1e2a47;
+    --border: #2a3a5c;
+    --text: #e0e0e0;
+    --muted: #8892a8;
+    --accent: #e2b340;
+    --green: #4ade80;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --orange: #fb923c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 2rem 1rem;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 1.8rem; color: var(--accent); margin-bottom: 0.25rem; }
+  .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 2rem; }
+  h2 { font-size: 1.3rem; color: var(--accent); margin: 2rem 0 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  h3 { font-size: 1.05rem; color: var(--text); margin: 1.2rem 0 0.5rem; }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .verdict {
+    background: var(--card);
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .verdict .label { font-size: 0.8rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
+  .verdict p { margin-top: 0.4rem; }
+
+  .lodge-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+  }
+  @media (max-width: 700px) { .lodge-grid { grid-template-columns: 1fr; } }
+
+  .lodge-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+  }
+  .lodge-card .name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .lodge-card .price-big {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0.3rem 0;
+  }
+  .lodge-card .price-note {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .torres .name { color: var(--orange); }
+  .torres .price-big { color: var(--orange); }
+  .serrano .name { color: var(--blue); }
+  .serrano .price-big { color: var(--blue); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 1rem 0; }
+  th { text-align: left; color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.5rem 0.8rem; border-bottom: 2px solid var(--border); }
+  td { padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .winner { color: var(--green); font-weight: 600; }
+  .loser { color: var(--muted); }
+
+  .day-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin: 0.8rem 0;
+  }
+  .day-card .day-title {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--accent);
+  }
+  .day-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+  @media (max-width: 700px) { .day-compare { grid-template-columns: 1fr; } }
+  .day-compare .col-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.3rem;
+  }
+  .day-compare .torres-col .col-label { color: var(--orange); }
+  .day-compare .serrano-col .col-label { color: var(--blue); }
+  .day-compare .detail { font-size: 0.85rem; color: var(--muted); }
+
+  .source-list { list-style: none; padding: 0; }
+  .source-list li { padding: 0.3rem 0; font-size: 0.85rem; }
+
+  .back-link { margin-bottom: 1.5rem; font-size: 0.9rem; }
+
+  .footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="back-link"><a href="/chile-trip-status.html">&larr; Back to trip status</a></div>
+
+<h1>Las Torres vs Rio Serrano</h1>
+<p class="subtitle">Patagonia lodge comparison &mdash; Jan 1&ndash;5, 2027 (4 nights, 2 adults)</p>
+
+<!-- PRICE OVERVIEW -->
+<div class="lodge-grid">
+  <div class="lodge-card torres">
+    <div class="name">Hotel Las Torres</div>
+    <div class="price-big">~$10,800</div>
+    <div class="price-note">All-inclusive + Grey Glacier catamaran ($274 extra)</div>
+    <div class="price-note" style="margin-top:0.3rem;">At the towers trailhead. 40+ excursions. Hike starts from the door.</div>
+    <div style="margin-top:0.5rem;font-size:0.85rem;">
+      <a href="https://www.booking.com/hotel/cl/las-torres-patagonia.html?checkin=2027-01-01&checkout=2027-01-05&group_adults=2&no_rooms=1">Booking.com</a> &middot;
+      <a href="https://lastorres.com/en/all-inclusive/all-inclusive-patagonia-vacation/">All-inclusive details</a> &middot;
+      <a href="https://lastorres.com/en/reserve/">Reserve</a>
+    </div>
+  </div>
+  <div class="lodge-card serrano">
+    <div class="name">Rio Serrano Hotel + Spa</div>
+    <div class="price-big">~$5,700</div>
+    <div class="price-note">All-inclusive, Superior room. Grey Glacier included.</div>
+    <div class="price-note" style="margin-top:0.3rem;">Park edge, panoramic views. Pool, sauna, Starlink Wi-Fi in rooms.</div>
+    <div style="margin-top:0.5rem;font-size:0.85rem;">
+      <a href="https://www.booking.com/hotel/cl/rao-serrano.html?checkin=2027-01-01&checkout=2027-01-05&group_adults=2&no_rooms=1">Booking.com</a> &middot;
+      <a href="https://rioserrano.com/en/all-inclusive/">All-inclusive details</a>
+    </div>
+  </div>
+</div>
+
+<div class="verdict">
+  <div class="label">Price difference</div>
+  <p>Rio Serrano saves <strong>~$5,100</strong> for the same 4-night all-inclusive stay with excursions. The tradeoff: Las Torres is at the trailhead, Rio Serrano requires a 1-hour transfer each way for the towers hike.</p>
+</div>
+
+<!-- DAY BY DAY -->
+<h2>Your 3 Days — Side by Side</h2>
+
+<div class="day-card">
+  <div class="day-title">Jan 2 — Base of the Towers Hike</div>
+  <div class="day-compare">
+    <div class="torres-col">
+      <div class="col-label">Las Torres</div>
+      <div class="detail">
+        <strong>8 hrs, 18.8 km, High difficulty</strong><br>
+        Walk out the hotel door to the trailhead. No transfer needed.<br>
+        Alternative: horseback ride + hike combo (6&ndash;8 hrs).<br>
+        <span class="winner">Advantage: saves 2+ hours of transfers</span>
+      </div>
+    </div>
+    <div class="serrano-col">
+      <div class="col-label">Rio Serrano</div>
+      <div class="detail">
+        <strong>9&ndash;12 hrs, 22 km, 5/5 difficulty</strong><br>
+        Depart 6:30 AM, return ~8 PM. Includes ~1 hr transfer each way.<br>
+        Long day due to distance from trailhead.<br>
+        <span class="loser">Drawback: 2-hour round-trip transfer overhead</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="day-card">
+  <div class="day-title">Jan 3 — Grey Glacier Boat</div>
+  <div class="day-compare">
+    <div class="torres-col">
+      <div class="col-label">Las Torres</div>
+      <div class="detail">
+        <strong>Full Paine tour, 7&ndash;10 hrs</strong><br>
+        Van tour: Black Bridge, Nordenskjold, Lake Pehoe, Salto Grande.<br>
+        Grey Glacier catamaran is <strong>extra: $137 pp ($274 for 2)</strong>.<br>
+        Without boat: included in all-inclusive.<br>
+        <a href="https://lastorres.com/en/circuitos-por-el-dia/full-paine-glacier-grey/">Details</a>
+      </div>
+    </div>
+    <div class="serrano-col">
+      <div class="col-label">Rio Serrano</div>
+      <div class="detail">
+        <strong>Grey III navigation + Grey Trail hike, 8&ndash;9 hrs</strong><br>
+        Boat ride to glacier face <strong>included in all-inclusive</strong>.<br>
+        Full-day excursion with hiking.<br>
+        <span class="winner">Advantage: saves $274 vs Las Torres</span><br>
+        <a href="https://rioserrano.com/en/all-inclusive/">Details</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="day-card">
+  <div class="day-title">Jan 4 — Cuernos / Horseback / Puma</div>
+  <div class="day-compare">
+    <div class="torres-col">
+      <div class="col-label">Las Torres</div>
+      <div class="detail">
+        Los Cuernos full hike: 6&ndash;8 hrs, 23.2 km, Medium-High<br>
+        Los Cuernos viewpoint: 4 hrs, 6 km, Easy<br>
+        Horseback: half-day or full-day options<br>
+        Puma tracking: not offered (external: $1,300&ndash;$2,200 pp)
+      </div>
+    </div>
+    <div class="serrano-col">
+      <div class="col-label">Rio Serrano</div>
+      <div class="detail">
+        Cuernos Viewpoint: 4 hrs, moderate<br>
+        Condor Viewpoint: 4 hrs<br>
+        Horseback: 1&ndash;2 hr sessions<br>
+        Puma tracking: not offered (same external operators)
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURE COMPARISON -->
+<h2>Feature Comparison</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th style="color:var(--orange);">Las Torres</th>
+      <th style="color:var(--blue);">Rio Serrano</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Location</td>
+      <td class="winner">Inside the park, at the trailhead</td>
+      <td>Park edge, 1.5 hrs from Puerto Natales</td>
+    </tr>
+    <tr>
+      <td>Base Torres transfer</td>
+      <td class="winner">None &mdash; walk out the door</td>
+      <td class="loser">~1 hr each way</td>
+    </tr>
+    <tr>
+      <td>Grey Glacier boat</td>
+      <td class="loser">$137 pp extra</td>
+      <td class="winner">Included</td>
+    </tr>
+    <tr>
+      <td>All-inclusive (4 nights, 2 ppl)</td>
+      <td class="loser">~$10,800</td>
+      <td class="winner">~$5,700</td>
+    </tr>
+    <tr>
+      <td>B&amp;B only (4 nights)</td>
+      <td>~$9,440 (half-board)</td>
+      <td class="winner">~$1,000&ndash;$1,600</td>
+    </tr>
+    <tr>
+      <td>Excursion options</td>
+      <td class="winner">40+</td>
+      <td>~13</td>
+    </tr>
+    <tr>
+      <td>Wi-Fi</td>
+      <td class="loser">Common areas only</td>
+      <td class="winner">Starlink in rooms</td>
+    </tr>
+    <tr>
+      <td>Pool / sauna</td>
+      <td class="loser">Spa only (20% discount)</td>
+      <td class="winner">Heated pool + sauna + gym included</td>
+    </tr>
+    <tr>
+      <td>Minibar</td>
+      <td class="loser">Not included</td>
+      <td class="winner">Included</td>
+    </tr>
+    <tr>
+      <td>Transfers included</td>
+      <td class="winner">PUQ, PNT, El Calafate</td>
+      <td>PUQ, PNT</td>
+    </tr>
+    <tr>
+      <td>Puma tracking</td>
+      <td colspan="2" style="color:var(--muted);">Neither &mdash; external operator, $1,300&ndash;$2,200 pp</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- PRICING DETAIL -->
+<h2>Pricing Breakdown</h2>
+
+<h3 style="color:var(--orange);">Las Torres</h3>
+<table>
+  <tbody>
+    <tr>
+      <td>All-inclusive (4 nights, 2 ppl)</td>
+      <td><strong>$10,000&ndash;$10,800</strong></td>
+      <td>Jan 1&ndash;3 is "special dates" pricing, Jan 3&ndash;5 is "high season"</td>
+    </tr>
+    <tr>
+      <td>Grey Glacier catamaran add-on</td>
+      <td>$274 (2 ppl)</td>
+      <td>Must book in advance</td>
+    </tr>
+    <tr>
+      <td>Half-board only (no excursions)</td>
+      <td>~$9,440 (2 ppl)</td>
+      <td>Breakfast + dinner. Lunch extra at $83 pp.</td>
+    </tr>
+    <tr>
+      <td>Full Paine day excursion (non-guest)</td>
+      <td>~$280 without boat / ~$395 with boat</td>
+      <td>Excursions only open to hotel guests</td>
+    </tr>
+  </tbody>
+</table>
+<p style="font-size:0.85rem;color:var(--muted);">Source: <a href="https://lastorres.com/en/all-inclusive/all-inclusive-patagonia-vacation/">lastorres.com rates</a>, <a href="https://lastorres.com/en/hotel/superior-room-hotel-las-torres/">room rates</a></p>
+
+<h3 style="color:var(--blue);">Rio Serrano</h3>
+<table>
+  <tbody>
+    <tr>
+      <td>All-inclusive Superior (4 nights)</td>
+      <td><strong>~$5,660</strong></td>
+      <td>2 holiday nights + 2 high season nights. Per room (double occ.)</td>
+    </tr>
+    <tr>
+      <td>All-inclusive Standard (4 nights)</td>
+      <td>~$5,200</td>
+      <td>Same structure, smaller room</td>
+    </tr>
+    <tr>
+      <td>All-inclusive Classic (4 nights)</td>
+      <td>~$5,050</td>
+      <td>Entry-level room</td>
+    </tr>
+    <tr>
+      <td>B&amp;B only (4 nights)</td>
+      <td>~$1,000&ndash;$1,600</td>
+      <td>Breakfast only. Book excursions separately.</td>
+    </tr>
+    <tr>
+      <td>B&amp;B + excursions separately</td>
+      <td>~$2,200&ndash;$2,600</td>
+      <td>Add ~$800&ndash;$1,200 for 3 days of guided activities</td>
+    </tr>
+  </tbody>
+</table>
+<p style="font-size:0.85rem;color:var(--muted);">Source: <a href="https://rioserrano.com/en/all-inclusive/">rioserrano.com rates</a> (2025&ndash;26 season, 2026&ndash;27 likely similar). <a href="https://www.gochile.cl/en/torres-del-paine-national-park/hotel-rio-serrano.htm">GoChile</a></p>
+
+<!-- SOURCES -->
+<h2>Sources</h2>
+<ul class="source-list">
+  <li><a href="https://lastorres.com/en/all-inclusive/all-inclusive-patagonia-vacation/">Las Torres &mdash; All-Inclusive details</a></li>
+  <li><a href="https://lastorres.com/en/hotel/superior-room-hotel-las-torres/">Las Torres &mdash; Room rates</a></li>
+  <li><a href="https://lastorres.com/en/circuitos-por-el-dia/full-paine-glacier-grey/">Las Torres &mdash; Full Paine / Grey Glacier tour</a></li>
+  <li><a href="https://www.swoop-patagonia.com/chile/torres-del-paine/hotels/torres/excursions">Swoop Patagonia &mdash; Las Torres excursions</a></li>
+  <li><a href="https://rioserrano.com/en/all-inclusive/">Rio Serrano &mdash; All-Inclusive details</a></li>
+  <li><a href="https://www.swoop-patagonia.com/chile/torres-del-paine/serrano-village/rio-serrano">Swoop Patagonia &mdash; Rio Serrano</a></li>
+  <li><a href="https://www.adventure-life.com/chile/tours/18619/rio-serrano-hotel-spa-torres-del-paine">Adventure Life &mdash; Rio Serrano 5-day</a></li>
+  <li><a href="https://www.gochile.cl/en/torres-del-paine-national-park/hotel-rio-serrano.htm">GoChile &mdash; Rio Serrano rates</a></li>
+  <li><a href="https://chilenativo.travel/destinations/torres-del-paine/puma-tracking/">Chile Nativo &mdash; Puma tracking</a></li>
+</ul>
+
+<div class="footer">
+  Generated Nov 14, 2026. Prices from hotel websites and booking platforms. Rio Serrano rates are 2025&ndash;26 season (2026&ndash;27 not yet published). Las Torres has published 2026&ndash;27 rates. Contact hotels directly to confirm Jan 1&ndash;5 availability.<br>
+  <a href="/chile-trip-status.html">&larr; Back to trip status</a>
+</div>
+
+</body>
+</html>
