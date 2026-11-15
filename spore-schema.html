@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spore Schema — Linear Data Model Mapping</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-bottom: 1.5rem; }
+  th { background: var(--surface); color: var(--text-muted); text-align: left; padding: 0.5rem 0.75rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .match { color: var(--green); }
+  .ext { color: var(--yellow); }
+  .drift { color: #fca5a5; }
+  code { background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85em; }
+  .status-badge { display: inline-block; font-size: 0.7rem; padding: 0.1rem 0.5rem; border-radius: 3px; font-weight: 600; text-transform: uppercase; }
+  .badge-match { background: #14532d; color: #86efac; }
+  .badge-ext { background: #713f12; color: #fbbf24; }
+  .badge-none { background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); }
+  .section-note { background: var(--surface); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; border-left: 3px solid var(--accent); }
+  .section-note strong { color: var(--accent); }
+  pre { background: var(--code-bg); border-radius: 8px; padding: 1rem 1.25rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.6; margin-bottom: 1.5rem; }
+</style>
+</head>
+<body>
+
+<h1>Spore Schema</h1>
+<p class="subtitle">Data model for seeds and spores, mapped to Linear's data model (Issue, Project, Attachment). Zero drift target.</p>
+
+<div class="section-note">
+  <strong>Design principle:</strong> Our schema follows Linear's where possible. Deviations are called out as MCC extensions. The goal is zero drift — every field either maps 1:1 to Linear or is explicitly marked as an extension that we manage ourselves.
+</div>
+
+<h2>Linear Environment</h2>
+
+<table>
+  <tr><td><strong>Team</strong></td><td>Mushroom Cloud Computing (<code>MCC</code>)</td></tr>
+  <tr><td><strong>Team ID</strong></td><td><code>382c0287-b7d1-4cf4-a960-4ebf640e60a6</code></td></tr>
+  <tr><td><strong>Projects</strong></td><td>Chile Trip (<code>f82aa1348554</code>), Chile &amp; Patagonia Trip (<code>26cc805e94bd</code>)</td></tr>
+  <tr>
+    <td><strong>Workflow States</strong></td>
+    <td>
+      Backlog (backlog) &rarr; Todo (unstarted) &rarr; In Progress (started) &rarr; In Review (started) &rarr; Done (completed) &rarr; Canceled (canceled) &rarr; Duplicate (duplicate)
+    </td>
+  </tr>
+  <tr><td><strong>Priority Scale</strong></td><td>0 = None, 1 = Urgent, 2 = High, 3 = Medium, 4 = Low</td></tr>
+</table>
+
+<h2>Seed &harr; Linear Project</h2>
+
+<p>A <strong>seed</strong> is our term for a project. Seeds map to Linear Projects.</p>
+
+<table>
+  <thead>
+    <tr><th>Seed Field</th><th>Type</th><th>Linear Field</th><th>Status</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>slug</code></td><td>string</td><td><code>Project.slugId</code></td><td><span class="status-badge badge-match">1:1</span></td><td>URL-safe identifier. Linear generates these.</td></tr>
+    <tr><td><code>name</code></td><td>string</td><td><code>Project.name</code></td><td><span class="status-badge badge-match">1:1</span></td><td></td></tr>
+    <tr><td><code>status</code></td><td>SeedStatus</td><td><code>Project.state</code></td><td><span class="status-badge badge-ext">mapped</span></td><td>Linear: planned/started/paused/completed/canceled. We add: idle, idea. See mapping table below.</td></tr>
+    <tr><td><code>description</code></td><td>string?</td><td><code>Project.description</code></td><td><span class="status-badge badge-match">1:1</span></td><td></td></tr>
+    <tr><td><code>sources</code></td><td>SeedSource[]</td><td>&mdash;</td><td><span class="status-badge badge-ext">extension</span></td><td>No Linear equivalent. Stored in Project.description as structured footer, or in externalLinks.</td></tr>
+    <tr><td><code>spore_count</code></td><td>number</td><td><code>Project.issues.count</code></td><td><span class="status-badge badge-match">1:1</span></td><td>Computed at query time.</td></tr>
+    <tr><td><code>active_spore_count</code></td><td>number</td><td>&mdash;</td><td><span class="status-badge badge-match">1:1</span></td><td>Computed: count issues where state.type not in (completed, canceled, duplicate).</td></tr>
+    <tr><td><code>highest_prio</code></td><td>SporeRef</td><td>&mdash;</td><td><span class="status-badge badge-match">1:1</span></td><td>Computed: lowest priority number among active issues.</td></tr>
+  </tbody>
+</table>
+
+<h3>Seed Status Mapping</h3>
+
+<table>
+  <thead><tr><th>Seed Status</th><th>Linear Project.state</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td><code>active</code></td><td><code>started</code></td><td class="match">Direct match</td></tr>
+    <tr><td><code>idle</code></td><td><code>paused</code></td><td class="ext">Closest fit. Linear "paused" = temporarily stopped.</td></tr>
+    <tr><td><code>idea</code></td><td><code>planned</code></td><td class="ext">Closest fit. Linear "planned" = not yet started.</td></tr>
+    <tr><td><code>parked</code></td><td><code>paused</code></td><td class="ext">Same as idle in Linear. We distinguish idle (has code) from parked (deliberate pause).</td></tr>
+    <tr><td><code>archived</code></td><td><code>completed</code> or <code>canceled</code></td><td class="ext">Depends on whether it finished or was abandoned.</td></tr>
+  </tbody>
+</table>
+
+<h2>Spore &harr; Linear Issue</h2>
+
+<p>A <strong>spore</strong> is our term for a tracked unit of work. Spores map to Linear Issues.</p>
+
+<table>
+  <thead>
+    <tr><th>Spore Field</th><th>Type</th><th>Linear Field</th><th>Status</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>id</code></td><td>string</td><td><code>Issue.identifier</code></td><td><span class="status-badge badge-match">1:1</span></td><td>e.g. "MCC-7". Team key + number.</td></tr>
+    <tr><td><code>seed_slug</code></td><td>string</td><td><code>Issue.project.slugId</code></td><td><span class="status-badge badge-match">1:1</span></td><td>Which project/seed this belongs to.</td></tr>
+    <tr><td><code>title</code></td><td>string</td><td><code>Issue.title</code></td><td><span class="status-badge badge-match">1:1</span></td><td></td></tr>
+    <tr><td><code>state</code></td><td>SporeState</td><td><code>Issue.state.name</code></td><td><span class="status-badge badge-match">1:1</span></td><td>See state mapping below.</td></tr>
+    <tr><td><code>priority</code></td><td>0-4</td><td><code>Issue.priority</code></td><td><span class="status-badge badge-match">1:1</span></td><td>Same scale. 0=none, 1=urgent, 4=low.</td></tr>
+    <tr><td><code>owner</code></td><td>"human" | "machine"</td><td><code>Issue.assignee</code></td><td><span class="status-badge badge-ext">mapped</span></td><td>Linear uses user assignment. We map: assigned user → human, unassigned → machine. Convention: assign to Erik for human-owned.</td></tr>
+    <tr><td><code>parent_id</code></td><td>string?</td><td><code>Issue.parent.identifier</code></td><td><span class="status-badge badge-match">1:1</span></td><td>Linear supports sub-issues natively (up to 10 levels).</td></tr>
+    <tr><td><code>sources</code></td><td>SporeSource[]</td><td><code>Issue.attachments[]</code></td><td><span class="status-badge badge-ext">mapped</span></td><td>Linear Attachments are URL-based. We extend with message IDs and quoted text in metadata. See source mapping below.</td></tr>
+    <tr><td><code>created_at</code></td><td>ISO 8601</td><td><code>Issue.createdAt</code></td><td><span class="status-badge badge-match">1:1</span></td><td></td></tr>
+    <tr><td><code>updated_at</code></td><td>ISO 8601</td><td><code>Issue.updatedAt</code></td><td><span class="status-badge badge-match">1:1</span></td><td></td></tr>
+    <tr><td><code>completed_at</code></td><td>ISO 8601?</td><td><code>Issue.completedAt</code></td><td><span class="status-badge badge-match">1:1</span></td><td>Set when moved to Done.</td></tr>
+    <tr><td><code>description</code></td><td>string?</td><td><code>Issue.description</code></td><td><span class="status-badge badge-match">1:1</span></td><td>Markdown.</td></tr>
+    <tr><td><code>labels</code></td><td>string[]</td><td><code>Issue.labels[].name</code></td><td><span class="status-badge badge-match">1:1</span></td><td></td></tr>
+    <tr><td><code>depends_on</code></td><td>string[]?</td><td><code>Issue.relations[]</code></td><td><span class="status-badge badge-ext">mapped</span></td><td>Linear has issue relations (blocks, is blocked by, relates to). We flatten to a dependency list.</td></tr>
+  </tbody>
+</table>
+
+<h3>Spore State &harr; Linear Workflow State</h3>
+
+<table>
+  <thead><tr><th>Spore State</th><th>Linear State Name</th><th>Linear State Type</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td><code>backlog</code></td><td>Backlog</td><td><code>backlog</code></td><td class="match">1:1</td></tr>
+    <tr><td><code>todo</code></td><td>Todo</td><td><code>unstarted</code></td><td class="match">1:1</td></tr>
+    <tr><td><code>in_progress</code></td><td>In Progress</td><td><code>started</code></td><td class="match">1:1</td></tr>
+    <tr><td><code>review</code></td><td>In Review</td><td><code>started</code></td><td class="match">1:1 &mdash; already exists in our Linear workflow</td></tr>
+    <tr><td><code>done</code></td><td>Done</td><td><code>completed</code></td><td class="match">1:1</td></tr>
+    <tr><td><code>canceled</code></td><td>Canceled</td><td><code>canceled</code></td><td class="match">1:1</td></tr>
+  </tbody>
+</table>
+
+<div class="section-note">
+  <strong>Zero drift confirmed:</strong> All six spore states map 1:1 to existing Linear workflow states. The "In Review" state already exists in our MCC team workflow (state ID <code>e8c836f6</code>). No custom states needed.
+</div>
+
+<h2>SporeSource &harr; Linear Attachment</h2>
+
+<table>
+  <thead>
+    <tr><th>SporeSource Field</th><th>Linear Attachment Field</th><th>Status</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>type</code></td><td><code>metadata.type</code></td><td><span class="status-badge badge-ext">convention</span></td><td>We store source type in the metadata JSON blob.</td></tr>
+    <tr><td><code>id</code></td><td><code>metadata.id</code></td><td><span class="status-badge badge-ext">convention</span></td><td>e.g. "#287", "a3f7b2c1". Stored in metadata.</td></tr>
+    <tr><td><code>url</code></td><td><code>Attachment.url</code></td><td><span class="status-badge badge-match">1:1</span></td><td>Primary field. Unique per issue. For chatbus messages without a URL, use <code>chatbus://msg/{id}</code>.</td></tr>
+    <tr><td><code>title</code></td><td><code>Attachment.title</code></td><td><span class="status-badge badge-match">1:1</span></td><td>Human-readable summary.</td></tr>
+    <tr><td><code>text</code></td><td><code>Attachment.subtitle</code></td><td><span class="status-badge badge-ext">convention</span></td><td>Quoted message text or commit message goes in subtitle.</td></tr>
+    <tr><td><code>timestamp</code></td><td><code>Attachment.createdAt</code></td><td><span class="status-badge badge-match">1:1</span></td><td></td></tr>
+  </tbody>
+</table>
+
+<h3>Source Type URL Conventions</h3>
+
+<table>
+  <thead><tr><th>Source Type</th><th>URL Pattern</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td><code>github_issue</code></td><td><code>https://github.com/{owner}/{repo}/issues/{n}</code></td><td>https://github.com/underscorenygren/claude-by-voice/issues/287</td></tr>
+    <tr><td><code>github_pr</code></td><td><code>https://github.com/{owner}/{repo}/pull/{n}</code></td><td>https://github.com/underscorenygren/claude-by-voice/pull/290</td></tr>
+    <tr><td><code>github_commit</code></td><td><code>https://github.com/{owner}/{repo}/commit/{sha}</code></td><td>https://github.com/underscorenygren/claude-by-voice/commit/8a0d79b</td></tr>
+    <tr><td><code>linear</code></td><td><code>https://linear.app/mushroom-cloud-computing/issue/{id}</code></td><td>https://linear.app/mushroom-cloud-computing/issue/MCC-7</td></tr>
+    <tr><td><code>chatbus</code></td><td><code>chatbus://msg/{id}</code></td><td>chatbus://msg/a3f7b2c1 (future: resolvable URL when viewer exists)</td></tr>
+    <tr><td><code>voice_note</code></td><td><code>file://{path}</code></td><td>file:///home/macbook/voice/data/voice-notes/2026-11-15.md</td></tr>
+    <tr><td><code>file</code></td><td><code>file://{path}</code></td><td>file:///home/macbook/mcc-tasks/ideas.md</td></tr>
+    <tr><td><code>url</code></td><td>Any URL</td><td>https://docs.mushroomcloudcomputing.com/slack/</td></tr>
+  </tbody>
+</table>
+
+<h2>Spore Storage</h2>
+
+<p>Spores are not flat. They accumulate over time and need context management.</p>
+
+<h3>Directory Structure</h3>
+
+<pre>
+mcc-tasks/
+  seeds.json                 # All seeds (projects) — small, always loaded
+  spores/
+    active.json              # Live working set — all non-done spores
+    archive/
+      2026-11.json           # Done/canceled spores, partitioned by month
+      2026-10.json
+</pre>
+
+<h3>Rules</h3>
+
+<ul>
+  <li><strong>seeds.json</strong> is always loaded. Small file, all projects.</li>
+  <li><strong>spores/active.json</strong> is the working set. Loaded by default in all views and by agents.</li>
+  <li><strong>spores/archive/</strong> is loaded on demand — when rendering "done" views, PM history, or time-based queries.</li>
+  <li>When a spore moves to <code>done</code> or <code>canceled</code>, it stays in active.json until the next sync cycle, then moves to the current month's archive.</li>
+  <li>An agent reading spores only needs <code>active.json</code> for current work. Archives are for history.</li>
+</ul>
+
+<h2>Sync Procedures</h2>
+
+<h3>Pull: Source &rarr; Local</h3>
+
+<table>
+  <thead><tr><th>Source</th><th>Procedure</th><th>Mapping</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>GitHub</td>
+      <td>GitHub REST API: <code>GET /repos/{owner}/{repo}/issues</code></td>
+      <td>open → todo, closed → done. Labels carry over. PR source auto-created from linked PRs.</td>
+    </tr>
+    <tr>
+      <td>Linear</td>
+      <td>Linear API: <code>issues(filter: { project: ... })</code></td>
+      <td>State/priority/parent map 1:1. Attachments → sources.</td>
+    </tr>
+    <tr>
+      <td>Files</td>
+      <td>Read local directory for structured task files</td>
+      <td>Parse markdown/JSON into spores.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Push: Local &rarr; Source</h3>
+
+<table>
+  <thead><tr><th>Source</th><th>Procedure</th></tr></thead>
+  <tbody>
+    <tr><td>Linear</td><td>Linear API: <code>issueCreate</code>, <code>issueUpdate</code>, <code>attachmentCreate</code></td></tr>
+    <tr><td>GitHub</td><td>REST API: <code>POST/PATCH /repos/{owner}/{repo}/issues</code></td></tr>
+    <tr><td>Files</td><td>Write back to local file.</td></tr>
+  </tbody>
+</table>
+
+<h3>Drift Detection</h3>
+
+<p>On each sync, compare local spore state vs source state:</p>
+
+<pre>
+for each spore:
+  for each source:
+    remote_state = fetch from source API
+    if remote_state != spore.state:
+      flag drift: {
+        spore_id,
+        source_type,
+        source_id,
+        local_state: spore.state,
+        remote_state,
+        detected_at: now()
+      }
+</pre>
+
+<p>Drift is surfaced as warnings in the UI. Resolution: human decides which direction to reconcile.</p>
+
+<h2>Procedural Metrics</h2>
+
+<p>Computed from local data only. No API calls at read time. Given a date range:</p>
+
+<pre>
+metrics(from, to) = {
+  done:        count(spores where completed_at in [from, to])
+  active:      count(spores where state in [todo, in_progress, review])
+  review:      count(spores where state == review)
+  backlog:     count(spores where state == backlog)
+  open_prs:    count(spores with github_pr source, state != done)
+  human_owned: count(active spores where owner == human)
+  machine_owned: count(active spores where owner == machine)
+  drift:       count(flagged drift items)
+}
+</pre>
+
+<p>The PM report renders these as the dashboard. An LLM interpretation layer runs on top for suggestions and risk analysis.</p>
+
+<h2>Drift Report</h2>
+
+<div class="section-note">
+  <strong>Current drift: 0</strong><br>
+  As of 2026-11-15, our schema maps 1:1 to Linear for all fields in use. Extensions (sources metadata, owner convention, chatbus:// URLs) use Linear's existing metadata/attachment fields — no custom fields or API workarounds needed.
+</div>
+
+<table>
+  <thead><tr><th>Field</th><th>Drift Status</th><th>Detail</th></tr></thead>
+  <tbody>
+    <tr><td>States</td><td class="match">Zero drift</td><td>All 6 spore states exist as Linear workflow states in MCC team.</td></tr>
+    <tr><td>Priority</td><td class="match">Zero drift</td><td>Same 0-4 scale.</td></tr>
+    <tr><td>Parent/child</td><td class="match">Zero drift</td><td>Linear supports sub-issues natively.</td></tr>
+    <tr><td>Sources via Attachments</td><td class="match">Zero drift</td><td>URL + title + subtitle + metadata JSON. All standard fields.</td></tr>
+    <tr><td>Owner convention</td><td class="ext">Convention only</td><td>We interpret assignee as human/machine. No schema change — just a reading convention.</td></tr>
+    <tr><td>Seed sources</td><td class="ext">Convention only</td><td>Stored in Project.description or externalLinks. No schema change.</td></tr>
+  </tbody>
+</table>
+
+<p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 2rem;">
+  Last updated: November 15, 2026. Schema version 2.
+  <br>Linear API reference: <a href="https://studio.apollographql.com/public/Linear-API/schema/reference">Apollo Studio</a>
+</p>
+
+</body>
+</html>
