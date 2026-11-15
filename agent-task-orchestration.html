@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Orchestration Research</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  /* Page-specific overrides — supplement shared style.css */
+  h2 { font-size: 1.5rem; color: #fff; text-transform: none; letter-spacing: normal; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+  h4 { font-size: 1rem; font-weight: 600; color: var(--accent); margin-top: 1.3rem; margin-bottom: 0.5rem; }
+  .tldr { background: var(--surface); border-left: 3px solid var(--accent); padding: 1rem 1.25rem; border-radius: 0 6px 6px 0; margin-bottom: 2rem; }
+  .tldr strong { color: var(--accent); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .diagram { background: var(--code-bg); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.78rem; line-height: 1.6; white-space: pre; overflow-x: auto; color: var(--text-muted); }
+  .diagram .hl { color: var(--accent2); }
+  .diagram .ac { color: var(--accent); }
+  .diagram .lk { color: var(--link); }
+  .card.alt-a { border-left-color: var(--accent2); }
+  .card.alt-b { border-left-color: var(--accent); }
+  .card.alt-c { border-left-color: #e94560; }
+  .card .card-title { font-weight: 600; color: #fff; font-size: 1.05rem; margin-bottom: 0.4rem; }
+  .card .card-desc { color: var(--text-muted); font-size: 0.9rem; }
+  .pro { color: var(--green); }
+  .con { color: #fca5a5; }
+  .phase { background: var(--surface); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+  .phase-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 0.4rem; }
+  .phase-1 .phase-label { color: var(--accent2); }
+  .phase-2 .phase-label { color: var(--accent); }
+  .phase-3 .phase-label { color: #e94560; }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+  / <span style="color: var(--text-muted);">Agent Infrastructure</span>
+</nav>
+
+<div class="series-nav">
+  <span class="series-label">Agent Architecture:</span>
+  <a href="agent-task-management.html">Dispatch Board</a>
+  <a href="agent-task-orchestration.html" class="current">Task Orchestration</a>
+</div>
+
+<h1>Task Orchestration Research</h1>
+<p class="subtitle">
+  Autonomous task management for a multi-agent system: survey, three alternatives, and a phased recommendation.
+</p>
+<p class="meta">November 2026 &mdash; Agent Architecture series</p>
+
+<div class="tldr">
+  <strong>TL;DR</strong>
+  <p style="margin-top:0.5rem; margin-bottom:0;">
+    Start with a <strong>reactive tail</strong> that watches the chatbus, maintains a live task state model, and answers "what are we doing?" queries.
+    Layer on an LLM planner in phase two. Defer full autonomy until the state model proves reliable.
+    Linear integration comes free in phase one via polling; deeper integration follows naturally.
+  </p>
+</div>
+
+<h2>1. Survey of Approaches</h2>
+
+<p>
+  The agent orchestration space has converged on a few dominant patterns. Each makes different tradeoffs
+  on autonomy, reliability, and developer control.
+</p>
+
+<h3>CrewAI &mdash; Role-Based Crews</h3>
+<p>
+  CrewAI assigns agents fixed roles (researcher, writer, reviewer) and runs them through a sequential or
+  hierarchical task pipeline. A "crew" is a static DAG of agents with defined handoff points. Tasks carry
+  context objects that accumulate outputs from prior steps.
+</p>
+<ul>
+  <li><strong>Pattern:</strong> Static role assignment, sequential or hierarchical execution</li>
+  <li><strong>Strengths:</strong> Simple mental model, declarative task definitions, built-in delegation</li>
+  <li><strong>Weaknesses:</strong> Rigid pipelines &mdash; poor at dynamic re-planning. No durable state; a crash mid-pipeline
+    loses all progress. No native concept of long-running tasks or follow-ups.</li>
+  <li><strong>Relevance:</strong> The role-based pattern maps loosely to our agent registry (builder, octocat, porter),
+    but our agents are persistent services, not ephemeral pipeline stages.</li>
+</ul>
+
+<h3>AutoGen / AG2 &mdash; Conversation-Based Routing</h3>
+<p>
+  Microsoft's AutoGen frames multi-agent work as <em>conversations</em>. Agents are participants in a group chat;
+  a "speaker selection" policy determines who talks next. Tasks emerge from conversation flow rather than
+  being declared upfront.
+</p>
+<ul>
+  <li><strong>Pattern:</strong> Multi-agent conversation with turn-taking policies</li>
+  <li><strong>Strengths:</strong> Flexible &mdash; agents can dynamically decide to delegate, ask for help, or
+    escalate. Natural for open-ended exploration tasks.</li>
+  <li><strong>Weaknesses:</strong> Hard to reason about termination. Conversation can loop or drift. No built-in
+    persistence &mdash; state lives only in the conversation context window. Speaker selection is fragile at scale.</li>
+  <li><strong>Relevance:</strong> Our chatbus already implements a conversation-like pattern. The "who should respond?"
+    question is exactly what we need to solve for proactive orchestration.</li>
+</ul>
+
+<h3>LangGraph &mdash; State Machines for Agents</h3>
+<p>
+  LangGraph models agent workflows as directed graphs with typed state. Nodes are processing steps (LLM calls,
+  tool invocations, human-in-the-loop gates). Edges are conditional transitions. State is checkpointed, making
+  workflows resumable.
+</p>
+<ul>
+  <li><strong>Pattern:</strong> Explicit state machine with checkpointed transitions</li>
+  <li><strong>Strengths:</strong> Predictable execution &mdash; you can trace exactly which node fired and why.
+    Built-in persistence and resume. Human-in-the-loop is a first-class concept (interrupt nodes).</li>
+  <li><strong>Weaknesses:</strong> Graphs must be defined upfront &mdash; dynamic re-planning requires meta-graphs.
+    Verbose for simple workflows. Tightly coupled to the LangChain ecosystem.</li>
+  <li><strong>Relevance:</strong> The state machine pattern is directly applicable. Our orchestrator already uses
+    XState-like state machines on the client. The checkpointing model is what we need for crash recovery.</li>
+</ul>
+
+<h3>Temporal.io &mdash; Durable Execution</h3>
+<p>
+  Temporal provides durable execution for long-running workflows. Activities (units of work) are retried
+  automatically on failure. Workflow state survives process crashes &mdash; the runtime replays the event history
+  to reconstruct state. Originally designed for microservice orchestration, now adopted for agent workflows.
+</p>
+<ul>
+  <li><strong>Pattern:</strong> Durable workflow engine with automatic retry, replay, and compensation</li>
+  <li><strong>Strengths:</strong> Bulletproof reliability &mdash; workflows survive any failure mode. Excellent
+    visibility into running workflows. Timers and cron schedules are native.</li>
+  <li><strong>Weaknesses:</strong> Heavy infrastructure &mdash; requires a Temporal server cluster. Determinism
+    constraints on workflow code (no random, no system time, no I/O in workflow functions). Significant
+    learning curve.</li>
+  <li><strong>Relevance:</strong> Overkill for our current scale, but the <em>concepts</em> (event sourcing, replay,
+    durable timers) are worth stealing. Our bus message history already provides a crude event log.</li>
+</ul>
+
+<h3>Anthropic Multi-Agent Patterns</h3>
+<p>
+  Anthropic's recommended patterns (from the multi-agent cookbook and tool_use documentation):
+</p>
+<ul>
+  <li><strong>Orchestrator-worker:</strong> A central LLM reads the task, decides which sub-agent to invoke (via tool_use),
+    collects results, synthesizes. This is what our supervisor already does manually.</li>
+  <li><strong>Routing:</strong> A lightweight classifier determines which specialized agent handles a request.
+    Our auto-routing concept matches this.</li>
+  <li><strong>Parallel fan-out:</strong> Dispatch the same task to multiple agents, aggregate results. Useful for
+    search, analysis, or consensus tasks.</li>
+  <li><strong>Tool chains:</strong> Sequential tool_use calls where each output feeds the next. Simple, predictable,
+    but synchronous and blocking.</li>
+</ul>
+<p>
+  The key insight from Anthropic's patterns: <strong>keep the orchestrator thin</strong>. The orchestrator decides
+  <em>what</em> to do; workers decide <em>how</em>. Mixing both in one agent leads to context window bloat and
+  unpredictable behavior.
+</p>
+
+<h3>Other Notable Frameworks</h3>
+
+<table>
+  <tr>
+    <th>Framework</th>
+    <th>Pattern</th>
+    <th>Key Idea</th>
+  </tr>
+  <tr>
+    <td><strong>Swarm</strong> (OpenAI)</td>
+    <td>Agent handoffs</td>
+    <td>Agents transfer control to each other via function calls. Lightweight, no central orchestrator. Good for customer service flows; less suited to parallel work.</td>
+  </tr>
+  <tr>
+    <td><strong>LlamaIndex Workflows</strong></td>
+    <td>Event-driven steps</td>
+    <td>Steps emit and consume typed events. Async-native, streaming-friendly. Similar to our bus pattern but more structured.</td>
+  </tr>
+  <tr>
+    <td><strong>Prefect / Dagster</strong></td>
+    <td>Data pipeline DAGs</td>
+    <td>Not agent-specific, but their observability and retry patterns are relevant. Prefect's "tasks as functions with decorators" is ergonomic.</td>
+  </tr>
+  <tr>
+    <td><strong>Semantic Kernel</strong> (Microsoft)</td>
+    <td>Plugin-based agents</td>
+    <td>Agents compose "plugins" (tools) via a planner. The planner generates a step-by-step plan from a goal. Plan validation and re-planning on failure.</td>
+  </tr>
+  <tr>
+    <td><strong>BabyAGI / AutoGPT</strong></td>
+    <td>Autonomous loop</td>
+    <td>The original "agent loop": observe state, plan next action, execute, repeat. Interesting as a concept; unreliable in practice without strong guardrails.</td>
+  </tr>
+</table>
+
+<hr>
+
+<h2>2. Three Alternatives</h2>
+
+<div class="card alt-a">
+  <div class="card-title">A. Reactive Tail</div>
+  <div class="card-desc">Watch the bus, maintain state, answer queries. No autonomous action.</div>
+</div>
+
+<div class="card alt-b">
+  <div class="card-title">B. Planner-Executor</div>
+  <div class="card-desc">LLM reads state, proposes actions, dispatches to workers. Human approves.</div>
+</div>
+
+<div class="card alt-c">
+  <div class="card-title">C. Full Autonomous Loop</div>
+  <div class="card-desc">Continuous agent: world model, proactive assignment, follow-up, escalation.</div>
+</div>
+
+<h3>A. Reactive Tail</h3>
+
+<h4>Architecture</h4>
+<p>
+  A single Go service (<code>task-tailer</code>) subscribes to the chatbus and sysbus. It maintains an in-memory
+  task state model &mdash; a map of task IDs to their current status, assigned agent, last update time, and
+  a short history of state transitions. Periodically polls Linear for external task state.
+</p>
+<p>
+  Exposes a simple HTTP API: <code>GET /state</code> returns the full model as JSON.
+  <code>GET /summary</code> returns a human-readable summary. The supervisor queries this when the user asks
+  "what are we doing?"
+</p>
+
+<div class="diagram"><span class="hl">chatbus</span> ──publish──▶ <span class="lk">task-tailer</span> ──state──▶ <span class="hl">in-memory model</span>
+<span class="hl">sysbus</span>  ──events──▶ <span class="lk">task-tailer</span>              │
+                                          ▼
+<span class="hl">Linear API</span> ◀──poll──── <span class="lk">task-tailer</span>    <span class="ac">HTTP API</span>
+                                          │
+                    <span class="lk">supervisor</span> ◀──GET /summary──┘
+                         │
+                    <span class="ac">chat-bridge</span> ──▶ user</div>
+
+<h4>Message Flow: "What are we doing?"</h4>
+<div class="diagram">user ──voice──▶ realtime ──deep_dispatch──▶ <span class="lk">supervisor</span>
+                                                   │
+                                            GET /summary
+                                                   │
+                                            <span class="lk">task-tailer</span>
+                                                   │
+                                     ┌─────────────┼─────────────┐
+                                     ▼             ▼             ▼
+                              <span class="hl">chatbus</span>      <span class="hl">sysbus</span>     <span class="hl">Linear</span>
+                              messages    events     issues
+                                     │             │             │
+                                     └─────────────┼─────────────┘
+                                                   ▼
+                                        task state model
+                                                   │
+                                            JSON summary
+                                                   │
+<span class="lk">supervisor</span> ◀───────────────────────────────────────┘
+     │
+     ▼
+<span class="ac">chat-bridge</span> ──▶ user: "Builder is compiling bridge.
+                        Octocat has PR #247 open.
+                        Two Linear issues unassigned."</div>
+
+<h4>Strengths</h4>
+<ul>
+  <li class="pro">Minimal implementation &mdash; one Go service, ~500 lines, uses existing <code>busclient</code></li>
+  <li class="pro">No LLM calls &mdash; deterministic, fast, cheap</li>
+  <li class="pro">Answers "what are we doing?" immediately from in-memory state</li>
+  <li class="pro">Linear integration is a simple polling loop (5-minute interval)</li>
+  <li class="pro">Zero risk of runaway autonomous actions</li>
+</ul>
+
+<h4>Weaknesses</h4>
+<ul>
+  <li class="con">No proactive follow-up &mdash; only responds to queries</li>
+  <li class="con">State model requires manual tuning of what bus messages mean what</li>
+  <li class="con">Cannot suggest next actions or prioritize</li>
+  <li class="con">Summary quality depends on structured message conventions (bus messages must be parseable)</li>
+</ul>
+
+<h4>Implementation Cost</h4>
+<p>
+  ~2-3 days. New Go service in <code>cmd/task-tailer/</code>. Subscribe to chatbus + sysbus. Parse known message
+  patterns (dispatch/confirmed, build/done, etc.). Add Linear API polling. Expose HTTP endpoints. Register in
+  <code>agents/registry.yaml</code> as a service.
+</p>
+
+<hr>
+
+<h3>B. Planner-Executor</h3>
+
+<h4>Architecture</h4>
+<p>
+  Builds on top of Alternative A. The task-tailer provides the state model. A separate <code>planner</code>
+  service periodically reads the state, sends it to an LLM (via <code>claude --print</code>), and receives
+  a list of suggested next actions. These suggestions are posted to the chatbus for the supervisor
+  to review and approve.
+</p>
+<p>
+  The planner does not execute &mdash; it only suggests. The supervisor (or user) approves,
+  and the supervisor dispatches via the normal teammate/worker path. This keeps a human in the loop
+  while adding proactive capability.
+</p>
+
+<div class="diagram">                          ┌──────────────┐
+                          │  <span class="lk">task-tailer</span>  │
+                          │  (state model) │
+                          └──────┬───────┘
+                                 │ GET /state
+                                 ▼
+                          ┌──────────────┐
+                          │   <span class="lk">planner</span>    │
+                          │  (batch worker)│
+                          └──────┬───────┘
+                                 │ claude --print
+                                 │ "Given this state,
+                                 │  what should happen next?"
+                                 ▼
+                          ┌──────────────┐
+                          │  suggestions  │
+                          │  (chatbus msg)│
+                          └──────┬───────┘
+                                 │
+                    ┌────────────┼────────────┐
+                    ▼                         ▼
+             <span class="lk">supervisor</span>                   <span class="ac">UI feed</span>
+             (reviews, approves)         (visible to user)
+                    │
+                    ▼
+             dispatch to workers</div>
+
+<h4>Message Flow: Proactive Follow-Up</h4>
+<div class="diagram"><span class="hl">cron</span> (every 15 min) ──bus-send──▶ <span class="lk">planner</span> "run"
+                                         │
+                                  GET /state from <span class="lk">task-tailer</span>
+                                         │
+                                  ┌──────┴──────┐
+                                  │ State snapshot: │
+                                  │ - PR #247 open 3h, no review │
+                                  │ - Build failed 1h ago │
+                                  │ - Linear ISS-42 unassigned │
+                                  └──────┬──────┘
+                                         │
+                                  claude --print with prompt:
+                                  "You are a task planner.
+                                   Given this state, suggest
+                                   1-3 concrete next actions."
+                                         │
+                                         ▼
+                                  ┌──────────────┐
+                                  │ Suggestions:  │
+                                  │ 1. Retry bridge build │
+                                  │ 2. Assign ISS-42 to octocat │
+                                  │ 3. Ping user re: PR #247 │
+                                  └──────┬──────┘
+                                         │
+                               publish to chatbus
+                               channel: "suggestions"
+                                         │
+                    ┌────────────────────┼──────────────┐
+                    ▼                    ▼              ▼
+             <span class="lk">supervisor</span>          <span class="ac">UI activity</span>    <span class="ac">notification</span>
+             picks up suggestion   feed shows it   (optional push)</div>
+
+<h4>Strengths</h4>
+<ul>
+  <li class="pro">Proactive &mdash; surfaces stale tasks, failed builds, unassigned work without being asked</li>
+  <li class="pro">Human-in-the-loop &mdash; suggestions require approval, limiting blast radius</li>
+  <li class="pro">LLM understands context &mdash; can reason about priority, dependencies, urgency</li>
+  <li class="pro">Batch worker pattern &mdash; follows existing octocat/worker architecture exactly</li>
+  <li class="pro">Linear integration richer &mdash; LLM can reason about issue labels, assignees, sprint context</li>
+</ul>
+
+<h4>Weaknesses</h4>
+<ul>
+  <li class="con">LLM calls cost money and add latency (~5-15s per planning cycle)</li>
+  <li class="con">Suggestion quality depends on prompt engineering and state model completeness</li>
+  <li class="con">Approval step adds friction &mdash; if user is away, suggestions queue up without action</li>
+  <li class="con">Planner may suggest actions the system cannot actually execute (hallucinated capabilities)</li>
+</ul>
+
+<h4>Implementation Cost</h4>
+<p>
+  ~1 week, assuming Alternative A exists. New batch worker in <code>cmd/planner/</code>. Cron trigger every
+  15 minutes. Prompt template that accepts JSON state and returns structured suggestions. Suggestion rendering
+  in the UI activity feed. Approval mechanism (chatbus command or UI button).
+</p>
+
+<hr>
+
+<h3>C. Full Autonomous Loop</h3>
+
+<h4>Architecture</h4>
+<p>
+  A persistent Claude agent (<code>orchestrator</code>) with its own MCP session. Maintains a world model
+  by continuously tailing the chatbus and sysbus. Has tool access to: dispatch work to agents, create/update
+  Linear issues, query GitHub, send notifications. Operates on a continuous loop: observe &rarr; plan &rarr;
+  act &rarr; observe.
+</p>
+<p>
+  Guardrails: budget limits (max N dispatches per hour), escalation thresholds (if confidence is low, ask
+  the user instead of acting), and an explicit "autonomous mode on/off" toggle.
+</p>
+
+<div class="diagram">                    ┌─────────────────────────────────┐
+                    │        <span class="ac">orchestrator</span>               │
+                    │   (persistent Claude agent)       │
+                    │                                   │
+                    │   ┌───────────┐  ┌────────────┐  │
+                    │   │ world model│  │  tool belt  │  │
+                    │   │ (live state)│  │ - dispatch  │  │
+                    │   │            │  │ - linear    │  │
+                    │   │ tasks[]    │  │ - github    │  │
+                    │   │ agents[]   │  │ - notify    │  │
+                    │   │ builds[]   │  │ - escalate  │  │
+                    │   └─────┬─────┘  └─────┬──────┘  │
+                    │         │              │          │
+                    │         └──────┬───────┘          │
+                    │                │                   │
+                    └────────────────┼───────────────────┘
+                                     │
+              ┌──────────────────────┼───────────────────────┐
+              ▼                      ▼                       ▼
+       <span class="hl">chatbus</span>                <span class="hl">sysbus</span>                 <span class="hl">Linear</span>
+       (subscribe +           (subscribe +            (read + write)
+        publish)               consume)
+              │                      │                       │
+              ▼                      ▼                       ▼
+       <span class="lk">workers</span>              <span class="ac">UI activity</span>              <span class="lk">team board</span>
+       (execute tasks)       (observe)               (assignments)</div>
+
+<h4>Message Flow: Autonomous Follow-Up</h4>
+<div class="diagram"><span class="hl">sysbus</span> event: build/failed bridge
+              │
+              ▼
+       <span class="ac">orchestrator</span> observes failure
+              │
+       check world model:
+       - bridge build failed 2x in last hour
+       - last commit was auto/fix-bridge by octocat
+       - PR #248 is open for this branch
+              │
+       decision: retry is unlikely to help
+       action: escalate to user + add comment to PR
+              │
+       ┌──────┴──────┐
+       ▼              ▼
+  <span class="ac">chat-bridge</span>     <span class="lk">GitHub API</span>
+  "Bridge build     POST comment
+   failed twice.    on PR #248:
+   Looks like a     "Build failing,
+   test regression. needs manual
+   PR #248."        investigation."
+       │
+       ▼
+  <span class="hl">Linear</span>: update ISS-48 status to "blocked"</div>
+
+<h4>Strengths</h4>
+<ul>
+  <li class="pro">Truly autonomous &mdash; handles overnight work, follows up without user involvement</li>
+  <li class="pro">Rich reasoning &mdash; can correlate events across time (build failed + same branch + recent PR)</li>
+  <li class="pro">Natural language interface &mdash; user says "handle things while I'm out" and it does</li>
+  <li class="pro">Can manage multi-step workflows (create issue &rarr; assign &rarr; monitor &rarr; review &rarr; merge)</li>
+  <li class="pro">Integrates with everything via tool_use &mdash; Linear, GitHub, chatbus, notifications</li>
+</ul>
+
+<h4>Weaknesses</h4>
+<ul>
+  <li class="con">Most complex to implement &mdash; persistent agent session, world model, guardrails</li>
+  <li class="con">Expensive &mdash; continuous Claude session with large context window</li>
+  <li class="con">Hardest to debug &mdash; autonomous decisions may be surprising or wrong</li>
+  <li class="con">Risk of runaway loops &mdash; agent dispatches work, observes result, dispatches more work</li>
+  <li class="con">Context window management &mdash; world model grows unboundedly without summarization</li>
+  <li class="con">Requires robust guardrails: rate limits, budget caps, confidence thresholds, kill switch</li>
+</ul>
+
+<h4>Implementation Cost</h4>
+<p>
+  ~3-4 weeks. New MCP agent in <code>agents/</code> with channel server routing. Tool definitions for
+  dispatch, Linear, GitHub, notification. World model schema and summarization logic. Guardrail system
+  (budget tracking, escalation rules). UI for monitoring autonomous decisions. Cron or continuous-run
+  mode. Testing framework for autonomous behavior (scenario-based with expected decisions).
+</p>
+
+<hr>
+
+<h2>3. Evaluation Matrix</h2>
+
+<table>
+  <tr>
+    <th>Criterion</th>
+    <th>A. Reactive Tail</th>
+    <th>B. Planner-Executor</th>
+    <th>C. Full Autonomous</th>
+  </tr>
+  <tr>
+    <td><strong>Implementation effort</strong></td>
+    <td>2-3 days</td>
+    <td>~1 week (on top of A)</td>
+    <td>3-4 weeks</td>
+  </tr>
+  <tr>
+    <td><strong>Reliability</strong></td>
+    <td>High &mdash; deterministic, no LLM</td>
+    <td>Medium &mdash; LLM suggestions may be wrong</td>
+    <td>Low initially &mdash; needs extensive guardrails</td>
+  </tr>
+  <tr>
+    <td><strong>Failure modes</strong></td>
+    <td>Stale state if bus drops messages</td>
+    <td>Bad suggestions, approval fatigue</td>
+    <td>Runaway loops, wrong dispatches, budget overrun</td>
+  </tr>
+  <tr>
+    <td><strong>"What are we doing?" queries</strong></td>
+    <td>Immediate, accurate, structured</td>
+    <td>Same as A (state model shared)</td>
+    <td>Rich narrative but may hallucinate</td>
+  </tr>
+  <tr>
+    <td><strong>Proactive follow-up</strong></td>
+    <td>None</td>
+    <td>Suggests actions every N minutes</td>
+    <td>Acts autonomously, follows up in real time</td>
+  </tr>
+  <tr>
+    <td><strong>Linear integration</strong></td>
+    <td>Read-only polling</td>
+    <td>Read + LLM-reasoned suggestions</td>
+    <td>Full read/write &mdash; creates, assigns, updates</td>
+  </tr>
+  <tr>
+    <td><strong>Concurrent task scalability</strong></td>
+    <td>Good &mdash; in-memory map scales to hundreds</td>
+    <td>Good &mdash; planner context window is the limit</td>
+    <td>Limited by context window and reasoning quality</td>
+  </tr>
+  <tr>
+    <td><strong>Cost (API calls)</strong></td>
+    <td>Zero</td>
+    <td>Low &mdash; one claude --print per planning cycle</td>
+    <td>High &mdash; continuous session + tool calls</td>
+  </tr>
+  <tr>
+    <td><strong>Debugging / observability</strong></td>
+    <td>Trivial &mdash; HTTP state endpoint</td>
+    <td>Moderate &mdash; log suggestions + approvals</td>
+    <td>Hard &mdash; need decision audit trail</td>
+  </tr>
+</table>
+
+<hr>
+
+<h2>4. Recommendation</h2>
+
+<p>
+  <strong>Start with A, layer B on top, defer C until the state model proves reliable.</strong>
+</p>
+
+<p>
+  The state model is the foundation everything else depends on. If the reactive tail cannot accurately
+  answer "what are we doing?", no amount of LLM reasoning on top will produce good results. Building A
+  first validates the data pipeline (bus messages &rarr; structured state) before adding intelligence.
+</p>
+
+<h3>Phased Roadmap</h3>
+
+<div class="phase phase-1">
+  <div class="phase-label">Phase 1: Reactive Tail (weeks 1-2)</div>
+  <p><strong>Build:</strong> <code>cmd/task-tailer/</code> Go service. Subscribe to chatbus + sysbus.
+    Parse dispatch/build/deploy/merge events into a task state map. Poll Linear every 5 minutes.
+    Expose <code>GET /state</code> and <code>GET /summary</code>.</p>
+  <p><strong>Wire:</strong> Supervisor queries <code>/summary</code> when user asks "what are we doing?"
+    Add a "Status" tile to the UI that renders the live state.</p>
+  <p><strong>Validate:</strong> Run for a week. Check: does the state model match reality? Are there
+    bus messages we're missing? Is the summary useful?</p>
+  <p><strong>Linear integration:</strong> Read-only. Fetch open issues, map to internal task IDs where possible.
+    Show in summary as "External: 3 Linear issues (2 assigned, 1 unassigned)."</p>
+  <p><strong>Exit criteria:</strong> State model accuracy >90% when spot-checked against GitHub + Linear.</p>
+</div>
+
+<div class="phase phase-2">
+  <div class="phase-label">Phase 2: Planner Layer (weeks 3-4)</div>
+  <p><strong>Build:</strong> <code>cmd/planner/</code> batch worker. Cron-triggered every 15 minutes.
+    Reads <code>/state</code> from task-tailer, sends to <code>claude --print</code> with a structured prompt,
+    publishes suggestions to chatbus channel <code>suggestions</code>.</p>
+  <p><strong>Prompt design:</strong> Include the state snapshot, the agent registry (who can do what),
+    recent history (last 10 state transitions), and explicit constraints ("never dispatch more than 2
+    tasks at once", "always escalate if build has failed 3+ times").</p>
+  <p><strong>Approval flow:</strong> Suggestions appear in the UI activity feed. Supervisor can approve
+    via chat command (<code>!approve 1</code>) or the user can approve via voice. Unapproved suggestions
+    expire after 1 hour.</p>
+  <p><strong>Linear integration:</strong> Planner can suggest creating issues, changing assignments, updating
+    status. Execution still goes through supervisor.</p>
+  <p><strong>Exit criteria:</strong> >70% of suggestions are useful (not rejected or expired). User
+    reports it surfaces things they would have missed.</p>
+</div>
+
+<div class="phase phase-3">
+  <div class="phase-label">Phase 3: Selective Autonomy (weeks 5-8)</div>
+  <p><strong>Not full autonomy.</strong> Instead, define a whitelist of actions the planner can execute
+    without approval: retry failed builds, assign unassigned Linear issues to the default worker,
+    post status summaries to chat. Everything else still requires approval.</p>
+  <p><strong>Guardrails:</strong> Max 5 autonomous actions per hour. Mandatory cool-down after any failure.
+    All autonomous actions logged to a decision audit trail (append-only JSONL file). Kill switch via
+    chatbus command (<code>!autonomous off</code>).</p>
+  <p><strong>Evaluate:</strong> After running for 2 weeks, review the decision audit trail. Expand the
+    whitelist if the autonomous actions were consistently correct. Contract if not.</p>
+  <p><strong>Full C (persistent agent) is deferred</strong> until the whitelist approach shows clear
+    limitations that only a continuous reasoning loop can solve. The batch planner with selective
+    autonomy covers 80% of the value at 20% of the complexity.</p>
+</div>
+
+<h3>Key Design Decisions</h3>
+
+<ul>
+  <li><strong>Go service for the tailer, not a Claude agent.</strong> The state model must be deterministic
+    and fast. An LLM adds no value to event parsing. Keep it mechanical.</li>
+  <li><strong>Batch worker for the planner, not a persistent agent.</strong> Planning every 15 minutes is
+    sufficient. A persistent agent is expensive and adds context management complexity for no gain at
+    this stage.</li>
+  <li><strong>Suggestions channel on chatbus.</strong> Keeps suggestions visible to all consumers (UI, supervisor,
+    future agents) without special routing.</li>
+  <li><strong>Linear polling, not webhooks.</strong> Webhooks require a public endpoint and SSL termination.
+    Polling every 5 minutes is adequate and simpler to implement. Switch to webhooks only if latency matters.</li>
+  <li><strong>State model as the single source of truth.</strong> Both the UI and the planner read from the
+    same <code>/state</code> endpoint. No divergent views of reality.</li>
+</ul>
+
+<h3>What This Does Not Solve</h3>
+
+<p>
+  This design assumes the supervisor is running. When the supervisor is offline (overnight, weekends),
+  suggestions queue up but nothing acts on them. Phase 3's selective autonomy partially addresses this,
+  but a fully autonomous overnight worker is a separate problem that requires the persistent agent model
+  (Alternative C) or a dedicated cron-triggered batch pipeline.
+</p>
+
+<p>
+  For overnight scenarios, the better near-term solution is a cron job that runs <code>claude --print</code>
+  with the state snapshot and a narrow mandate ("retry any failed builds, post a morning summary").
+  This is cheaper and more predictable than a persistent agent.
+</p>
+
+<!-- published: PENDING @ PENDING -->
+</body>
+</html>
