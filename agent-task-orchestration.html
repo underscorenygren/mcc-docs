@@ -617,6 +617,259 @@
     same <code>/state</code> endpoint. No divergent views of reality.</li>
 </ul>
 
+<hr>
+
+<h2>5. The World Model</h2>
+
+<p>
+  "World model" sounds abstract, but for an LLM it's concrete: <strong>structured text in the context window.</strong>
+  The model has no persistent internal state. Its "world" is whatever data you inject into the prompt.
+</p>
+
+<h3>What the World Model Contains</h3>
+
+<p>
+  The task-tailer maintains a JSON state object. When the planner (or supervisor) calls <code>GET /state</code>,
+  it gets back something like:
+</p>
+
+<pre><code>{
+  "snapshot_at": "2026-11-15T01:30:00Z",
+  "tasks": [
+    {
+      "id": "MCC-9",
+      "title": "Lisabot — standalone Slack agent",
+      "status": "in_progress",
+      "priority": "high",
+      "last_activity": "2026-11-14T08:00:00Z",
+      "stale_days": 1,
+      "assignee": null
+    },
+    {
+      "id": "MCC-17",
+      "title": "Formalize GitHub issues in Linear",
+      "status": "todo",
+      "priority": "high",
+      "last_activity": "2026-11-14T06:00:00Z",
+      "stale_days": 1,
+      "assignee": null
+    }
+  ],
+  "prs": [
+    {
+      "number": 290,
+      "title": "Mobile liveness check on resume",
+      "branch": "auto/mobile-liveness-check",
+      "status": "open",
+      "reviews": 0,
+      "age_hours": 36
+    }
+  ],
+  "builds": [],
+  "agents": [
+    { "name": "builder", "status": "idle", "last_active": "2026-11-14T22:00:00Z" },
+    { "name": "lisabot", "status": "running", "last_active": "2026-11-15T01:15:00Z" }
+  ],
+  "linear_summary": {
+    "mcc": { "total": 10, "high_or_above": 3, "unassigned": 10 },
+    "chile_trip": { "total": 10, "urgent": 3, "waiting": 2 }
+  }
+}</code></pre>
+
+<h3>How It Gets Updated</h3>
+
+<p>Three approaches, from simplest to most current:</p>
+
+<table>
+  <tr>
+    <th>Approach</th>
+    <th>Mechanism</th>
+    <th>Freshness</th>
+    <th>Cost</th>
+  </tr>
+  <tr>
+    <td><strong>Push</strong></td>
+    <td>Snapshot injected every N minutes into agent context</td>
+    <td>Stale between pushes</td>
+    <td>Low &mdash; one read per cycle</td>
+  </tr>
+  <tr>
+    <td><strong>Pull</strong></td>
+    <td>Agent calls <code>GET /state</code> tool when it decides to</td>
+    <td>Current on demand</td>
+    <td>Medium &mdash; agent may over/under-query</td>
+  </tr>
+  <tr>
+    <td><strong>Event stream</strong></td>
+    <td>Bus messages flow into context continuously</td>
+    <td>Real-time</td>
+    <td>High &mdash; context fills fast</td>
+  </tr>
+</table>
+
+<p>
+  <strong>Recommended for our system: pull + periodic push.</strong> The tailer maintains the real world model
+  in Go (deterministic, always current). The planner pulls a snapshot every 15 minutes. The supervisor pulls
+  on demand when the user asks "what are we doing?" Between pulls, the software state machine tracks transitions
+  without LLM involvement.
+</p>
+
+<div class="diagram"><span class="hl">chatbus</span> ──events──▶ <span class="lk">task-tailer</span> ──maintains──▶ <span class="hl">world model (Go, in-memory)</span>
+<span class="hl">sysbus</span>  ──events──▶ <span class="lk">task-tailer</span>                          │
+<span class="hl">Linear</span>  ◀──poll────  <span class="lk">task-tailer</span>                          │
+<span class="hl">GitHub</span>  ◀──poll────  <span class="lk">task-tailer</span>                          │
+                                                          │
+                                                   GET /state
+                                                          │
+                                          ┌───────────────┼───────────────┐
+                                          ▼               ▼               ▼
+                                    <span class="lk">planner</span>       <span class="lk">supervisor</span>       <span class="ac">UI dashboard</span>
+                                   (every 15m)    (on demand)      (live render)</div>
+
+<p>
+  The key insight: <strong>the agent never builds its own world model.</strong> It reads a pre-computed snapshot
+  from the tailer. The tailer is the world; the agent is the reasoning layer on top.
+</p>
+
+<hr>
+
+<h2>6. Planner Scenarios</h2>
+
+<p>
+  Concrete examples of what the planner would do given real system state. Each scenario shows the
+  state snapshot the planner receives, the reasoning it applies, and the exact messages it emits.
+</p>
+
+<h3>Scenario A: Stale In-Progress Task</h3>
+
+<div class="card alt-a">
+  <div class="card-title">Input: state snapshot</div>
+  <div class="card-desc">MCC-9 (Lisabot) — status: in_progress, last_activity: 3 days ago, assignee: none</div>
+</div>
+
+<p><strong>Planner reasoning:</strong> Task marked in-progress but no activity in 3 days. No assignee.
+  Either it's done and wasn't closed, or it's stuck.</p>
+
+<p><strong>Emitted messages:</strong></p>
+<pre><code>→ chatbus publish channel=suggestions
+{
+  "type": "suggestion",
+  "priority": "medium",
+  "task": "MCC-9",
+  "action": "reconcile",
+  "message": "MCC-9 (Lisabot) has been in-progress for 3 days with no activity. Verify: is it done? If so, close it. If stuck, what's blocking?",
+  "options": [
+    { "label": "Mark done", "command": "!close MCC-9" },
+    { "label": "Reassign to octocat", "command": "!assign MCC-9 octocat" },
+    { "label": "Dismiss", "command": "!dismiss" }
+  ]
+}</code></pre>
+
+<h3>Scenario B: Unreviewed PR Aging</h3>
+
+<div class="card alt-b">
+  <div class="card-title">Input: state snapshot</div>
+  <div class="card-desc">PR #290 — open 36 hours, 0 reviews, branch: auto/mobile-liveness-check, tests passing</div>
+</div>
+
+<p><strong>Planner reasoning:</strong> PR is ready (tests pass) but has no reviews after 36 hours.
+  This blocks the mobile liveness feature.</p>
+
+<p><strong>Emitted messages:</strong></p>
+<pre><code>→ chatbus publish channel=suggestions
+{
+  "type": "suggestion",
+  "priority": "high",
+  "pr": 290,
+  "action": "review_needed",
+  "message": "PR #290 (mobile liveness check) has been open 36h with no reviews. Tests pass. Ready to merge.",
+  "options": [
+    { "label": "Merge now", "command": "!merge 290" },
+    { "label": "I'll review it", "command": "!ack 290" }
+  ]
+}</code></pre>
+
+<h3>Scenario C: Build Failure Pattern</h3>
+
+<div class="card alt-c">
+  <div class="card-title">Input: state snapshot</div>
+  <div class="card-desc">builds: [{service: bridge, status: failed, at: 1h ago}, {service: bridge, status: failed, at: 3h ago}]. Last commit on bridge: auto/fix-bridge by octocat. PR #248 open.</div>
+</div>
+
+<p><strong>Planner reasoning:</strong> Bridge has failed twice in the last 3 hours. Same branch, automated fix attempt.
+  Retrying is unlikely to help — this needs human investigation.</p>
+
+<p><strong>Emitted messages:</strong></p>
+<pre><code>→ chatbus publish channel=suggestions
+{
+  "type": "suggestion",
+  "priority": "urgent",
+  "service": "bridge",
+  "action": "escalate",
+  "message": "Bridge build has failed 2x in 3 hours. Last commit from octocat on auto/fix-bridge. Automated retry unlikely to help — needs manual investigation.",
+  "options": [
+    { "label": "Assign to me", "command": "!assign bridge-fix human" },
+    { "label": "Retry anyway", "command": "!build bridge" },
+    { "label": "Check logs", "command": "!logs bridge" }
+  ]
+}
+
+→ chatbus publish channel=supervisor
+{
+  "type": "notification",
+  "message": "Bridge build failing repeatedly. PR #248 may have a test regression."
+}</code></pre>
+
+<h3>Scenario D: Cross-Project Dependency</h3>
+
+<div class="card alt-a">
+  <div class="card-title">Input: state snapshot</div>
+  <div class="card-desc">MCC-7 (voice dropping) — status: todo, priority: high. MCC-8 (email pipeline) — status: todo, priority: medium. PR #290 (mobile liveness) — open, adds reconnect logic for voice WS.</div>
+</div>
+
+<p><strong>Planner reasoning:</strong> PR #290 adds voice WebSocket reconnect logic. MCC-7 is about voice dropping.
+  Merging #290 may partially address MCC-7. These should be linked.</p>
+
+<p><strong>Emitted messages:</strong></p>
+<pre><code>→ chatbus publish channel=suggestions
+{
+  "type": "suggestion",
+  "priority": "medium",
+  "action": "link",
+  "message": "PR #290 adds WS reconnect on resume — may partially fix MCC-7 (voice dropping). Suggest: merge #290 first, then re-evaluate MCC-7.",
+  "options": [
+    { "label": "Merge #290 and re-test", "command": "!merge 290" },
+    { "label": "They're unrelated", "command": "!dismiss" }
+  ]
+}</code></pre>
+
+<h3>Scenario E: Unassigned High-Priority Work</h3>
+
+<div class="card alt-b">
+  <div class="card-title">Input: state snapshot</div>
+  <div class="card-desc">3 high-priority MCC tasks unassigned. Agent registry shows: builder (idle), octocat (idle), supervisor (active). MCC-17 is "formalize GitHub issues" — mechanical, suitable for automation.</div>
+</div>
+
+<p><strong>Planner reasoning:</strong> Idle agents available. MCC-17 is a well-defined mechanical task — read GitHub issues,
+  create Linear issues. Good candidate for octocat.</p>
+
+<p><strong>Emitted messages:</strong></p>
+<pre><code>→ chatbus publish channel=suggestions
+{
+  "type": "suggestion",
+  "priority": "high",
+  "task": "MCC-17",
+  "action": "auto_assign",
+  "message": "MCC-17 (formalize GitHub issues in Linear) is unassigned and mechanical. Octocat is idle. Suggest: dispatch to octocat.",
+  "options": [
+    { "label": "Dispatch to octocat", "command": "!dispatch MCC-17 octocat" },
+    { "label": "I'll handle it", "command": "!assign MCC-17 human" },
+    { "label": "Not now", "command": "!dismiss" }
+  ]
+}</code></pre>
+
+<hr>
+
 <h3>What This Does Not Solve</h3>
 
 <p>
