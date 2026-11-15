@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCC Terminology</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .term {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 3px solid var(--accent);
+  }
+  .term-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.3rem;
+  }
+  .term-origin {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+  }
+  .term-def {
+    margin-bottom: 0.75rem;
+  }
+  .term-usage {
+    background: var(--code-bg);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+  }
+  .term-usage .yes { color: var(--green); }
+  .term-usage .no { color: #fca5a5; }
+  .term-maps {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+  }
+  .term-maps strong { color: var(--accent2); }
+  .section-intro {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+  .category-label {
+    display: inline-block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    margin-left: 0.75rem;
+    position: relative;
+    top: -2px;
+  }
+  .cat-work { background: #312e81; color: #a5b4fc; }
+  .cat-infra { background: #164e63; color: #67e8f9; }
+  .cat-comm { background: #713f12; color: #fbbf24; }
+  .cat-role { background: #14532d; color: #86efac; }
+</style>
+</head>
+<body>
+
+<h1>MCC Terminology</h1>
+<p class="subtitle">Project-specific language for Mushroom Cloud Computing. These terms have precise meanings that differ from their generic usage.</p>
+
+<h2>Why This Exists</h2>
+<p class="section-intro">
+  We work across multiple systems (Linear, GitHub, chatbus, Claude Code) where words like "issue", "task", and "agent" mean different things depending on context. We also have voice as a primary interface, so terms need to be short, distinct, and unambiguous when spoken aloud. This glossary defines what each term means in our system specifically.
+</p>
+
+<h2>Work Items</h2>
+
+<div class="term">
+  <div class="term-name">Spore <span class="category-label cat-work">work</span></div>
+  <div class="term-origin">From mushroom biology &mdash; a spore carries everything needed to grow.</div>
+  <div class="term-def">
+    <p>A <strong>spore</strong> is our canonical data object for a tracked piece of work between agent and human. It carries inline sources: GitHub URLs, Linear URLs, chatbus message IDs, commit hashes, and human-readable summaries of each. Sources are denormalized &mdash; copied at creation time, not looked up live.</p>
+    <p>A spore maps to a Linear issue for storage today, but the schema is ours and will evolve independently. Multiple source references per spore. Message IDs are preserved for future cross-referencing.</p>
+  </div>
+  <div class="term-maps"><strong>Maps to:</strong> Linear issue (current storage layer)</div>
+  <div class="term-usage">
+    <span class="yes">"Create a spore for the voice dropping bug."</span><br>
+    <span class="yes">"This spore has three sources: the GitHub issue, Erik's voice note, and the chatbus thread."</span><br>
+    <span class="no">"Create a Linear issue" &mdash; use only when referring to the Linear service API specifically</span><br>
+    <span class="no">"Create a task" &mdash; ambiguous (Claude Code tasks, mcc-tasks, Linear?)</span>
+  </div>
+</div>
+
+<div class="term">
+  <div class="term-name">"Spore this" <span class="category-label cat-work">verb</span></div>
+  <div class="term-def">
+    <p>Synthesize the current conversation into a spore. The agent extracts the work item, attaches relevant sources (message IDs, links, quotes), and creates the spore with enough context to act on later. Like "commit" is to git &mdash; a single verb that packages current state into a durable record.</p>
+  </div>
+  <div class="term-usage">
+    <span class="yes">"Spore this &mdash; we decided to replace the chatbus HTTP layer."</span><br>
+    <span class="yes">"Spore this conversation about the stream library."</span>
+  </div>
+</div>
+
+<h2>Agents &amp; Workers</h2>
+
+<div class="term">
+  <div class="term-name">Shroom <span class="category-label cat-infra">infra</span></div>
+  <div class="term-origin">Short for mushroom &mdash; grows in the background, part of the ecosystem.</div>
+  <div class="term-def">
+    <p>A <strong>shroom</strong> is a background agent worker &mdash; a process that picks up work, executes it autonomously, and reports results. Shrooms are dispatched as teammates (via Claude Code's teammate/worktree system) and run without interactive supervision.</p>
+    <p>Previously, shrooms were self-hosted Docker containers subscribing to the chatbus. The teammate model replaced that: each shroom gets its own worktree, executes a focused prompt, and pushes results to a branch. The infra changed but the concept is the same &mdash; autonomous background work.</p>
+  </div>
+  <div class="term-maps"><strong>Implementation:</strong> Claude Code teammates (current), Docker containers (legacy)</div>
+  <div class="term-usage">
+    <span class="yes">"Dispatch a shroom to fix the auth bug on a branch."</span><br>
+    <span class="yes">"The four shrooms finished &mdash; three PRs ready for review."</span><br>
+    <span class="no">"Background agent" &mdash; ambiguous</span><br>
+    <span class="no">"Worker" &mdash; too generic, could mean anything</span>
+  </div>
+</div>
+
+<div class="term">
+  <div class="term-name">Supervisor <span class="category-label cat-role">role</span></div>
+  <div class="term-def">
+    <p>The primary Claude Code session that the human interacts with directly. Receives messages via chat-bridge (voice, web, Slack), dispatches shrooms, manages state, reports status. There is one supervisor per session.</p>
+  </div>
+  <div class="term-usage">
+    <span class="yes">"The supervisor dispatched three shrooms and is waiting for results."</span>
+  </div>
+</div>
+
+<div class="term">
+  <div class="term-name">Agent <span class="category-label cat-role">role</span></div>
+  <div class="term-def">
+    <p>A user-facing Claude agent with a named identity (Porter, Atlas, Runa). Has a portal page, wakes on demand, interacts conversationally with external users. Agents are not shrooms &mdash; they are interactive, not autonomous.</p>
+  </div>
+  <div class="term-usage">
+    <span class="yes">"Porter is an agent &mdash; users talk to him through his portal."</span><br>
+    <span class="no">"The builder agent" &mdash; builder is a shroom, not an agent</span>
+  </div>
+</div>
+
+<h2>Communication</h2>
+
+<div class="term">
+  <div class="term-name">Chatbus <span class="category-label cat-comm">comm</span></div>
+  <div class="term-def">
+    <p>The central message routing service. All chat messages (human, agent, shroom) flow through the chatbus. Messages have channels (supervisor, chat, agent-specific), directions (in/out), and are persisted to a JSONL ring buffer. The chatbus is the system of record for conversation history.</p>
+  </div>
+  <div class="term-maps"><strong>Service:</strong> <code>cmd/chatbus/</code>, port 9095</div>
+</div>
+
+<div class="term">
+  <div class="term-name">Sysbus <span class="category-label cat-comm">comm</span></div>
+  <div class="term-def">
+    <p>The system event bus. Carries lifecycle signals (session start, build status, deploy events, tool calls) &mdash; not chat messages. The UI activity feed reads from the sysbus. Fire-and-forget; never blocks work.</p>
+  </div>
+  <div class="term-maps"><strong>Service:</strong> <code>cmd/sysbus/</code>, port 9097</div>
+</div>
+
+<div class="term">
+  <div class="term-name">Chat-bridge <span class="category-label cat-comm">comm</span></div>
+  <div class="term-def">
+    <p>The MCP server that connects the supervisor to the web/voice UI. Messages from the human arrive here; the supervisor replies here. This is the canonical communication channel &mdash; every response must go through chat-bridge AND the terminal.</p>
+  </div>
+</div>
+
+<h2>External Services</h2>
+
+<div class="term">
+  <div class="term-name">Linear <span class="category-label cat-infra">service</span></div>
+  <div class="term-def">
+    <p>The external issue tracking service at linear.app. We use it as a storage and sync layer for spores. When we say "push to Linear" or "sync to Linear", we mean the service. The data format (spore) is ours &mdash; Linear is one backend.</p>
+  </div>
+  <div class="term-usage">
+    <span class="yes">"Sync this spore to Linear."</span><br>
+    <span class="yes">"Check the Linear board for MCC priority."</span><br>
+    <span class="no">"Create a Linear issue" when you mean "create a spore"</span>
+  </div>
+</div>
+
+<div class="term">
+  <div class="term-name">Seed <span class="category-label cat-infra">service</span></div>
+  <div class="term-def">
+    <p>The project inventory and task dashboard at tasks.mushroomcloudcomputing.com. Shows all projects, their status, and top-priority work. Built from mcc-tasks repo data.</p>
+  </div>
+</div>
+
+<h2>Conventions</h2>
+
+<div class="term">
+  <div class="term-name">Naming Rules</div>
+  <div class="term-def">
+    <ul style="padding-left: 1.25rem;">
+      <li><strong>Voice-first:</strong> terms must be short, distinct, and unambiguous when spoken. "Spore" vs "store" is borderline &mdash; context resolves it. "Shroom" is clear.</li>
+      <li><strong>No overloading:</strong> if a word already means something in a system we use (GitHub, Linear, Claude Code), pick a different word.</li>
+      <li><strong>Qualify external systems:</strong> say "GitHub issue", "Linear issue", "Claude Code task" when referring to those systems specifically. Our terms (spore, shroom) are unqualified.</li>
+      <li><strong>Mushroom theme:</strong> preferred but not required. The name should fit naturally in conversation.</li>
+    </ul>
+  </div>
+</div>
+
+<h2>Quick Reference</h2>
+<table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+  <thead>
+    <tr>
+      <th style="background: var(--surface); padding: 0.5rem 0.75rem; text-align: left; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Term</th>
+      <th style="background: var(--surface); padding: 0.5rem 0.75rem; text-align: left; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Meaning</th>
+      <th style="background: var(--surface); padding: 0.5rem 0.75rem; text-align: left; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Not</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);"><strong>Spore</strong></td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">Tracked work item with inline sources</td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">A Linear issue, a GitHub issue, a task</td></tr>
+    <tr><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);"><strong>Spore this</strong></td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">Synthesize conversation into a spore</td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">File an issue, create a ticket</td></tr>
+    <tr><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);"><strong>Shroom</strong></td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">Background agent worker (teammate)</td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">An interactive agent, a Docker service</td></tr>
+    <tr><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);"><strong>Supervisor</strong></td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">Primary Claude session (this one)</td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">A shroom, an agent</td></tr>
+    <tr><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);"><strong>Agent</strong></td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">User-facing named Claude (Porter, Atlas)</td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">A shroom, a background process</td></tr>
+    <tr><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);"><strong>Chatbus</strong></td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">Chat message routing service</td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">The sysbus, the chat-bridge</td></tr>
+    <tr><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);"><strong>Sysbus</strong></td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">System event bus (lifecycle, tool calls)</td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">The chatbus</td></tr>
+    <tr><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);"><strong>Linear</strong></td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">The external service (linear.app)</td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">Our data format (that's a spore)</td></tr>
+    <tr><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);"><strong>Seed</strong></td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">Project dashboard (tasks.mcc.com)</td><td style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);">&mdash;</td></tr>
+  </tbody>
+</table>
+
+<p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 2rem;">
+  Last updated: November 15, 2026. This is a living document &mdash; new terms are added as the system evolves.
+</p>
+
+</body>
+</html>
