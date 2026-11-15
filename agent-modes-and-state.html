@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Behavioral Modes &amp; State Machines</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  /* Page-specific overrides — supplement shared style.css */
+  h2 { font-size: 1.5rem; color: #fff; text-transform: none; letter-spacing: normal; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+  h4 { font-size: 1rem; font-weight: 600; color: var(--accent); margin-top: 1.3rem; margin-bottom: 0.5rem; }
+  .tldr { background: var(--surface); border-left: 3px solid var(--accent); padding: 1rem 1.25rem; border-radius: 0 6px 6px 0; margin-bottom: 2rem; }
+  .tldr strong { color: var(--accent); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .diagram { background: var(--code-bg); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.78rem; line-height: 1.6; white-space: pre; overflow-x: auto; color: var(--text-muted); }
+  .diagram .hl { color: var(--accent2); }
+  .diagram .ac { color: var(--accent); }
+  .diagram .lk { color: var(--link); }
+  .card.alt-a { border-left-color: var(--accent2); }
+  .card.alt-b { border-left-color: var(--accent); }
+  .card.alt-c { border-left-color: #e94560; }
+  .card .card-title { font-weight: 600; color: #fff; font-size: 1.05rem; margin-bottom: 0.4rem; }
+  .card .card-desc { color: var(--text-muted); font-size: 0.9rem; }
+  .pro { color: var(--green); }
+  .con { color: #fca5a5; }
+  .mode-box { background: var(--surface); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; border-left: 3px solid var(--border); }
+  .mode-box.brainstorm { border-left-color: var(--accent2); }
+  .mode-box.validation { border-left-color: var(--yellow); }
+  .mode-box.execution { border-left-color: var(--green); }
+  .mode-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 0.4rem; }
+  .mode-box.brainstorm .mode-label { color: var(--accent2); }
+  .mode-box.validation .mode-label { color: var(--yellow); }
+  .mode-box.execution .mode-label { color: var(--green); }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+  / <span style="color: var(--text-muted);">Agent Infrastructure</span>
+</nav>
+
+<div class="series-nav">
+  <span class="series-label">Agent Architecture:</span>
+  <a href="agent-task-management.html">Dispatch Board</a>
+  <a href="agent-task-orchestration.html">Task Orchestration</a>
+  <a href="agent-modes-and-state.html" class="current">Modes &amp; State</a>
+</div>
+
+<h1>Agent Behavioral Modes &amp; State Machines</h1>
+<p class="subtitle">
+  Formalizing agent behavior: three rule mechanisms, two kinds of state machine, and a hybrid model where software enforces transitions while the agent handles judgment.
+</p>
+<p class="meta">November 2026 &mdash; Agent Architecture series</p>
+
+<div class="tldr">
+  <strong>TL;DR</strong>
+  <p style="margin-top:0.5rem; margin-bottom:0;">
+    Three mechanisms encode agent rules: <strong>CLAUDE.md instructions</strong> (cheap, skippable), <strong>hooks</strong> (mechanical, limited to tool events), and <strong>skills with preconditions</strong> (composable, testable).
+    "Agent state machines" with fuzzy transitions are just prompting with extra words. The useful architecture is a <strong>hybrid</strong>: a software state machine enforces deterministic transitions between modes, while the agent exercises judgment <em>within</em> each mode.
+    The enforcement mechanism is <strong>tool restriction</strong> &mdash; each mode exposes a different tool set, preventing the agent from taking actions outside its current role.
+  </p>
+</div>
+
+<h2>1. The Problem</h2>
+
+<p>
+  Agents drift. Without formalization, an agent tasked with "review this PR" may start editing files, deploy changes, or wander into unrelated codebases. The behavior is probabilistic &mdash; sometimes the agent follows instructions precisely, sometimes it interprets them creatively under context pressure.
+</p>
+
+<p>
+  Specific failure modes observed in production:
+</p>
+
+<ul>
+  <li><strong>Validation skipped.</strong> Agent completes a task, marks it done, never checks if the deployment actually works.</li>
+  <li><strong>Mode blur.</strong> Agent brainstorming an approach starts writing code mid-discussion, before the plan is agreed.</li>
+  <li><strong>Stale task drift.</strong> Agent picks up a stale task from context and re-executes it, even though it was completed hours ago.</li>
+  <li><strong>Self-managed transitions.</strong> Agent decides on its own when to move from planning to execution, sometimes prematurely.</li>
+</ul>
+
+<p>
+  The common thread: the agent manages its own state transitions. It decides when to shift from one behavioral mode to another. This is the root cause. An agent that controls its own mode switches will eventually switch at the wrong time.
+</p>
+
+<hr>
+
+<h2>2. Three Rule Mechanisms</h2>
+
+<p>
+  There are three ways to encode behavioral rules for a Claude Code agent. Each has a different enforcement strength and a different cost to iterate.
+</p>
+
+<table>
+  <tr>
+    <th>Mechanism</th>
+    <th>Enforcement</th>
+    <th>Scope</th>
+    <th>Iteration Cost</th>
+    <th>Failure Mode</th>
+  </tr>
+  <tr>
+    <td><strong>CLAUDE.md rules</strong></td>
+    <td>Advisory (LLM follows or ignores)</td>
+    <td>All behavior</td>
+    <td>Edit a text file</td>
+    <td>Ignored under context pressure</td>
+  </tr>
+  <tr>
+    <td><strong>Hooks</strong></td>
+    <td>Mechanical (shell command fires)</td>
+    <td>Tool-call events only</td>
+    <td>Write a shell script</td>
+    <td>Can only react to tool calls, not semantic events</td>
+  </tr>
+  <tr>
+    <td><strong>Skills with preconditions</strong></td>
+    <td>Structural (skill chains enforce order)</td>
+    <td>Composable operations</td>
+    <td>Define skill + precondition graph</td>
+    <td>Agent can bypass by not invoking the skill</td>
+  </tr>
+</table>
+
+<h3>CLAUDE.md Rules</h3>
+
+<p>
+  Plain text instructions injected into the system prompt. The agent reads them at session start and (ideally) follows them throughout.
+</p>
+
+<pre><code># Example: validation rule in CLAUDE.md
+## Post-deploy validation
+After every deploy, run these checks before reporting success:
+1. curl the health endpoint
+2. Check nginx logs for 404s
+3. Verify the page loads</code></pre>
+
+<h4>Strengths</h4>
+<ul>
+  <li class="pro">Zero infrastructure &mdash; edit a file, restart the session</li>
+  <li class="pro">Covers any behavioral aspect: tone, workflow, priorities, restrictions</li>
+  <li class="pro">Human-readable &mdash; serves as documentation and instruction simultaneously</li>
+</ul>
+
+<h4>Weaknesses</h4>
+<ul>
+  <li class="con">No enforcement &mdash; the agent can skip rules when the context window is full or the task is urgent</li>
+  <li class="con">Degradation over distance &mdash; rules near the top of context are followed more reliably than rules buried deep</li>
+  <li class="con">No feedback loop &mdash; you only discover a rule was skipped after the damage is done</li>
+</ul>
+
+<h3>Hooks</h3>
+
+<p>
+  Shell commands that fire automatically on specific events: before a commit, after a tool call, on session start. Claude Code supports hooks via <code>.claude/hooks/</code>.
+</p>
+
+<pre><code># Example: pre-commit hook that blocks deploy from non-main branches
+#!/bin/bash
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [[ "$BRANCH" != "main" ]] && git diff --cached --name-only | grep -q "deploy/"; then
+  echo "ERROR: deploy/ changes only allowed on main"
+  exit 1
+fi</code></pre>
+
+<h4>Strengths</h4>
+<ul>
+  <li class="pro">Mechanical enforcement &mdash; the hook runs regardless of what the agent thinks</li>
+  <li class="pro">Deterministic &mdash; same event always triggers same check</li>
+  <li class="pro">Can block actions (non-zero exit code prevents the tool call from completing)</li>
+</ul>
+
+<h4>Weaknesses</h4>
+<ul>
+  <li class="con">Limited trigger surface &mdash; hooks fire on tool-call events (bash, write, commit), not on semantic events ("agent started planning" or "user approved the task")</li>
+  <li class="con">No LLM judgment &mdash; hooks are binary pass/fail, cannot make nuanced decisions</li>
+  <li class="con">Workaround risk &mdash; the agent may find alternative tool calls that avoid the hook</li>
+</ul>
+
+<h3>Skills with Preconditions</h3>
+
+<p>
+  A skill is a composable, documented operation the agent can invoke. Skills can declare preconditions &mdash; other skills that must run first. This creates enforceable chains.
+</p>
+
+<pre><code># Example: deploy skill requires validate skill
+skill: deploy
+preconditions:
+  - validate   # must pass before deploy can proceed
+steps:
+  - docker compose build ${service}
+  - docker compose up -d --force-recreate ${service}
+  - curl health endpoint
+
+skill: validate
+steps:
+  - run test suite
+  - check for uncommitted changes
+  - verify branch is main</code></pre>
+
+<h4>Strengths</h4>
+<ul>
+  <li class="pro">Composable &mdash; skills chain into workflows without hardcoding sequences</li>
+  <li class="pro">Testable &mdash; each skill is a unit that can be verified independently</li>
+  <li class="pro">Self-documenting &mdash; the skill definition describes what it does and what it requires</li>
+</ul>
+
+<h4>Weaknesses</h4>
+<ul>
+  <li class="con">Agent must invoke the skill &mdash; nothing prevents the agent from running the deploy steps directly without calling the skill</li>
+  <li class="con">Requires infrastructure to define, register, and enforce preconditions</li>
+  <li class="con">Precondition evaluation is still LLM-mediated unless backed by a software check</li>
+</ul>
+
+<h4>Mechanism Comparison</h4>
+
+<div class="diagram">Enforcement strength:
+
+<span class="hl">CLAUDE.md rules</span>      ░░░░░░░░░░░░░░░░░░░░  Advisory
+<span class="lk">Skills + preconditions</span> ████████░░░░░░░░░░░░  Structural
+<span class="ac">Hooks</span>                  ████████████████░░░░  Mechanical
+
+Coverage breadth:
+
+<span class="hl">CLAUDE.md rules</span>      ████████████████████  Everything
+<span class="lk">Skills + preconditions</span> ████████████░░░░░░░░  Defined operations
+<span class="ac">Hooks</span>                  ████░░░░░░░░░░░░░░░░  Tool-call events only</div>
+
+<p>
+  No single mechanism is sufficient. The strongest enforcement (hooks) has the narrowest scope. The broadest scope (CLAUDE.md) has the weakest enforcement. A robust system layers all three.
+</p>
+
+<hr>
+
+<h2>3. Software vs Agent State Machines</h2>
+
+<p>
+  "State machine" gets applied to two fundamentally different things in agent systems. Conflating them leads to architectural confusion.
+</p>
+
+<h3>Software State Machines</h3>
+
+<p>
+  Deterministic. Runs in code. Transitions are triggered by observable events: bus messages, tool-call completions, API responses, timers. The state machine does not decide whether to transition &mdash; it transitions when the event fires.
+</p>
+
+<div class="diagram"><span class="hl">States:</span>  idle ──▶ building ──▶ testing ──▶ deploying ──▶ validating ──▶ done
+                          │            │              │               │
+                          ▼            ▼              ▼               ▼
+                       <span class="con">build_failed</span>  <span class="con">test_failed</span>   <span class="con">deploy_failed</span>  <span class="con">validation_failed</span>
+                          │            │              │               │
+                          └────────────┴──────────────┴───────────────┘
+                                                 │
+                                          <span class="ac">retry</span> (max 3) ──▶ <span class="con">escalate</span>
+
+<span class="hl">Trigger:</span> bus message "build/done" fires transition building → testing
+<span class="hl">No judgment involved.</span> Event arrives, state changes.</div>
+
+<p>
+  Properties: fast (microseconds), cheap (no LLM), predictable (same input always produces same transition), auditable (state transitions are logged).
+</p>
+
+<h3>Agent State Machines</h3>
+
+<p>
+  Often proposed in agent framework docs: "the agent is in the planning state, then transitions to execution." But how does the transition happen? The LLM <em>decides</em> it has finished planning. The transition is probabilistic, not deterministic.
+</p>
+
+<div class="diagram"><span class="hl">Proposed:</span>   planning ──"I'm done planning"──▶ execution
+
+<span class="con">Reality:</span>    planning ──(LLM thinks it's done)──▶ execution
+                          │
+                   (but is it really done?)
+                          │
+                   (depends on context window,
+                    prompt position, temperature,
+                    how many tokens remain...)</div>
+
+<p>
+  <strong>If transitions are fuzzy, it is not a state machine.</strong> It is prompting with extra vocabulary. Calling it a "state machine" imports expectations of determinism that do not hold. The agent may skip states, revisit states, or invent states that were not in the design.
+</p>
+
+<h3>When Each Applies</h3>
+
+<table>
+  <tr>
+    <th>Dimension</th>
+    <th>Software SM</th>
+    <th>Agent SM</th>
+  </tr>
+  <tr>
+    <td><strong>Transitions</strong></td>
+    <td>Deterministic, event-triggered</td>
+    <td>Probabilistic, LLM-decided</td>
+  </tr>
+  <tr>
+    <td><strong>Speed</strong></td>
+    <td>Microseconds</td>
+    <td>Seconds (LLM inference)</td>
+  </tr>
+  <tr>
+    <td><strong>Cost</strong></td>
+    <td>Zero (runs in code)</td>
+    <td>API call per transition decision</td>
+  </tr>
+  <tr>
+    <td><strong>Predictability</strong></td>
+    <td>100% given same event</td>
+    <td>Varies with context, prompt, model version</td>
+  </tr>
+  <tr>
+    <td><strong>Best for</strong></td>
+    <td>Lifecycle management, retry logic, build pipelines, mode switching</td>
+    <td>Within-state reasoning, tool selection, response generation</td>
+  </tr>
+  <tr>
+    <td><strong>Failure mode</strong></td>
+    <td>Bug in transition logic (fixable)</td>
+    <td>Drift, skipped states, invented states (hard to detect)</td>
+  </tr>
+</table>
+
+<hr>
+
+<h2>4. The Hybrid Model</h2>
+
+<p>
+  The resolution: <strong>software enforces transitions, agent handles judgment within states.</strong>
+</p>
+
+<p>
+  Don't trust the agent to manage its own state transitions. Don't trust the software to make nuanced decisions within a state. Each does what it is good at.
+</p>
+
+<div class="diagram">┌──────────────────────────────────────────────────────────────┐
+│                   <span class="ac">Software State Machine</span>                     │
+│                                                              │
+│  <span class="hl">brainstorm</span> ──event──▶ <span class="hl">execution</span> ──event──▶ <span class="hl">validation</span> ──event──▶ <span class="hl">done</span>  │
+│      │                   │                    │                │
+│      ▼                   ▼                    ▼                │
+│  ┌────────┐         ┌────────┐          ┌────────┐            │
+│  │ <span class="lk">Agent</span>  │         │ <span class="lk">Agent</span>  │          │ <span class="lk">Agent</span>  │            │
+│  │ reads, │         │ edits, │          │ checks │            │
+│  │ thinks,│         │ builds,│          │ tests, │            │
+│  │ chats  │         │ deploys│          │ verifies│           │
+│  └────────┘         └────────┘          └────────┘            │
+│                                                              │
+│  <span class="ac">Transitions:</span> bus messages, tool completions, chat commands      │
+│  <span class="lk">Within-state:</span> agent judgment, LLM reasoning, tool selection    │
+└──────────────────────────────────────────────────────────────┘</div>
+
+<p>
+  This maps directly to the reactive tailer (software SM) + planner (agent judgment) architecture from the <a href="agent-task-orchestration.html">Task Orchestration research</a>. The tailer detects events and drives transitions. The agent operates within the boundaries the current state allows.
+</p>
+
+<h4>Key Principle: Observable Events as Transition Triggers</h4>
+
+<p>
+  Transitions must be triggered by events the software can observe mechanically:
+</p>
+
+<ul>
+  <li><strong>Bus messages:</strong> <code>build/done</code>, <code>deploy/done</code>, <code>dispatch/confirmed</code></li>
+  <li><strong>Tool-call completions:</strong> agent called <code>git commit</code>, agent called <code>docker compose up</code></li>
+  <li><strong>Chat commands:</strong> user says <code>!approve</code>, <code>!validate</code>, <code>!brainstorm</code></li>
+  <li><strong>Timers:</strong> 30 seconds without activity, build timeout reached</li>
+  <li><strong>External API state:</strong> GitHub PR merged, CI check passed</li>
+</ul>
+
+<p>
+  The agent does not choose when to leave a state. The software detects the condition and switches the mode. The agent operates within the new mode's constraints.
+</p>
+
+<hr>
+
+<h2>5. Mode Controller Design</h2>
+
+<p>
+  The enforcement mechanism for the hybrid model is <strong>tool restriction</strong>. Each behavioral mode exposes a different set of tools. The agent physically cannot take actions outside its current mode because the tools are not available.
+</p>
+
+<h3>Example Modes</h3>
+
+<div class="mode-box brainstorm">
+  <div class="mode-label">Brainstorm Mode</div>
+  <p><strong>Purpose:</strong> Explore ideas, read code, discuss approaches. No changes to the codebase.</p>
+  <p><strong>Allowed tools:</strong> <code>read</code>, <code>grep</code>, <code>glob</code>, <code>chat-bridge</code>, <code>write</code> (restricted to <code>assets/plans/</code> only)</p>
+  <p><strong>Blocked tools:</strong> <code>edit</code>, <code>bash</code> (except read-only commands), <code>git commit</code>, <code>docker</code></p>
+  <p><strong>Exit trigger:</strong> User approves a plan via chat command (<code>!approve</code>) or voice confirmation.</p>
+</div>
+
+<div class="mode-box execution">
+  <div class="mode-label">Execution Mode</div>
+  <p><strong>Purpose:</strong> Implement the agreed plan. Full tool access.</p>
+  <p><strong>Allowed tools:</strong> All &mdash; <code>read</code>, <code>edit</code>, <code>write</code>, <code>bash</code>, <code>git</code>, <code>docker</code>, <code>chat-bridge</code></p>
+  <p><strong>Blocked tools:</strong> None (current default behavior)</p>
+  <p><strong>Exit trigger:</strong> Agent calls a "done" tool, or dispatches to a worker. Software SM transitions to validation.</p>
+</div>
+
+<div class="mode-box validation">
+  <div class="mode-label">Validation Mode</div>
+  <p><strong>Purpose:</strong> Verify the work is correct. Can read and check, cannot change.</p>
+  <p><strong>Allowed tools:</strong> <code>read</code>, <code>grep</code>, <code>glob</code>, <code>bash</code> (read-only: <code>curl</code>, <code>docker logs</code>, <code>git status</code>), <code>chat-bridge</code>, GitHub API (read), Linear API (read)</p>
+  <p><strong>Blocked tools:</strong> <code>edit</code>, <code>write</code>, <code>git commit</code>, <code>docker compose up</code></p>
+  <p><strong>Exit trigger:</strong> All validation checks pass (software SM verifies), or agent escalates a failure to the user.</p>
+</div>
+
+<h3>Tool Sets Per Mode</h3>
+
+<table>
+  <tr>
+    <th>Tool</th>
+    <th>Brainstorm</th>
+    <th>Execution</th>
+    <th>Validation</th>
+  </tr>
+  <tr>
+    <td><code>read</code></td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>Yes</td>
+  </tr>
+  <tr>
+    <td><code>grep</code> / <code>glob</code></td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>Yes</td>
+  </tr>
+  <tr>
+    <td><code>chat-bridge</code></td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>Yes</td>
+  </tr>
+  <tr>
+    <td><code>edit</code></td>
+    <td>&mdash;</td>
+    <td>Yes</td>
+    <td>&mdash;</td>
+  </tr>
+  <tr>
+    <td><code>write</code></td>
+    <td>Plans only</td>
+    <td>Yes</td>
+    <td>&mdash;</td>
+  </tr>
+  <tr>
+    <td><code>bash</code> (mutating)</td>
+    <td>&mdash;</td>
+    <td>Yes</td>
+    <td>&mdash;</td>
+  </tr>
+  <tr>
+    <td><code>bash</code> (read-only)</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>Yes</td>
+  </tr>
+  <tr>
+    <td><code>git commit</code> / <code>push</code></td>
+    <td>&mdash;</td>
+    <td>Yes</td>
+    <td>&mdash;</td>
+  </tr>
+  <tr>
+    <td><code>docker compose</code></td>
+    <td>&mdash;</td>
+    <td>Yes</td>
+    <td>&mdash;</td>
+  </tr>
+  <tr>
+    <td>GitHub/Linear API (write)</td>
+    <td>&mdash;</td>
+    <td>Yes</td>
+    <td>&mdash;</td>
+  </tr>
+  <tr>
+    <td>GitHub/Linear API (read)</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>Yes</td>
+  </tr>
+</table>
+
+<h3>Transition Flow</h3>
+
+<div class="diagram"><span class="hl">user</span> ──"let's think about X"──▶ <span class="ac">mode controller</span> ──set──▶ <span class="lk">brainstorm</span>
+                                         │
+<span class="hl">user</span> ──"!approve"──────────────▶ <span class="ac">mode controller</span> ──set──▶ <span class="lk">execution</span>
+                                         │
+<span class="ac">sysbus</span> ──"dispatch/confirmed"──▶ <span class="ac">mode controller</span> ──set──▶ <span class="lk">validation</span>
+                                         │
+<span class="ac">validation checks</span> ──all pass──▶ <span class="ac">mode controller</span> ──set──▶ <span class="lk">idle</span>
+                                         │
+<span class="ac">validation checks</span> ──failure───▶ <span class="ac">mode controller</span> ──set──▶ <span class="lk">execution</span> (fix cycle)</div>
+
+<hr>
+
+<h2>6. Implementation Options</h2>
+
+<p>
+  Claude Code does not natively support dynamic tool sets. Three approaches can approximate it.
+</p>
+
+<div class="card alt-a">
+  <div class="card-title">A. MCP Proxy</div>
+  <div class="card-desc">
+    A proxy process sits between Claude Code and the actual MCP tool servers. The proxy holds the current mode and filters tool calls &mdash; allowed tools pass through, blocked tools return an error message explaining the restriction. Mode changes arrive via bus message or HTTP endpoint.
+  </div>
+</div>
+
+<table>
+  <tr>
+    <th></th>
+    <th>MCP Proxy</th>
+  </tr>
+  <tr>
+    <td class="pro">Pro</td>
+    <td>True enforcement &mdash; blocked tools are invisible or return errors</td>
+  </tr>
+  <tr>
+    <td class="pro">Pro</td>
+    <td>Single agent session, preserves context across mode changes</td>
+  </tr>
+  <tr>
+    <td class="pro">Pro</td>
+    <td>Mode switch is a bus message, not a session restart</td>
+  </tr>
+  <tr>
+    <td class="con">Con</td>
+    <td>Requires building an MCP proxy (new infrastructure)</td>
+  </tr>
+  <tr>
+    <td class="con">Con</td>
+    <td>Built-in tools (read, edit, bash) may not be interceptable via MCP</td>
+  </tr>
+</table>
+
+<div class="card alt-b">
+  <div class="card-title">B. Separate Sessions (Switchboard)</div>
+  <div class="card-desc">
+    Different Claude Code sessions for different modes, each with a different <code>.mcp.json</code> that only lists the tools for that mode. A software controller decides which session is active and routes messages to it. Context is passed between sessions via files or a shared state store.
+  </div>
+</div>
+
+<table>
+  <tr>
+    <th></th>
+    <th>Separate Sessions</th>
+  </tr>
+  <tr>
+    <td class="pro">Pro</td>
+    <td>Works today with vanilla Claude Code &mdash; no custom proxy needed</td>
+  </tr>
+  <tr>
+    <td class="pro">Pro</td>
+    <td>Complete isolation between modes &mdash; brainstorm session literally cannot edit</td>
+  </tr>
+  <tr>
+    <td class="con">Con</td>
+    <td>Context loss on switch &mdash; each session starts fresh or needs explicit handoff</td>
+  </tr>
+  <tr>
+    <td class="con">Con</td>
+    <td>Expensive &mdash; multiple concurrent Claude sessions</td>
+  </tr>
+  <tr>
+    <td class="con">Con</td>
+    <td>Latency on mode switch (session startup is seconds, not milliseconds)</td>
+  </tr>
+</table>
+
+<div class="card alt-c">
+  <div class="card-title">C. Hook-Based Soft Enforcement</div>
+  <div class="card-desc">
+    Use Claude Code hooks to intercept tool calls and reject those not allowed in the current mode. A mode state file (<code>/tmp/agent-mode</code>) is read by every hook. CLAUDE.md instructions tell the agent what mode it is in and what tools to use. Hooks catch violations.
+  </div>
+</div>
+
+<table>
+  <tr>
+    <th></th>
+    <th>Hook-Based</th>
+  </tr>
+  <tr>
+    <td class="pro">Pro</td>
+    <td>No new infrastructure &mdash; uses existing hook system</td>
+  </tr>
+  <tr>
+    <td class="pro">Pro</td>
+    <td>Single session, context preserved</td>
+  </tr>
+  <tr>
+    <td class="pro">Pro</td>
+    <td>Incremental &mdash; add one hook at a time for specific violations</td>
+  </tr>
+  <tr>
+    <td class="con">Con</td>
+    <td>Hooks only fire on tool calls, not on all agent actions</td>
+  </tr>
+  <tr>
+    <td class="con">Con</td>
+    <td>Agent still sees all tools and may attempt blocked ones repeatedly</td>
+  </tr>
+  <tr>
+    <td class="con">Con</td>
+    <td>Soft enforcement &mdash; the agent knows the tools exist and may try workarounds</td>
+  </tr>
+</table>
+
+<h4>Recommendation</h4>
+
+<p>
+  Start with <strong>C (hooks)</strong> for immediate value. It requires no new infrastructure and catches the most common violations (editing during brainstorm, deploying without validation). Move to <strong>A (MCP proxy)</strong> when the mode system proves useful and hook coverage is insufficient. Defer <strong>B (separate sessions)</strong> unless context isolation becomes a hard requirement.
+</p>
+
+<hr>
+
+<h2>7. Validation Case Study</h2>
+
+<p>
+  Walk through the "check your work" flow using the hybrid architecture.
+</p>
+
+<h4>Scenario</h4>
+<p>
+  The supervisor dispatches a task to a teammate: "Fix the broken CSS on the dashboard." The teammate completes the work and pushes a PR. The system must verify the fix before reporting success.
+</p>
+
+<h4>Step-by-Step</h4>
+
+<div class="diagram"><span class="hl">1. Dispatch</span>
+   supervisor ──dispatch──▶ teammate
+   mode controller: execution → <span class="lk">waiting</span>
+   (supervisor's tools restricted while waiting &mdash; no new dispatches)
+
+<span class="hl">2. Completion event</span>
+   sysbus ──"dispatch/confirmed"──▶ mode controller
+   teammate pushes PR, bus message: "pr/opened #250"
+   mode controller: waiting → <span class="lk">validation</span>
+   (tools restricted to read-only + check commands)
+
+<span class="hl">3. Agent runs validation (within validation mode)</span>
+   agent judgment decides WHAT to check:
+   ├── curl the dashboard page
+   ├── check nginx logs for 404s
+   ├── verify PR #250 targets main
+   ├── check Linear issue status
+   └── run <code>vitest</code> for CSS-related tests
+
+   agent CANNOT:
+   ├── edit files (tool blocked)
+   ├── deploy (tool blocked)
+   └── merge the PR (tool blocked)
+
+<span class="hl">4a. All checks pass</span>
+   agent reports: "all checks pass"
+   software SM detects pass condition → <span class="lk">done</span>
+   mode controller: validation → idle
+   chat-bridge: "Dashboard CSS fix verified. PR #250 ready to merge."
+
+<span class="hl">4b. Check fails</span>
+   agent reports: "404 on dashboard.css"
+   software SM detects failure → <span class="lk">execution</span> (fix cycle)
+   mode controller: validation → execution
+   chat-bridge: "Validation failed &mdash; CSS file missing. Re-entering execution."</div>
+
+<h4>What the Hybrid Prevents</h4>
+
+<ul>
+  <li><strong>Without hybrid:</strong> Agent completes task, skips validation, says "done." User discovers the dashboard is broken an hour later.</li>
+  <li><strong>With hybrid:</strong> Software SM forces the agent into validation mode after task completion. The agent cannot report "done" until the software SM transitions out of validation. The agent cannot fix things in validation mode &mdash; it can only check. If something is wrong, it must go back to execution mode (triggered by the software SM detecting a failure report).</li>
+</ul>
+
+<h4>Cross-Checking Sources</h4>
+
+<p>
+  Validation mode is where multi-source cross-checking happens. The agent, restricted to read-only tools, checks:
+</p>
+
+<table>
+  <tr>
+    <th>Source</th>
+    <th>What to Check</th>
+    <th>Failure Condition</th>
+  </tr>
+  <tr>
+    <td>GitHub PR</td>
+    <td>PR exists, targets main, CI passing</td>
+    <td>PR missing, CI red, wrong base branch</td>
+  </tr>
+  <tr>
+    <td>Deployment</td>
+    <td>Health endpoint, nginx logs, page loads</td>
+    <td>404s, 502s, health check failure</td>
+  </tr>
+  <tr>
+    <td>Linear</td>
+    <td>Issue status matches work state</td>
+    <td>Issue still "in progress" after PR merged</td>
+  </tr>
+  <tr>
+    <td>Test suite</td>
+    <td>Relevant tests pass</td>
+    <td>New failures in affected test files</td>
+  </tr>
+  <tr>
+    <td>Git state</td>
+    <td>No uncommitted changes, branch is clean</td>
+    <td>Leftover debug code, untracked files</td>
+  </tr>
+</table>
+
+<p>
+  The software SM does not know what "validation" means for a given task. That is agent judgment. The software SM only knows: "you are in validation mode, you can only read, and you cannot leave until you report pass or fail."
+</p>
+
+<hr>
+
+<h2>8. Open Questions</h2>
+
+<ul>
+  <li><strong>Granularity of bash restriction.</strong> In validation mode, <code>bash</code> should allow <code>curl</code> and <code>docker logs</code> but block <code>docker compose up</code>. Filtering bash commands by content requires parsing the command string &mdash; fragile, but achievable with an allowlist of prefixes.</li>
+  <li><strong>Mode persistence across sessions.</strong> If the agent session restarts mid-validation, does it resume in validation mode? Requires persisting mode state to disk and reading it on startup.</li>
+  <li><strong>Agent awareness of mode.</strong> Should the agent know what mode it is in? Probably yes &mdash; the CLAUDE.md should state the current mode and its constraints. This helps the agent work within the mode rather than fighting the restrictions.</li>
+  <li><strong>Multi-agent mode coordination.</strong> If the supervisor is in validation mode and a teammate reports a new issue, does the supervisor need to exit validation to handle it? Mode preemption rules need definition.</li>
+  <li><strong>Mode for the user.</strong> Can the user override the mode controller? Probably yes &mdash; a <code>!force-execute</code> command should bypass validation if the user knows what they are doing. The mode controller serves the user, not the other way around.</li>
+</ul>
+
+<!-- published: PENDING @ PENDING -->
+</body>
+</html>
