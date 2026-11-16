@@ -2,3 +2,79 @@
 [main 514bdc9] auto-publish: index.html,task-state.html
  2 files changed, 233 deletions(-)
  delete mode 100644 task-state.html
+To https://github.com/underscorenygren/mcc-docs.git
+   8ce51c8..514bdc9  main -> main
+2026-11-14T23:19:59Z published: index.html,task-state.html
+[main ee36de4] auto-publish: agent-task-orchestration.html
+ 1 file changed, 636 insertions(+)
+ create mode 100644 agent-task-orchestration.html
+To https://github.com/underscorenygren/mcc-docs.git
+   cc3674f..ee36de4  main -> main
+2026-11-15T00:42:35Z published: agent-task-orchestration.html
+[main 418bd0c] auto-publish: agent-modes-and-state.html
+ 1 file changed, 731 insertions(+)
+ create mode 100644 agent-modes-and-state.html
+To https://github.com/underscorenygren/mcc-docs.git
+   5c0618d..418bd0c  main -> main
+2026-11-15T18:49:14Z published: agent-modes-and-state.html
+[main 1e43245] auto-publish: agent-task-orchestration.html,index.html
+ 2 files changed, 8 insertions(+)
+To https://github.com/underscorenygren/mcc-docs.git
+   418bd0c..1e43245  main -> main
+2026-11-15T18:49:46Z published: agent-task-orchestration.html,index.html
+[main b4af17a] auto-publish: agent-task-orchestration.html
+ 1 file changed, 253 insertions(+)
+To https://github.com/underscorenygren/mcc-docs.git
+   974d481..b4af17a  main -> main
+2026-11-15T18:54:48Z published: agent-task-orchestration.html
+On branch main
+Your branch is ahead of 'origin/main' by 1 commit.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   auto-publish.log
+
+no changes added to commit (use "git add" and/or "git commit -a")
+To https://github.com/underscorenygren/mcc-docs.git
+   b4af17a..64bd431  main -> main
+2026-11-15T20:28:54Z published: index.html,terminology.html
+[main 8d2808d] auto-publish: spore-schema.html
+ 1 file changed, 285 insertions(+)
+ create mode 100644 spore-schema.html
+To https://github.com/underscorenygren/mcc-docs.git
+   64bd431..8d2808d  main -> main
+2026-11-15T20:52:26Z published: spore-schema.html
+[auto/trip-research 5229fa4] auto-publish: trip-constraints.html
+ 1 file changed, 129 insertions(+)
+ create mode 100644 trip-constraints.html
+Everything up-to-date
+2026-11-16T16:18:12Z published: trip-constraints.html
+[auto/trip-research faccd67] auto-publish: traveler-personas.html
+ 1 file changed, 199 insertions(+)
+ create mode 100644 traveler-personas.html
+Everything up-to-date
+2026-11-16T16:19:13Z published: traveler-personas.html
+[auto/trip-research 9768e5d] auto-publish: palm-springs-research.html
+ 1 file changed, 420 insertions(+)
+ create mode 100644 palm-springs-research.html
+Everything up-to-date
+2026-11-16T16:21:14Z published: palm-springs-research.html
+[auto/trip-research 34b5294] auto-publish: chile-dining.html,chile-lodge-comparison.html,chile-trip-status.html,colombia-research.html
+ 4 files changed, 708 insertions(+)
+ create mode 100644 colombia-research.html
+Everything up-to-date
+2026-11-16T16:24:14Z published: chile-dining.html,chile-lodge-comparison.html,chile-trip-status.html,colombia-research.html
+[main fabee15] auto-publish: trips/chile/chile-dining.html,trips/chile/chile-lodge-comparison.html,trips/chile/chile-trip-status.html,trips/colombia-research.html,trips/palm-springs-research.html,trips/traveler-personas.html,trips/trip-constraints.html
+ 7 files changed, 0 insertions(+), 0 deletions(-)
+ rename chile-dining.html => trips/chile/chile-dining.html (100%)
+ rename chile-lodge-comparison.html => trips/chile/chile-lodge-comparison.html (100%)
+ rename chile-trip-status.html => trips/chile/chile-trip-status.html (100%)
+ rename colombia-research.html => trips/colombia-research.html (100%)
+ rename palm-springs-research.html => trips/palm-springs-research.html (100%)
+ rename traveler-personas.html => trips/traveler-personas.html (100%)
+ rename trip-constraints.html => trips/trip-constraints.html (100%)
+To https://github.com/underscorenygren/mcc-docs.git
+   79a6f7c..fabee15  main -> main
+2026-11-16T16:27:16Z published: trips/chile/chile-dining.html,trips/chile/chile-lodge-comparison.html,trips/chile/chile-trip-status.html,trips/colombia-research.html,trips/palm-springs-research.html,trips/traveler-personas.html,trips/trip-constraints.html
