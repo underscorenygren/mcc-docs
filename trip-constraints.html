@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trip Constraints — Dec 2026 / Jan 2027</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .constraint-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  .constraint-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+  }
+  .constraint-card .label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .constraint-card .value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 0.2rem;
+  }
+  .constraint-card .detail {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+  }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+  <span style="color: var(--text-muted);"> / </span>
+  <span style="color: var(--text-muted);">Trip Planning</span>
+</nav>
+
+<h1>Trip Constraints</h1>
+<p class="subtitle">Essential parameters for the Dec 2026 / Jan 2027 trip. Extracted from the Chile/Patagonia research that has been deferred.</p>
+
+<div class="constraint-grid">
+  <div class="constraint-card">
+    <div class="label">Travelers</div>
+    <div class="value">Erik &amp; Lisa</div>
+    <div class="detail">2 people, couple trip</div>
+  </div>
+  <div class="constraint-card">
+    <div class="label">Target Dates</div>
+    <div class="value">Dec 29 &ndash; Jan 6</div>
+    <div class="detail">9 days max. Shorter OK (3&ndash;4 days for nearby destinations like Palm Springs).</div>
+  </div>
+  <div class="constraint-card">
+    <div class="label">Must Include</div>
+    <div class="value">New Year's Eve</div>
+    <div class="detail">NYE celebration is a core part of the trip, not just a date range.</div>
+  </div>
+  <div class="constraint-card">
+    <div class="label">Home Base</div>
+    <div class="value">Houston, TX</div>
+    <div class="detail">Flights from IAH (George Bush Intercontinental).</div>
+  </div>
+</div>
+
+<h2>Budget</h2>
+
+<p>Inferred from the Chile research, where three tiers were considered:</p>
+
+<div class="constraint-grid">
+  <div class="constraint-card">
+    <div class="label">Budget Tier</div>
+    <div class="value" style="color: var(--green);">$12&ndash;13k</div>
+    <div class="detail">Total for 2 people, 9-day international trip. Rio Serrano lodge tier.</div>
+  </div>
+  <div class="constraint-card">
+    <div class="label">Mid-Range Tier</div>
+    <div class="value" style="color: var(--link);">$17&ndash;18k</div>
+    <div class="detail">Las Torres lodge tier. This is where Erik was leaning for Chile.</div>
+  </div>
+  <div class="constraint-card">
+    <div class="label">Premium Tier</div>
+    <div class="value" style="color: var(--yellow);">$25&ndash;26k</div>
+    <div class="detail">Tierra Patagonia tier. Upper bound of consideration.</div>
+  </div>
+</div>
+
+<p>For a shorter domestic trip (Palm Springs, 3&ndash;4 days), the budget would naturally be lower &mdash; likely $3&ndash;6k total for 2 people at equivalent luxury tiers.</p>
+
+<h2>Hard Constraints</h2>
+
+<ul>
+  <li><strong>No visa required.</strong> Chile, Colombia, and Palm Springs (domestic) all meet this. US passport holders get 90-day visa-free entry to Colombia.</li>
+  <li><strong>Direct or one-stop flights from Houston.</strong> Chile required a nonstop United route. Palm Springs has direct flights. Colombia (Bogota) has direct United and Avianca flights from IAH (~5 hours).</li>
+  <li><strong>Moderate activity level.</strong> The Chile trip was deferred partly because the Patagonia hiking was too intensive. They want experiences, not endurance tests. Light walks, cultural exploration, and food are preferred over multi-hour high-difficulty hikes.</li>
+</ul>
+
+<h2>Soft Preferences (Inferred)</h2>
+
+<ul>
+  <li><strong>Food matters.</strong> The Chile research included a detailed dining guide with Michelin-star restaurants, wine tours, and meal-by-meal budgeting. Dining is a priority, not an afterthought.</li>
+  <li><strong>Comfort/luxury lodging.</strong> They were comparing $5,700&ndash;$20,000 all-inclusive lodges in Patagonia and $350&ndash;500/night city hotels (Ritz-Carlton Santiago, boutique hotels in Valparaiso). This is upper-tier accommodation.</li>
+  <li><strong>Cultural experiences over pure adventure.</strong> The Chile itinerary included wine country, street art in Valparaiso, Santiago food scene &mdash; not just outdoor activities.</li>
+  <li><strong>Relaxed pace.</strong> The Chile itinerary had rest days built in and lighter alternatives for active days. No packed schedules.</li>
+  <li><strong>NYE should be special.</strong> The Chile plan specifically centered NYE in Valparaiso for the fireworks spectacle. Whatever destination is chosen, NYE should be a highlight event.</li>
+</ul>
+
+<h2>What Changed</h2>
+
+<p>The Chile/Patagonia trip was deferred because the core draw (Torres del Paine) requires sustained high-intensity hiking that doesn't match the trip style Erik and Lisa want. The research was thorough &mdash; lodges, dining, flights, budget all mapped out &mdash; but the activity level was the dealbreaker.</p>
+
+<p>The two alternatives being researched are:</p>
+<ul>
+  <li><a href="palm-springs-research.html">Palm Springs</a> &mdash; shorter NYE trip (3&ndash;4 days), domestic, low-effort luxury.</li>
+  <li><a href="colombia-research.html">Colombia</a> &mdash; same dates (Dec 29 &ndash; Jan 6), multi-city cultural trip with food focus.</li>
+</ul>
+
+<p>See also: <a href="traveler-personas.html">Traveler Personas</a> for inferred preferences about how Erik and Lisa travel.</p>
+
+</body>
+</html>
