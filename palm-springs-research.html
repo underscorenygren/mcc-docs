@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palm Springs NYE — Trip Research</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+  }
+  .summary-card .label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .summary-card .value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 0.2rem;
+  }
+  .summary-card .detail {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+  }
+  .hotel-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin: 0.6rem 0;
+  }
+  .hotel-card .name {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #fff;
+  }
+  .hotel-card .meta {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 0.2rem;
+  }
+  .hotel-card .price {
+    color: var(--green);
+    font-weight: 600;
+    margin-top: 0.3rem;
+  }
+  .hotel-card .note {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+  }
+  .day-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin: 0.6rem 0;
+  }
+  .day-card .day-title {
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0.4rem;
+  }
+  .day-card .day-detail {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+  .badge {
+    display: inline-block;
+    padding: 0.12rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    vertical-align: middle;
+    margin-left: 0.3rem;
+  }
+  .badge-top { background: rgba(139,92,246,0.15); color: var(--accent); }
+  .badge-mid { background: rgba(93,173,226,0.15); color: var(--link); }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+  <span style="color: var(--text-muted);"> / </span>
+  <a href="trip-constraints.html" style="color: #5dade2; text-decoration: none;">Trip Planning</a>
+</nav>
+
+<h1>Palm Springs NYE</h1>
+<p class="subtitle">3&ndash;4 day luxury trip over New Year's Eve. Dec 30, 2026 &ndash; Jan 2, 2027.</p>
+
+<div class="summary-grid">
+  <div class="summary-card">
+    <div class="label">Duration</div>
+    <div class="value">3&ndash;4 days</div>
+    <div class="detail">Dec 30 &ndash; Jan 1 or Jan 2</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">Flight Time</div>
+    <div class="value">~3h 30m</div>
+    <div class="detail">IAH &rarr; PSP, direct flights available</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">Weather</div>
+    <div class="value">62&ndash;71&deg;F</div>
+    <div class="detail">Sunny, dry, cool evenings (40s&deg;F)</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">Est. Budget (2 ppl)</div>
+    <div class="value">$3,500&ndash;6,000</div>
+    <div class="detail">Flights + luxury hotel + dining + activities</div>
+  </div>
+</div>
+
+<h2>Why Palm Springs</h2>
+
+<div class="callout green">
+  <p>Based on the <a href="traveler-personas.html">traveler personas</a>: Palm Springs is a low-effort, high-reward option. No visa, no international logistics, short flight, resort-style relaxation with good food. It trades the "big trip" energy of Chile/Colombia for a refined, easy weekend with guaranteed sun and excellent dining. Good fit if the preference leans toward recharging over exploring.</p>
+</div>
+
+<h2>Flights from Houston (IAH)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Route</th>
+      <th>Airlines</th>
+      <th>Duration</th>
+      <th>Frequency</th>
+      <th>Price (RT, 2 ppl)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>IAH &rarr; PSP (direct)</td>
+      <td>United</td>
+      <td>~3h 30m</td>
+      <td>5 direct/week</td>
+      <td>$650&ndash;800</td>
+    </tr>
+    <tr>
+      <td>IAH &rarr; PSP (1 stop)</td>
+      <td>United, American, Southwest</td>
+      <td>~5&ndash;6h</td>
+      <td>Multiple daily</td>
+      <td>$500&ndash;700</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="font-size: 0.85rem; color: var(--text-muted);">December has fewer flights than other months (~9/week total). Book early. Direct United flights depart around 9:30 AM from IAH. Prices are estimates based on web search &mdash; check <a href="https://www.google.com/travel/flights?q=Flights+from+IAH+to+PSP+on+2026-12-30+return+2027-01-02&curr=USD" target="_blank" rel="noopener">Google Flights</a>, <a href="https://www.kayak.com/flights/IAH-PSP/2026-12-30/2027-01-02/2adults" target="_blank" rel="noopener">Kayak</a>, or <a href="https://www.united.com" target="_blank" rel="noopener">United.com</a> for current pricing.</p>
+
+<h2>Hotels &amp; Resorts</h2>
+
+<h3>Top Tier <span class="badge badge-top">Luxury</span></h3>
+
+<div class="hotel-card">
+  <div class="name">The Parker Palm Springs</div>
+  <div class="meta">Jonathan Adler-designed. Citrus gardens, 2 pools, Gene Autry estate. Norma's restaurant, Les Cactus bar.</div>
+  <div class="price">~$450&ndash;900+/night (holiday rates likely at upper end)</div>
+  <div class="note">Hosts its own NYE celebration with glamour and cocktails. One of the most distinctive properties in the desert. <a href="https://www.theparkerpalmsprings.com" target="_blank" rel="noopener">theparkerpalmsprings.com</a></div>
+</div>
+
+<div class="hotel-card">
+  <div class="name">The Ritz-Carlton, Rancho Mirage</div>
+  <div class="meta">Mountain-view resort. Spa, pool, fine dining (The Edge). 15 min from downtown Palm Springs.</div>
+  <div class="price">~$540&ndash;700/night (incl. $50 resort fee)</div>
+  <div class="note">Classic luxury chain option. Views of the Coachella Valley from the Santa Rosa mountain perch. <a href="https://www.ritzcarlton.com/en/hotels/ctdrc-the-ritz-carlton-rancho-mirage" target="_blank" rel="noopener">ritzcarlton.com</a></div>
+</div>
+
+<div class="hotel-card">
+  <div class="name">La Quinta Resort &amp; Club</div>
+  <div class="meta">Historic 1926 property. 41 pools, 5 golf courses, spa. 23 miles from Palm Springs.</div>
+  <div class="price">~$500&ndash;1,100+/night</div>
+  <div class="note">More of a full resort campus. Good if golf or spa days are appealing. Farther from Palm Springs downtown. <a href="https://www.laquintaresort.com" target="_blank" rel="noopener">laquintaresort.com</a></div>
+</div>
+
+<h3>Mid-Luxury <span class="badge badge-mid">Distinctive</span></h3>
+
+<div class="hotel-card">
+  <div class="name">Kimpton Rowan Palm Springs</div>
+  <div class="meta">Downtown Palm Springs rooftop hotel. 4 Saints restaurant (see dining). Pool deck with mountain views.</div>
+  <div class="price">~$300&ndash;500/night</div>
+  <div class="note">Best location for walkability &mdash; right on Palm Canyon Drive. 4 Saints offers a NYE prix-fixe. <a href="https://www.rowanpalmsprings.com" target="_blank" rel="noopener">rowanpalmsprings.com</a></div>
+</div>
+
+<div class="hotel-card">
+  <div class="name">Avalon Hotel Palm Springs</div>
+  <div class="meta">Mid-century modern boutique. Marlowe's restaurant. 3 pools. Intimate, design-forward.</div>
+  <div class="price">~$250&ndash;400/night</div>
+  <div class="note">Hosts its own NYE celebration at Marlowe's. Good Old Hollywood vibe. <a href="https://www.avalon-hotel.com" target="_blank" rel="noopener">avalon-hotel.com</a></div>
+</div>
+
+<h2>NYE Celebrations</h2>
+
+<div class="hotel-card">
+  <div class="name">Agua Caliente Casino &mdash; Outdoor Fireworks Extravaganza</div>
+  <div class="meta">The main public event. Live music (Liquid Blue, Eevaan Tre), food trucks, beer garden, VIP seating.</div>
+  <div class="price">From $59/person</div>
+  <div class="note">Thursday, Dec 31 at 8 PM. Fireworks at midnight. Biggest public celebration in the area. <a href="https://www.aguacalientecasinos.com/casino/pop-royale-new-years-eve-celebration/" target="_blank" rel="noopener">aguacalientecasinos.com</a></div>
+</div>
+
+<div class="hotel-card">
+  <div class="name">Purple Room Supper Club</div>
+  <div class="meta">Sinatra-era supper club. Three-course dinner, live jazz ensemble.</div>
+  <div class="price">Needs verification &mdash; likely $150&ndash;250/person</div>
+  <div class="note">Old Palm Springs glamour. Intimate and theatrical. Book well ahead for NYE.</div>
+</div>
+
+<div class="hotel-card">
+  <div class="name">Hotel NYE events</div>
+  <div class="meta">The Parker, Avalon (Marlowe's), and Kimpton Rowan (4 Saints) all host their own celebrations.</div>
+  <div class="price">Varies &mdash; typically included or $100&ndash;200/person prix-fixe</div>
+  <div class="note">The easiest option: celebrate where you sleep. No driving. The Parker's celebration is the most upscale of the bunch.</div>
+</div>
+
+<p style="font-size: 0.85rem; color: var(--text-muted);">NYE 2026 falls on a Thursday, making it easy to extend into a long weekend.</p>
+
+<h2>Dining</h2>
+
+<p>Palm Springs has 9 MICHELIN Guide restaurants as of 2026. The food scene has expanded significantly in recent years.</p>
+
+<div class="hotel-card">
+  <div class="name">Workshop Kitchen + Bar</div>
+  <div class="meta">MICHELIN Guide. Modern Californian, farm-to-table. Converted 1920s building, soaring ceilings.</div>
+  <div class="price">$150&ndash;250 for 2 with wine</div>
+  <div class="note">The most architecturally striking restaurant in Palm Springs. Seasonal menus. <a href="https://www.workshoppalmsprings.com" target="_blank" rel="noopener">workshoppalmsprings.com</a></div>
+</div>
+
+<div class="hotel-card">
+  <div class="name">Copley's on Palm Canyon</div>
+  <div class="meta">Cary Grant's former guesthouse. Courtyard dining, contemporary American.</div>
+  <div class="price">$120&ndash;200 for 2 with wine</div>
+  <div class="note">Offers a NYE prix-fixe menu. One of the most established fine dining spots in Palm Springs. <a href="https://www.copleyspalmsprings.com" target="_blank" rel="noopener">copleyspalmsprings.com</a></div>
+</div>
+
+<div class="hotel-card">
+  <div class="name">4 Saints (Kimpton Rowan)</div>
+  <div class="meta">Rooftop restaurant. Modern American, craft cocktails. Mountain views.</div>
+  <div class="price">$100&ndash;180 for 2 with wine</div>
+  <div class="note">NYE prix-fixe available. Good sunset-to-midnight option if staying at the Rowan.</div>
+</div>
+
+<div class="hotel-card">
+  <div class="name">Norma's (The Parker)</div>
+  <div class="meta">The Parker's on-site restaurant. Brunch institution, dinner service.</div>
+  <div class="price">$80&ndash;150 for 2</div>
+  <div class="note">Famous for extravagant brunch. If staying at The Parker, this is the default morning spot.</div>
+</div>
+
+<h2>Day Trips &amp; Activities</h2>
+
+<h3>Joshua Tree National Park</h3>
+<p>~1 hour drive from Palm Springs. December/January is ideal &mdash; cool enough to hike any time of day, with manageable crowds on weekday mornings. Key stops: Skull Rock, Arch Rock, Cholla Cactus Garden. Plan for 3&ndash;5 hours. Pack layers (it can be cold and windy at higher elevations) and plenty of water.</p>
+
+<h3>Palm Springs Aerial Tramway</h3>
+<p>10-minute rotating gondola ride from the desert floor (warm) to Mt. San Jacinto at 8,516 feet (possibly snow). Temperature drop of 30&ndash;40&deg;F from base to summit. Short nature walks at the top, restaurant/bar at the mountain station. ~2&ndash;3 hours total.</p>
+
+<h3>Indian Canyons</h3>
+<p>Palm oasis hikes on Agua Caliente tribal land. Easy to moderate trails (1&ndash;3 hours). Andreas Canyon and Palm Canyon are the highlights. Good morning activity before brunch.</p>
+
+<h3>Shopping &amp; Culture</h3>
+<p>El Paseo in Palm Desert is the "Rodeo Drive of the desert" &mdash; galleries, boutiques, restaurants. Palm Springs Art Museum is worth a visit. Mid-century modern architecture tours are a Palm Springs specialty.</p>
+
+<h3>Spa Day</h3>
+<p>Two Bunch Palms (a natural hot springs resort in Desert Hot Springs, 20 min away) offers day passes. Most resort hotels (Parker, Ritz-Carlton, La Quinta) have full-service spas.</p>
+
+<h2>Weather</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>December Average</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Daytime high</td>
+      <td>62&ndash;71&deg;F (17&ndash;22&deg;C)</td>
+    </tr>
+    <tr>
+      <td>Overnight low</td>
+      <td>41&ndash;49&deg;F (5&ndash;9&deg;C)</td>
+    </tr>
+    <tr>
+      <td>Rain</td>
+      <td>Rare &mdash; desert climate</td>
+    </tr>
+    <tr>
+      <td>Sunshine</td>
+      <td>8+ hours/day</td>
+    </tr>
+    <tr>
+      <td>UV</td>
+      <td>Moderate (still sunscreen territory)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="font-size: 0.85rem; color: var(--text-muted);">Evenings are chilly &mdash; bring a jacket for outdoor NYE events. Days are pleasant for pool time, hiking, and outdoor dining.</p>
+
+<h2>Suggested Itinerary</h2>
+
+<div class="day-card">
+  <div class="day-title">Dec 30 (Tue) &mdash; Arrive &amp; Settle In</div>
+  <div class="day-detail">
+    Morning flight IAH &rarr; PSP (direct, ~3.5h). Check into hotel. Afternoon pool time or walk Palm Canyon Drive. Dinner at Workshop Kitchen + Bar or Copley's.
+  </div>
+</div>
+
+<div class="day-card">
+  <div class="day-title">Dec 31 (Wed) &mdash; NYE</div>
+  <div class="day-detail">
+    Morning: brunch at Norma's (if at Parker) or a Palm Canyon cafe. Midday: spa treatment or Palm Springs Art Museum. Late afternoon: get ready for the evening. NYE dinner at the hotel or Purple Room Supper Club. Midnight: fireworks at Agua Caliente or private hotel celebration.
+  </div>
+</div>
+
+<div class="day-card">
+  <div class="day-title">Jan 1 (Thu) &mdash; Joshua Tree Day Trip</div>
+  <div class="day-detail">
+    Late morning start (recovery from NYE). Drive to Joshua Tree (~1h). Scenic drive + short walks (Skull Rock, Cholla Cactus Garden). Return for dinner. Or: substitute a spa day at Two Bunch Palms if nature isn't calling.
+  </div>
+</div>
+
+<div class="day-card">
+  <div class="day-title">Jan 2 (Fri) &mdash; Depart</div>
+  <div class="day-detail">
+    Morning: Indian Canyons walk or El Paseo shopping. Afternoon flight home. Or extend one more night for a fully relaxed trip.
+  </div>
+</div>
+
+<h2>Budget Estimate (2 people)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Comfortable</th>
+      <th>Premium</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Flights (RT, 2 ppl)</td>
+      <td>$650</td>
+      <td>$800</td>
+    </tr>
+    <tr>
+      <td>Hotel (3 nights)</td>
+      <td>$1,200 (Kimpton/Avalon)</td>
+      <td>$2,400 (Parker/Ritz)</td>
+    </tr>
+    <tr>
+      <td>Dining (3 days)</td>
+      <td>$600</td>
+      <td>$1,000</td>
+    </tr>
+    <tr>
+      <td>NYE event/dinner</td>
+      <td>$200</td>
+      <td>$500</td>
+    </tr>
+    <tr>
+      <td>Activities (Joshua Tree, spa, etc.)</td>
+      <td>$150</td>
+      <td>$400</td>
+    </tr>
+    <tr>
+      <td>Car rental (3 days)</td>
+      <td>$200</td>
+      <td>$300</td>
+    </tr>
+    <tr style="border-top: 2px solid var(--border);">
+      <td><strong>Total (2 people)</strong></td>
+      <td><strong style="color: var(--green);">~$3,000&ndash;3,500</strong></td>
+      <td><strong style="color: var(--yellow);">~$5,000&ndash;5,500</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="font-size: 0.85rem; color: var(--text-muted);">Note: a car rental is recommended. Palm Springs attractions are spread across the Coachella Valley &mdash; Joshua Tree, La Quinta, Rancho Mirage are all separate towns. Uber/Lyft coverage is inconsistent outside downtown.</p>
+
+<h2>Why This Could Work</h2>
+
+<ul>
+  <li><strong>Zero friction.</strong> Domestic flight, no passport/visa logistics, no language barrier, no currency exchange. Plan it in an afternoon, fly out in a few days.</li>
+  <li><strong>Right activity level.</strong> Pool, short hikes, art, dining, spa. Everything is optional and low-intensity. Matches the "moderate activity, relaxed pace" preference.</li>
+  <li><strong>Food scene is real.</strong> 9 MICHELIN Guide restaurants. Workshop Kitchen + Bar alone would satisfy the "one memorable fine dining experience" preference.</li>
+  <li><strong>NYE is covered.</strong> Multiple celebration options from raucous (Agua Caliente fireworks) to intimate (Purple Room jazz). Hotel-based celebrations mean no driving.</li>
+  <li><strong>Budget-friendly.</strong> At $3&ndash;5k total, it's a fraction of the Chile budget. Could be positioned as the "easy NYE" with a bigger international trip planned for another time.</li>
+</ul>
+
+<h2>Tradeoffs</h2>
+
+<ul>
+  <li><strong>Not a "big trip."</strong> Palm Springs is lovely but not an adventure destination. If the goal is a transformative travel experience, this might feel like a nice weekend rather than a real trip.</li>
+  <li><strong>Familiar territory.</strong> No cultural novelty &mdash; it's southern California resort life. Depending on how much they value new experiences, this could be pro (easy, relaxed) or con (nothing to discover).</li>
+  <li><strong>NYE can be quiet.</strong> Palm Springs NYE is not Valparaiso or Cartagena. It's resort-party-scale, not city-wide-celebration-scale.</li>
+</ul>
+
+<p style="margin-top: 2rem;">Compare with: <a href="colombia-research.html">Colombia multi-city trip</a> (same dates, full international itinerary). See <a href="trip-constraints.html">Trip Constraints</a> and <a href="traveler-personas.html">Traveler Personas</a> for context.</p>
+
+</body>
+</html>
