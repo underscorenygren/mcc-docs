@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Activity Viewer Landscape — Claude Code Session Observability</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .tool-row { margin-bottom: 2rem; }
+  .tool-row h3 { margin-bottom: 0.25rem; }
+  .tool-meta { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.4rem; }
+  .tool-meta a { color: #5dade2; text-decoration: none; }
+  .tool-meta a:hover { text-decoration: underline; }
+  .differentiator { font-size: 0.85rem; border-left: 3px solid #5dade2; padding: 0.4rem 0.8rem; margin-top: 0.5rem; background: rgba(93, 173, 226, 0.05); }
+  .cc-badge { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 0.1em 0.5em; border-radius: 3px; margin-left: 0.4rem; vertical-align: middle; }
+  .cc-yes { background: #1a3a2a; color: #6fcf97; }
+  .cc-partial { background: #3a2e10; color: #f0c040; }
+  .cc-no { background: #2a1a1a; color: #888; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0 2rem; }
+  th, td { text-align: left; padding: 0.4rem 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+  th { color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .gap-item { margin-bottom: 0.6rem; padding-left: 1rem; border-left: 2px solid var(--border); }
+  .gap-item strong { display: block; }
+  .tl-dr { background: rgba(93, 173, 226, 0.08); border: 1px solid rgba(93, 173, 226, 0.2); border-radius: 6px; padding: 1rem 1.25rem; margin-bottom: 2rem; }
+  .tl-dr p { margin: 0.3rem 0; font-size: 0.9rem; }
+  .section-intro { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+</nav>
+
+<h1>Activity Viewer Landscape</h1>
+<p class="subtitle">Who else is building session viewers and observability tools for AI coding agents — and where the gaps are.</p>
+
+<div class="tl-dr">
+  <strong style="display:block; margin-bottom:0.4rem;">TL;DR</strong>
+  <p>There are ~15 open-source Claude Code JSONL viewers and three major observability platforms (Langfuse, LangSmith, W&amp;B Weave) with native Claude Code integrations. Almost all focus on cost/token analytics, browsable conversation history, and static traces. What nobody does: a first-class <strong>agent state model</strong> — tracking background tasks, teammate dispatch, and their lifecycle as they run. The WebSocket-served real-time feed, timeline scrubber, and jq-style field filters we built in mcc-activity are largely absent from this space.</p>
+</div>
+
+<h2>Landscape — What Exists</h2>
+<p class="section-intro">The ecosystem splits into three tiers: local JSONL viewers (tightly Claude Code-specific), platform observability tools (framework-agnostic, hook-based), and cross-agent tools (support Cursor, Devin, Aider, etc.).</p>
+
+<h3 style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem;">Tier 1 — Claude Code JSONL Viewers</h3>
+
+<div class="tool-row">
+  <h3>Claudoscope <span class="cc-badge cc-yes">Claude Code</span></h3>
+  <div class="tool-meta"><a href="https://github.com/cordwainersmith/claudoscope">github.com/cordwainersmith/claudoscope</a> &mdash; Native macOS app, MIT, Swift/SwiftUI</div>
+  <p>Native macOS menu bar app that monitors <code>~/.claude/projects/</code> via FSEvents. Browses session history, searches across conversations, tracks token cost per project, detects leaked credentials in session files in real time, and lints <code>CLAUDE.md</code> configs (19 rules). Sends native macOS notifications when Claude needs permission or finishes a turn. Zero telemetry, fully local.</p>
+  <div class="differentiator">Differentiator: secrets detection + config linting inside the viewer. Only tool that actively monitors for credential leaks in transcripts.</div>
+</div>
+
+<div class="tool-row">
+  <h3>claude-code-trace <span class="cc-badge cc-yes">Claude Code</span></h3>
+  <div class="tool-meta"><a href="https://github.com/delexw/claude-code-trace">github.com/delexw/claude-code-trace</a> &mdash; TypeScript, web + TUI</div>
+  <p>Session log viewer for <code>~/.claude/projects</code> JSONL files. Browses conversations, tool calls, tokens, and live-tails active sessions. Available as a desktop app, web UI, and TUI (terminal).</p>
+  <div class="differentiator">Differentiator: TUI mode — the only viewer that works in the terminal without a browser.</div>
+</div>
+
+<div class="tool-row">
+  <h3>claude-transcript-viewer <span class="cc-badge cc-yes">Claude Code</span></h3>
+  <div class="tool-meta"><a href="https://github.com/WiseeCarrot/claude-transcript-viewer">github.com/WiseeCarrot/claude-transcript-viewer</a> &mdash; Tauri/Rust desktop app</div>
+  <p>Tauri + Rust desktop app that turns raw JSONL logs into a browsable timeline. Tool calls are paired with their outputs, replies are markdown-rendered, and full-text search works across every session.</p>
+  <div class="differentiator">Differentiator: Tauri/Rust stack — closest to what mcc-activity chose (Rust WebSocket server). Tool call + output pairing as a first-class UI unit.</div>
+</div>
+
+<div class="tool-row">
+  <h3>claude-session-visualizer <span class="cc-badge cc-yes">Claude Code</span></h3>
+  <div class="tool-meta"><a href="https://github.com/anaypaul/claude-session-visualizer">github.com/anaypaul/claude-session-visualizer</a> &mdash; TypeScript, React Flow</div>
+  <p>Live visualization dashboard. Renders session execution as an interactive graph (React Flow) with error highlighting — failed tool calls glow red. Includes token burn charts, thinking trace explorer, and an error replay feature: a density strip on the timeline marks error locations, clicking shows the tool name, input, error message, and what happened next.</p>
+  <div class="differentiator">Differentiator: execution trees + error replay. The only tool with a visual dependency graph of tool calls and an error-focused replay UI.</div>
+</div>
+
+<div class="tool-row">
+  <h3>session-tree <span class="cc-badge cc-yes">Claude Code</span></h3>
+  <div class="tool-meta"><a href="https://github.com/roykollensvendsen/session-tree">github.com/roykollensvendsen/session-tree</a> &mdash; TypeScript</div>
+  <p>Live task-graph view of every Claude Code session on the machine. Supports replay — walk any session back through its history with your own prompts on the timeline.</p>
+  <div class="differentiator">Differentiator: interactive replay with the user's own prompts on the timeline — the most direct competitor to a scrubber-style replay.</div>
+</div>
+
+<div class="tool-row">
+  <h3>token-dashboard <span class="cc-badge cc-yes">Claude Code</span></h3>
+  <div class="tool-meta"><a href="https://github.com/nateherkai/token-dashboard">github.com/nateherkai/token-dashboard</a> &mdash; TypeScript</div>
+  <p>Per-prompt cost analytics, tool/file heatmaps, subagent attribution, cache analytics, and project comparisons — all from the JSONL transcripts.</p>
+  <div class="differentiator">Differentiator: cost analytics depth. Heatmaps by tool and file, subagent attribution per spend — the most sophisticated cost breakdown.</div>
+</div>
+
+<div class="tool-row">
+  <h3>claude-code-command-center <span class="cc-badge cc-yes">Claude Code</span></h3>
+  <div class="tool-meta"><a href="https://github.com/amahpour/claude-code-command-center">github.com/amahpour/claude-code-command-center</a> &mdash; TypeScript, web</div>
+  <p>Web-based dashboard for monitoring multiple Claude Code sessions simultaneously. JSONL Watcher monitors <code>~/.claude/projects/</code> for changes, shows session status, token usage, active tools, and subagents across all terminal instances at a glance.</p>
+  <div class="differentiator">Differentiator: multi-session monitoring in one view. Designed explicitly for running multiple Claude Code instances in parallel.</div>
+</div>
+
+<div class="tool-row">
+  <h3>transcript-viewer <span class="cc-badge cc-yes">Claude Code</span></h3>
+  <div class="tool-meta"><a href="https://github.com/juckele/transcript-viewer">github.com/juckele/transcript-viewer</a> &mdash; TypeScript, local web</div>
+  <p>Live local web viewer for session transcripts and token spend. Pages update live as sessions are written.</p>
+  <div class="differentiator">Differentiator: minimal — focused solely on live update fidelity without a heavy UI layer.</div>
+</div>
+
+<h3 style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2rem; margin-bottom: 1rem;">Tier 2 — Platform Observability (Hook-Based)</h3>
+
+<div class="tool-row">
+  <h3>Langfuse <span class="cc-badge cc-yes">Claude Code</span></h3>
+  <div class="tool-meta"><a href="https://langfuse.com/integrations/developer-tools/claude-code">langfuse.com/integrations/developer-tools/claude-code</a> &mdash; Open source + hosted</div>
+  <p>Hooks into Claude Code's lifecycle (stop hook) to ship sessions to Langfuse as traces. Each conversation turn, tool call, and model response becomes a structured trace with properly nested observations — including thinking blocks and token usage. Timestamps are backdated to match the original session timing. Supports team usage dashboards: attaches user identity so token spend can be broken down by developer or project.</p>
+  <div class="differentiator">Differentiator: proper trace nesting with thinking blocks. Most complete representation of multi-step tool-use loops in a trace store.</div>
+</div>
+
+<div class="tool-row">
+  <h3>LangSmith <span class="cc-badge cc-yes">Claude Code</span></h3>
+  <div class="tool-meta"><a href="https://devs30.com/en/blog/claude-code-tracing-langsmith-langfuse">devs30.com &mdash; LangChain / LangSmith</a> &mdash; Hosted (commercial)</div>
+  <p>Hooks into nine Claude Code lifecycle points: UserPromptSubmit, PreToolUse, PostToolUse, Stop, StopFailure, SubagentStop, PreCompact, PostCompact, SessionEnd. Each message is its own trace; tool and subagent spans nest inside. Ships traces to LangSmith where they can be clustered into Insights, used to build eval datasets, and monitored for regressions.</p>
+  <div class="differentiator">Differentiator: nine lifecycle hooks — the most granular Claude Code integration. SubagentStop + PreCompact hooks capture events no other platform sees.</div>
+</div>
+
+<div class="tool-row">
+  <h3>W&amp;B Weave <span class="cc-badge cc-yes">Claude Code</span></h3>
+  <div class="tool-meta"><a href="https://docs.wandb.ai/weave/guides/integrations/agents/claude-code-harness">docs.wandb.ai &mdash; Weights &amp; Biases Weave</a> &mdash; Hosted (commercial + free tier)</div>
+  <p>Plugin traces every Claude Code session automatically — no code changes required. Ships user prompts, Claude responses, tool inputs and outputs, file contents, shell commands, and fetched URLs. Each session is a top-level trace; individual turns and tool calls are child entries in the Traces tab. Rebuilt in 2026 specifically to handle agent debugging failures in production.</p>
+  <div class="differentiator">Differentiator: zero-code install (<code>npm install -g weave-claude-code</code>) — lowest friction of the platform integrations.</div>
+</div>
+
+<div class="tool-row">
+  <h3>AgentOps <span class="cc-badge cc-partial">Partial</span></h3>
+  <div class="tool-meta"><a href="https://github.com/AgentOps-AI/agentops">github.com/AgentOps-AI/agentops</a> &mdash; Python SDK, open source + hosted</div>
+  <p>Python SDK for AI agent monitoring. Records an agent's entire session — every LLM call, tool invocation, and step — and supports visual session replay with rewind and point-in-time control. Tracks token cost, latency, and errors. Renders inter-agent interactions as connected flows showing how messages and control pass between agents. Covers 400+ LLM models. Primary integration path is Python-based agents (CrewAI, OpenAI Agents SDK, LangChain, AutoGen); Claude Code hooks are possible via the event API but not first-class.</p>
+  <div class="differentiator">Differentiator: multi-agent flow visualization — the best tool for seeing how control passes between agents in a network, not just within one session.</div>
+</div>
+
+<h3 style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2rem; margin-bottom: 1rem;">Tier 3 — Cross-Agent / Multi-Tool</h3>
+
+<div class="tool-row">
+  <h3>AgentsView <span class="cc-badge cc-yes">Claude Code</span></h3>
+  <div class="tool-meta"><a href="https://github.com/kenn-io/agentsview">github.com/kenn-io/agentsview</a> &mdash; TypeScript</div>
+  <p>Local-first session search, analytics, and token statistics for coding agents. Supports Claude Code, Codex, Cursor, Aider, Devin CLI, OpenHands CLI, and 50+ others. Tool sequences dashboard follows errors, retries, tool switches, and recovery chains back to their recorded calls.</p>
+  <div class="differentiator">Differentiator: cross-agent breadth — unified interface for 50+ agents, the only tool that lets you compare tool call patterns across Claude Code vs Cursor vs Aider.</div>
+</div>
+
+<div class="tool-row">
+  <h3>cursor-trace <span class="cc-badge cc-no">Cursor only</span></h3>
+  <div class="tool-meta"><a href="https://github.com/dwqs/cursor-trace">github.com/dwqs/cursor-trace</a> &mdash; TypeScript</div>
+  <p>Browses and visualizes Cursor AI agent session transcripts. Features thinking detection, tool call inspection, session browser listing all projects and agent sessions, and HTML export.</p>
+  <div class="differentiator">Differentiator: thinking block detection — identifies and surfaces model reasoning separately from tool output, applicable pattern for any agent viewer.</div>
+</div>
+
+<div class="tool-row">
+  <h3>OpenHands observability <span class="cc-badge cc-no">OpenHands only</span></h3>
+  <div class="tool-meta"><a href="https://docs.openhands.dev/sdk/guides/observability">docs.openhands.dev &mdash; OpenHands (All-Hands AI)</a></div>
+  <p>Full session replay from the event log. The conversation is a typed stream of immutable Action and Observation Pydantic events — replayable by design. Supports pause, resume, fork, deterministic replay, and full audit trails. Browser interactions are recorded using rrweb (DOM mutations, mouse, scroll), saved as JSON, and replayed in-browser.</p>
+  <div class="differentiator">Differentiator: deterministic replay as a first-class architectural guarantee, not a bolted-on viewer. rrweb-based browser session recording is unique in this space.</div>
+</div>
+
+<h2>Direct Comparisons — Closest to mcc-activity</h2>
+<p class="section-intro">Projects that share the most surface area with what we built.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Project</th>
+      <th>Real-time feed</th>
+      <th>Timeline scrubber</th>
+      <th>Agent state model</th>
+      <th>Free-text search</th>
+      <th>Field filters (jq)</th>
+      <th>WebSocket server</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>mcc-activity</strong></td>
+      <td>Yes (Rust WS server, tails JSONL)</td>
+      <td>Yes</td>
+      <td>Yes (background tasks, teammates)</td>
+      <td>Yes</td>
+      <td>Yes (jq-style)</td>
+      <td>Yes (Rust)</td>
+    </tr>
+    <tr>
+      <td>claude-session-visualizer</td>
+      <td>Yes (live)</td>
+      <td>Error density strip</td>
+      <td>No</td>
+      <td>No</td>
+      <td>No</td>
+      <td>No (browser-only)</td>
+    </tr>
+    <tr>
+      <td>session-tree</td>
+      <td>Yes (live)</td>
+      <td>Yes (task graph)</td>
+      <td>No</td>
+      <td>No</td>
+      <td>No</td>
+      <td>No</td>
+    </tr>
+    <tr>
+      <td>claude-code-trace</td>
+      <td>Yes (live tail)</td>
+      <td>No</td>
+      <td>No</td>
+      <td>No</td>
+      <td>No</td>
+      <td>No</td>
+    </tr>
+    <tr>
+      <td>Claudoscope</td>
+      <td>Yes (FSEvents)</td>
+      <td>No</td>
+      <td>No</td>
+      <td>Yes</td>
+      <td>No</td>
+      <td>No (native macOS)</td>
+    </tr>
+    <tr>
+      <td>AgentOps</td>
+      <td>No (trace store)</td>
+      <td>Yes (session replay)</td>
+      <td>Partial (multi-agent flows)</td>
+      <td>Yes</td>
+      <td>No</td>
+      <td>No (hosted)</td>
+    </tr>
+    <tr>
+      <td>Langfuse</td>
+      <td>No (trace store)</td>
+      <td>No</td>
+      <td>No</td>
+      <td>Yes</td>
+      <td>Yes (trace queries)</td>
+      <td>No (hosted/self-hosted)</td>
+    </tr>
+    <tr>
+      <td>OpenHands</td>
+      <td>Yes</td>
+      <td>Yes (deterministic replay)</td>
+      <td>Yes (Actions/Observations)</td>
+      <td>No</td>
+      <td>No</td>
+      <td>Yes (Python)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Gaps — What Nobody Does</h2>
+<p class="section-intro">Areas where the existing ecosystem has no coverage or only shallow support.</p>
+
+<div class="gap-item">
+  <strong>Agent state model for dispatched work</strong>
+  No existing viewer tracks background tasks, teammate dispatches, and their lifecycle (pending, running, failed, done) as first-class entities in the UI. All tools treat the transcript as a linear event log — none model the supervisor's mental state: "I dispatched X to teammate Y, it's on branch Z, here is its current status."
+</div>
+
+<div class="gap-item">
+  <strong>Reverse-chronological event display</strong>
+  Every viewer shows events in chronological order (oldest first). For a long-running session that's been running for hours, the most recent activity is buried at the bottom. mcc-activity shows newest first by default — none of the surveyed tools do this.
+</div>
+
+<div class="gap-item">
+  <strong>jq-style field filters for JSONL</strong>
+  Langfuse has trace query filters. No local viewer offers jq-style dot-notation filters against arbitrary JSONL fields. The most common viewer search is free-text across rendered content — not structured field access.
+</div>
+
+<div class="gap-item">
+  <strong>Multi-agent state across hosts</strong>
+  AgentOps visualizes inter-agent flows but only within a single Python process tree. No tool models agents running in separate Docker containers on separate branches with separate JSONL files, all rendered into one coherent activity view.
+</div>
+
+<div class="gap-item">
+  <strong>WebSocket-served real-time feed as a shareable service</strong>
+  All local viewers are either browser-only (read direct from filesystem via Tauri/Electron) or platform-hosted. No tool exposes a WebSocket endpoint that any browser — including a mobile device on the same network — can connect to and receive a live event stream from.
+</div>
+
+<div class="gap-item">
+  <strong>Rust + local-first + network-accessible</strong>
+  Tauri/Rust for the desktop case exists (claude-transcript-viewer). A Rust WebSocket server that exposes the stream over the network without requiring a cloud account does not exist in this space.
+</div>
+
+<div class="gap-item">
+  <strong>Session-level agent health signals</strong>
+  Claudoscope detects when Claude is blocked on a permission. No tool surfaces higher-level health signals: "this agent hasn't made a tool call in N minutes", "this subagent's last 3 tool calls all failed", "token burn rate is 3x normal for this session type."
+</div>
+
+<h2>Opportunities</h2>
+<p class="section-intro">What we could learn from, borrow, or potentially integrate with.</p>
+
+<div class="card">
+  <div class="title">Error replay UI from claude-session-visualizer</div>
+  <div class="desc">The error density strip — a timeline axis with red dots at error locations — is a compact and useful pattern. Combining it with the scrubber gives both spatial ("many errors in this region") and temporal ("jump to this exact error") navigation. Worth adopting.</div>
+</div>
+
+<div class="card">
+  <div class="title">Thinking block surfacing from cursor-trace</div>
+  <div class="desc">Identifying and rendering model reasoning separately from tool I/O is a broadly applicable pattern. If the JSONL includes thinking events, surfacing them as a distinct collapsible section next to the tool call that follows would help debugging.</div>
+</div>
+
+<div class="card">
+  <div class="title">Langfuse trace queries as a filter model</div>
+  <div class="desc">Langfuse's trace query interface (filter by model, duration, cost, tag) is more discoverable than raw jq syntax for most users. Offering a preset filter palette alongside free-form jq filters would lower the entry bar without sacrificing power.</div>
+</div>
+
+<div class="card">
+  <div class="title">AgentOps multi-agent flow graph</div>
+  <div class="desc">When a supervisor dispatches to teammates, those relationships could be rendered as a connected graph — not just a flat list. AgentOps' inter-agent flow visualization is the reference design. Applicable once mcc-activity tracks multi-agent sessions.</div>
+</div>
+
+<div class="card">
+  <div class="title">OpenHands deterministic replay</div>
+  <div class="desc">OpenHands' immutable Action/Observation event stream is the right model for deterministic replay. If mcc-activity's event model is append-only and typed, it could support forked replay: "replay from event N with a different input at step M." Currently no tool in this space except OpenHands does this.</div>
+</div>
+
+<div class="card">
+  <div class="title">AgentsView as a potential data source aggregator</div>
+  <div class="desc">AgentsView already parses 50+ agent formats. Rather than writing parsers for Cursor/Aider/Devin logs ourselves, feeding those through AgentsView's normalization layer and consuming its output format could make mcc-activity cross-agent without maintaining N parsers.</div>
+</div>
+
+<div class="card">
+  <div class="title">W&amp;B Weave plugin architecture (zero-code install)</div>
+  <div class="desc">Weave's install path (<code>npm install -g weave-claude-code &amp;&amp; weave-claude-code install</code>) registers itself as a Claude Code hook with no changes to the agent. If mcc-activity were to offer a push-based mode (agent pushes events to the server via a hook), this install pattern is the right model.</div>
+</div>
+
+</body>
+</html>
