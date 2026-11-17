@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collaboration Design Decisions</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+</nav>
+
+<h1>Collaboration Design Decisions</h1>
+<p class="subtitle">Every non-trivial choice for the collaboration system &mdash; what was chosen, what was rejected, and when to revisit.</p>
+
+<h2>D1: Context as the primary collaboration primitive (not agent)</h2>
+
+<p><strong>Chosen:</strong> A <code>Context</code> is the top-level object. Members, messages, tasks, and assets belong to a context. An agent is an optional binding on a context.</p>
+
+<p><strong>Alternatives:</strong></p>
+<ul>
+  <li>(A) Keep agent = collaboration. Each collaboration gets a full MCP agent.</li>
+  <li>(B) Introduce "rooms" within a single agent.</li>
+</ul>
+
+<p><strong>Why this:</strong> Option A is the status quo and requires a Docker container + Claude session per collaboration, costing ~$0.50/day idle and not scaling past 5&ndash;10 collaborations. Option B keeps the agent-centric model but adds complexity inside agents that don't need it. A context is lighter &mdash; tier-0 contexts have zero AI cost. The agent becomes a pluggable layer, not the foundation.</p>
+
+<p><strong>Revisit if:</strong> Every collaboration genuinely needs a persistent AI agent (unlikely given the party-planning use case, which is mostly human-to-human with occasional AI assist).</p>
+
+<h2>D2: Three-tier agent binding</h2>
+
+<p><strong>Chosen:</strong> Three tiers: none (relay), batch (<code>claude --print</code>), full (MCP agent).</p>
+
+<p><strong>Alternatives:</strong></p>
+<ul>
+  <li>(A) Two tiers: none and full.</li>
+  <li>(B) Continuous spectrum (configurable per-request).</li>
+</ul>
+
+<p><strong>Why this:</strong> Two tiers forces every AI-enabled context to bear the full cost of a persistent agent. The batch tier is the sweet spot for most collaborations: inject context state into a prompt, get a one-shot response, no persistent session. Option B is overengineered for the current use cases.</p>
+
+<p><strong>Revisit if:</strong> Batch latency (cold-start <code>claude --print</code> is ~3s) is unacceptable for a use case, or if a use case needs tools but not persistence (could add a tier 1.5: batch with tools).</p>
+
+<h2>D3: Go for the context service</h2>
+
+<p><strong>Chosen:</strong> <code>cmd/context-service/main.go</code>, same pattern as chatbus, scheduler, builder.</p>
+
+<p><strong>Alternatives:</strong></p>
+<ul>
+  <li>(A) TypeScript/Bun service.</li>
+  <li>(B) Add context endpoints to the existing chatbus.</li>
+</ul>
+
+<p><strong>Why this:</strong> All backend services are Go. Adding a TS service introduces a new runtime dependency in production. Option B overloads the chatbus, which has a clear single responsibility (message routing). A separate service follows the existing pattern and can be developed/deployed independently.</p>
+
+<p><strong>Revisit if:</strong> The team shifts to TypeScript for all services, or if the context service is so thin that a separate container is unjustified (fold into chatbus).</p>
+
+<h2>D4: File-based storage (YAML config + JSONL messages)</h2>
+
+<p><strong>Chosen:</strong> Each context gets a directory under <code>data/contexts/{id}/</code>. Config is <code>context.yaml</code>, messages are <code>messages.jsonl</code>, tasks are <code>tasks.md</code>.</p>
+
+<p><strong>Alternatives:</strong></p>
+<ul>
+  <li>(A) SQLite per context.</li>
+  <li>(B) Postgres/Redis.</li>
+  <li>(C) Single global JSONL (like current bus-messages.jsonl).</li>
+</ul>
+
+<p><strong>Why this:</strong> YAML and JSONL are human-readable, inspectable with standard tools, and trivially backupable. The current chatbus already uses JSONL successfully. SQLite adds a dependency and makes data inspection harder. Postgres/Redis is massive overkill for &lt;100 contexts. Option C loses isolation &mdash; context data must never leak across contexts.</p>
+
+<p><strong>Revisit if:</strong> Message volume per context exceeds ~100K messages (JSONL scan becomes slow), or if complex queries are needed (search across messages, aggregations). At that point, SQLite per context is the right step up.</p>
+
+<h2>D5: WebSocket hub in context-service (not chatbus)</h2>
+
+<p><strong>Chosen:</strong> Context-service manages its own WebSocket connections per context. Messages flow: client WS &rarr; context-service &rarr; persist + broadcast. Agent messages flow: chatbus &rarr; context-service &rarr; broadcast to WS clients.</p>
+
+<p><strong>Alternatives:</strong></p>
+<ul>
+  <li>(A) Clients connect to chatbus directly, chatbus gains context routing.</li>
+  <li>(B) Clients connect to bridge, bridge routes to context-service.</li>
+</ul>
+
+<p><strong>Why this:</strong> Option A violates chatbus's single responsibility (inter-service message routing, not client-facing WebSocket management). Option B adds a hop and couples the bridge to context semantics. Context-service owns the context lifecycle, so it should own the client connections for that context.</p>
+
+<p><strong>Revisit if:</strong> Context-service WebSocket management becomes a bottleneck (unlikely at &lt;100 concurrent connections), or if all client WebSockets should unify through a single gateway.</p>
+
+<h2>D6: Per-context access via email allowlist</h2>
+
+<p><strong>Chosen:</strong> Each context has a <code>members</code> array with email addresses and roles. Context-service checks <code>X-Auth-Email</code> (from oauth2-proxy) against the member list.</p>
+
+<p><strong>Alternatives:</strong></p>
+<ul>
+  <li>(A) Role-based access control (RBAC) with permission matrices.</li>
+  <li>(B) Token-based access (share a secret link).</li>
+  <li>(C) Reuse <code>deploy/routes.json</code> access lists.</li>
+</ul>
+
+<p><strong>Why this:</strong> Email allowlists are dead simple and match the existing auth model (routes.json already uses email lists). RBAC is overkill for two roles. Token-based access bypasses the OAuth flow. Option C couples contexts to the deploy config, which should be for system routing, not collaboration membership.</p>
+
+<p><strong>Revisit if:</strong> More than two roles are needed (e.g., read-only, admin, moderator), or anonymous/guest access is required.</p>
+
+<h2>D7: Owner and collaborator roles only</h2>
+
+<p><strong>Chosen:</strong> Two roles: <code>owner</code> (full control: settings, membership, deletion) and <code>collaborator</code> (read/write: messages, tasks, notes, assets).</p>
+
+<p><strong>Alternatives:</strong></p>
+<ul>
+  <li>(A) Three roles: owner, editor, viewer.</li>
+  <li>(B) Fine-grained permissions per layer (can_chat, can_edit_tasks, can_upload).</li>
+</ul>
+
+<p><strong>Why this:</strong> The first use case is two people (owner + Lisa). A viewer role would be needed for larger groups, but not now. Fine-grained permissions add UI complexity for settings that nobody will configure. Start with two roles; add viewer when someone asks for it.</p>
+
+<p><strong>Revisit if:</strong> A context has &gt;5 members and the owner wants some to be read-only.</p>
+
+<h2>D8: Context switcher replaces agent selector</h2>
+
+<p><strong>Chosen:</strong> The UI's top-level selector switches between contexts, not agents. Each context renders the tiles appropriate to its enabled layers.</p>
+
+<p><strong>Alternatives:</strong></p>
+<ul>
+  <li>(A) Keep agent selector, add context selector as a second dropdown.</li>
+  <li>(B) Tabs or sidebar for contexts.</li>
+</ul>
+
+<p><strong>Why this:</strong> Two selectors create confusion about which one controls what. The agent selector's current purpose (pick Marcel, Vanya, etc.) maps directly to "pick a context" since each agent becomes a context. A sidebar (option B) is planned for the full UI but the switcher dropdown is simpler to implement first and matches the existing UI pattern.</p>
+
+<p><strong>Revisit if:</strong> The number of contexts exceeds what fits comfortably in a dropdown (~10), at which point a sidebar with search is better.</p>
+
+<h2>D9: Messages as JSONL, not in chatbus</h2>
+
+<p><strong>Chosen:</strong> Context messages are stored in per-context <code>messages.jsonl</code> files, separate from the global <code>bus-messages.jsonl</code>.</p>
+
+<p><strong>Alternatives:</strong></p>
+<ul>
+  <li>(A) Store in chatbus global JSONL with a context field for filtering.</li>
+  <li>(B) Store in chatbus and per-context (dual write).</li>
+</ul>
+
+<p><strong>Why this:</strong> The chatbus JSONL is a system bus log &mdash; it contains all inter-service traffic, not just user-facing messages. Context messages are user content with different retention, privacy, and access requirements. Mixing them makes it hard to delete a context's data or enforce context isolation. Dual-write adds consistency risk.</p>
+
+<p><strong>Revisit if:</strong> Cross-context message search is needed (which would require an index anyway, at which point the storage backend changes).</p>
+
+<h2>D10: No database, no ORM</h2>
+
+<p><strong>Chosen:</strong> Direct file I/O. YAML parsed with <code>gopkg.in/yaml.v3</code>, JSONL with <code>encoding/json</code> line-by-line.</p>
+
+<p><strong>Alternatives:</strong></p>
+<ul>
+  <li>(A) SQLite with an ORM.</li>
+  <li>(B) Embedded key-value store (bbolt, badger).</li>
+</ul>
+
+<p><strong>Why this:</strong> The data model is simple: one YAML file per context, one JSONL file per context's messages. File I/O is the simplest correct solution. Adding a database adds schema migrations, connection management, and a dependency.</p>
+
+<p><strong>Revisit if:</strong> Transactions are needed (e.g., atomic membership + access control updates), or query performance degrades.</p>
+
+<h2>D11: Presence via WebSocket heartbeat, not a separate system</h2>
+
+<p><strong>Chosen:</strong> Presence (who is online in a context) is tracked by context-service based on active WebSocket connections. A member is "online" if they have at least one open WS connection to that context.</p>
+
+<p><strong>Alternatives:</strong></p>
+<ul>
+  <li>(A) Separate presence service with Redis pub/sub.</li>
+  <li>(B) Polling endpoint.</li>
+</ul>
+
+<p><strong>Why this:</strong> The WebSocket connection already exists per context. Tracking connection state is trivial and doesn't require another service. Redis adds operational complexity for a feature that serves &lt;20 concurrent users. Polling wastes bandwidth.</p>
+
+<p><strong>Revisit if:</strong> Cross-service presence is needed (e.g., "is Lisa online anywhere in the system"), or if WS connections are distributed across multiple server instances.</p>
+
+<h2>D12: Message envelope includes sender identity</h2>
+
+<p><strong>Chosen:</strong> Every message carries <code>from_email</code>, <code>from_name</code>, and <code>role</code>. The server stamps these from the authenticated session, not from client-provided data.</p>
+
+<p><strong>Alternatives:</strong></p>
+<ul>
+  <li>(A) Client sends display name, server trusts it.</li>
+  <li>(B) Only email, display name resolved client-side.</li>
+</ul>
+
+<p><strong>Why this:</strong> Trusting client-provided identity is a security hole. Server-stamped identity ensures messages are attributed correctly. Including both email and name avoids a client-side lookup step.</p>
+
+<p><strong>Revisit if:</strong> Identity providers beyond oauth2-proxy are added where email isn't the canonical identifier.</p>
+
+<h2>D13: Batch agent uses context state injection, not conversation history</h2>
+
+<p><strong>Chosen:</strong> When a tier-1 (batch) agent processes a request, it receives: the last N messages, current tasks, and pinned notes &mdash; formatted as a system prompt prefix to <code>claude --print</code>.</p>
+
+<p><strong>Alternatives:</strong></p>
+<ul>
+  <li>(A) Full conversation history replay.</li>
+  <li>(B) RAG over message history.</li>
+  <li>(C) Summary of conversation.</li>
+</ul>
+
+<p><strong>Why this:</strong> Full history is expensive and hits context limits quickly. RAG requires an embedding pipeline that doesn't exist. A summary loses detail. Injecting recent messages + structured state (tasks, notes) gives the model enough context for one-shot assistance without infrastructure overhead.</p>
+
+<p><strong>Revisit if:</strong> Users complain the batch agent "doesn't remember" &mdash; at that point, add a conversation summary that's updated periodically and injected alongside recent messages.</p>
+
+<h2>D14: Mobile support via responsive web, not native components</h2>
+
+<p><strong>Chosen:</strong> The collaborative UI works on mobile through responsive CSS. The same SPA serves both desktop and mobile browsers. No native mobile components for contexts.</p>
+
+<p><strong>Alternatives:</strong></p>
+<ul>
+  <li>(A) Native React Native components in the Expo app.</li>
+  <li>(B) Separate mobile-optimized web view.</li>
+</ul>
+
+<p><strong>Why this:</strong> The Expo app is still early stage. Building context UI twice (web + native) doubles the work. Responsive web gives mobile support immediately. The collaboration features (chat, tasks, notes) are standard UI patterns that work well in mobile browsers.</p>
+
+<p><strong>Revisit if:</strong> The Expo app becomes the primary mobile interface and web views feel second-class.</p>
+
+<h2>D15: Invitation by email, not by link</h2>
+
+<p><strong>Chosen:</strong> The owner invites collaborators by entering their email. The system sends an invite email via Resend. The invitee must log in with that email via OAuth.</p>
+
+<p><strong>Alternatives:</strong></p>
+<ul>
+  <li>(A) Shareable invite link (anyone with the link can join).</li>
+  <li>(B) Invite code (enter a short code to join).</li>
+</ul>
+
+<p><strong>Why this:</strong> Email-based invitation ties directly to the auth model (oauth2-proxy checks email). A shareable link bypasses access control. An invite code adds a step without adding security over email-based auth.</p>
+
+<p><strong>Revisit if:</strong> Users without Google accounts (the current OAuth provider) need to be supported, or public/semi-public contexts are desired.</p>
+
+<h2>D16: No cross-context data sharing</h2>
+
+<p><strong>Chosen:</strong> Contexts are fully isolated. No mechanism to reference data from one context in another.</p>
+
+<p><strong>Alternatives:</strong></p>
+<ul>
+  <li>(A) Opt-in cross-context references (link a note from context A into context B).</li>
+  <li>(B) Global shared library of artifacts.</li>
+</ul>
+
+<p><strong>Why this:</strong> Isolation is the safe default. Cross-context references create permission complexity (if Lisa can see context A but not context B, and context A references context B data, what happens?). Build isolation first; add controlled sharing later if needed.</p>
+
+<p><strong>Revisit if:</strong> The owner has related contexts (e.g., "Lisa party" and "Lisa birthday") and wants to share assets between them.</p>
+
+<h2>D17: Context IDs are slugs, not UUIDs</h2>
+
+<p><strong>Chosen:</strong> Context IDs are human-readable slugs (e.g., <code>party-planning</code>, <code>reyes-project</code>). Generated from the context name, with conflict resolution by appending a counter.</p>
+
+<p><strong>Alternatives:</strong></p>
+<ul>
+  <li>(A) UUIDs.</li>
+  <li>(B) Numeric auto-increment.</li>
+</ul>
+
+<p><strong>Why this:</strong> Slugs are readable in URLs, file paths, and logs. UUIDs are opaque and make debugging harder. The slug appears in <code>data/contexts/{id}/</code>, in WebSocket paths <code>/ws/context/{id}/chat</code>, and in API routes <code>/api/contexts/{id}</code>. Human-readable identifiers make all of these easier to work with. Conflicts are rare (owner creates contexts, not automated systems).</p>
+
+<p><strong>Revisit if:</strong> Context renaming without breaking references is needed, or if slugs collide frequently.</p>
+
+</body>
+</html>
