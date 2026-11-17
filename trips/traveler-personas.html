@@ -56,6 +56,34 @@
     letter-spacing: 0.05em;
     font-weight: 600;
   }
+  .series-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    background: var(--surface);
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+  }
+  .series-nav .series-label {
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-right: 0.25rem;
+  }
+  .series-nav a {
+    color: var(--link);
+    text-decoration: none;
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+  }
+  .series-nav a:hover { background: var(--surface2); }
+  .series-nav a.current {
+    color: #fff;
+    background: var(--surface2);
+    font-weight: 600;
+  }
 </style>
 </head>
 <body>
@@ -65,6 +93,15 @@
   <span style="color: var(--text-muted);"> / </span>
   <span style="color: var(--text-muted);">Trip Planning</span>
 </nav>
+
+<div class="series-nav">
+  <span class="series-label">Trip Planning:</span>
+  <a href="decision-preplan.html">Decision Pre-Plan</a>
+  <a href="colombia-research.html">Colombia</a>
+  <a href="palm-springs-research.html">Palm Springs</a>
+  <a href="traveler-personas.html" class="current">Personas</a>
+  <a href="trip-constraints.html">Constraints</a>
+</div>
 
 <h1>Traveler Personas</h1>
 <p class="subtitle">Who Erik and Lisa are as travelers &mdash; direct input, not inferences.</p>
