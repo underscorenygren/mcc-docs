@@ -18,23 +18,40 @@
     color: #fff;
     margin-bottom: 0.3rem;
   }
-  .persona-card .evidence {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    margin-top: 0.3rem;
-    font-style: italic;
+  .duo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1rem 0;
   }
-  .hypothesis {
+  @media (max-width: 700px) {
+    .duo-grid { grid-template-columns: 1fr; }
+  }
+  .duo-grid .persona-card {
+    margin: 0;
+  }
+  .duo-grid .persona-card.erik { border-left: 3px solid #7dd3fc; }
+  .duo-grid .persona-card.lisa { border-left: 3px solid #f9a8d4; }
+  .duo-grid .persona-card .name {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+  .duo-grid .persona-card.erik .name { color: #7dd3fc; }
+  .duo-grid .persona-card.lisa .name { color: #f9a8d4; }
+  .conclusion {
     background: var(--surface);
-    border-left: 3px solid var(--yellow);
+    border-left: 3px solid var(--green);
     border-radius: 0 6px 6px 0;
     padding: 0.8rem 1rem;
     margin: 0.6rem 0;
     font-size: 0.9rem;
   }
-  .hypothesis .label {
+  .conclusion .label {
     font-size: 0.72rem;
-    color: var(--yellow);
+    color: var(--green);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-weight: 600;
@@ -44,108 +61,144 @@
 <body>
 
 <nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
-  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+  <a href="../index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
   <span style="color: var(--text-muted);"> / </span>
   <span style="color: var(--text-muted);">Trip Planning</span>
 </nav>
 
 <h1>Traveler Personas</h1>
-<p class="subtitle">Who Erik and Lisa are as travelers &mdash; inferred from the Chile/Patagonia planning. These are hypotheses for Erik to correct, not assertions.</p>
-
-<div class="callout yellow">
-  <p>Everything below is inferred from planning documents: lodge comparisons, dining research, itinerary choices, and decision patterns. Some of this will be wrong. The purpose is to give trip research a starting point so recommendations are relevant, not generic.</p>
-</div>
+<p class="subtitle">Who Erik and Lisa are as travelers &mdash; direct input, not inferences.</p>
 
 <h2>Food &amp; Dining</h2>
 
+<p>Dining is a primary travel motivation, driven by Lisa. The food scene of a destination matters when choosing where to go.</p>
+
+<div class="duo-grid">
+  <div class="persona-card lisa">
+    <div class="name">Lisa</div>
+    <div class="trait">Experienced, opinionated, restriction-aware</div>
+    <p>Extensive fine dining experience but does not crave Michelin stars &mdash; she often finds the long tasting menus tedious. Reads food blogs and guide books; appreciates well-referenced recommendations.</p>
+    <p><strong>Restrictions:</strong> Allergic to dairy, does not eat red meat or gluten. Willing to compromise if the restaurant is genuinely good.</p>
+    <p>Lisa is Korean-American &mdash; her standards for Asian food are high. Generic "Asian fusion" won't cut it.</p>
+  </div>
+  <div class="persona-card erik">
+    <div class="name">Erik</div>
+    <div class="trait">Adventurous, budget-conscious gourmand</div>
+    <p>Will try everything once. Enjoys exploring local food scenes and street food. Dislikes overpaying for a subpar meal &mdash; value matters more than prestige.</p>
+  </div>
+</div>
+
+<div class="conclusion">
+  <div class="label">Together</div>
+  <p>Quality dining without chasing luxury for its own sake. 1&ndash;2 memorable meals per trip, supplemented by well-researched casual eating. Walking food tours are a favorite, especially in places with strong ethnic cuisine. A great lunch spot can bridge two walking activities (museums, city tours).</p>
+</div>
+
+<h2>Activity Level &amp; Fitness</h2>
+
+<p>Both go to the gym daily at home, but training is not a trip priority.</p>
+
+<div class="duo-grid">
+  <div class="persona-card lisa">
+    <div class="name">Lisa</div>
+    <div class="trait">Likes a good gym, especially in familiar destinations</div>
+    <p>Does Solidcore, Barry's, and similar. When traveling to places she knows (London, etc.), she'll seek out a good gym. A hotel with a quality gym is a plus. For new destinations, she's flexible about skipping workouts.</p>
+  </div>
+  <div class="persona-card erik">
+    <div class="name">Erik</div>
+    <div class="trait">Active but doesn't seek out gyms on trips</div>
+    <p>Physical activity comes from the trip itself &mdash; walking, exploring, hiking.</p>
+  </div>
+</div>
+
+<div class="conclusion">
+  <div class="label">Together</div>
+  <p>Both are physically capable but don't plan trips around exercise. The ideal day has two activities: breakfast, day activity, break, evening activity. A heavy brunch means a lighter or no lunch (or a snack between activities). They want room for relaxing at the hotel on some afternoons &mdash; planned but with reactive flexibility.</p>
+</div>
+
+<h2>Weather &amp; Comfort</h2>
+
+<div class="duo-grid">
+  <div class="persona-card erik">
+    <div class="name">Erik</div>
+    <div class="trait">Runs warm</div>
+    <p>Hot weather may require more breaks, shade, and hydration planning. Indoor-heavy itineraries work better in heat.</p>
+  </div>
+  <div class="persona-card lisa">
+    <div class="name">Lisa</div>
+    <div class="trait">Runs cold</div>
+    <p>Cold weather means more indoor activities and recharge breaks. Packing guidance matters &mdash; she wants to know what to expect so she can prepare.</p>
+  </div>
+</div>
+
+<div class="conclusion">
+  <div class="label">Together</div>
+  <p>Weather is an important planning factor. Trip research should include climate data and packing notes. Shoulder seasons with moderate temperatures tend to work best for both.</p>
+</div>
+
+<h2>Lodging</h2>
+
+<div class="duo-grid">
+  <div class="persona-card lisa">
+    <div class="name">Lisa</div>
+    <div class="trait">Extensive travel experience, prefers American-style comfort</div>
+    <p>Calibrated expectations from many high-end hotels. Values comfort, cleanliness, reliable service. A good gym and quality bedding matter.</p>
+  </div>
+  <div class="persona-card erik">
+    <div class="name">Erik</div>
+    <div class="trait">Budget-conscious, comfortable roughing it</div>
+    <p>Doesn't need luxury and actively dislikes conspicuous consumption and materialism. Would rather spend on experiences (food, activities) than a nicer room.</p>
+  </div>
+</div>
+
+<div class="conclusion">
+  <div class="label">Together</div>
+  <p>They bias toward things that are nice, but not luxury for its own sake. A $400/night boutique hotel with character beats a $700/night generic luxury chain. Value-conscious: they research and compare rather than defaulting to the highest price point.</p>
+</div>
+
+<h2>Interests &amp; Culture</h2>
+
 <div class="persona-card">
-  <div class="trait">Food is a primary travel motivation, not a supporting activity.</div>
-  <p>The Chile research included a standalone dining guide with restaurants categorized by tier (fine dining, upper mid-range, casual), meal-by-meal budget breakdowns, and specific restaurant recommendations with pricing. The dining budget ($1,200&ndash;1,800 for 2 people, non-hotel meals only) was treated as a first-class planning item.</p>
-  <div class="evidence">Evidence: Dedicated chile-dining.html doc, Borago (Michelin star) on the must-do list, wine tour as a full-day activity.</div>
+  <div class="trait">Art, museums, and shows</div>
+  <p>Both love art. Museums are a go-to activity and work well as walking-based daytime plans. Erik enjoys reading and gravitates toward intellectual and literary sites &mdash; a museum of Nobel laureates, for example, would be a draw.</p>
 </div>
 
 <div class="persona-card">
-  <div class="trait">Erik has an existing food reference frame.</div>
-  <p>Erik has eaten at Borago in Santiago and knows the Cerro Alegre dining scene in Valparaiso. He pushed back on the initial dining budget ($500&ndash;800) as too low, citing that it "would barely cover Santiago dinners alone." He engages with food as someone who has opinions, not just preferences.</p>
-  <div class="evidence">Evidence: "Erik has been" badge on Borago, budget correction in dining doc.</div>
-</div>
-
-<div class="hypothesis">
-  <div class="label">Hypothesis</div>
-  <p>They want 1&ndash;2 memorable fine dining experiences per trip, supplemented by quality casual eating. Not every meal needs to be an event, but the food scene of a destination matters when choosing where to go.</p>
-</div>
-
-<h2>Comfort &amp; Luxury Level</h2>
-
-<div class="persona-card">
-  <div class="trait">Upper-tier comfort, not ultra-luxury.</div>
-  <p>The Chile lodges ranged from $5,700 to $20,000+ for 4 nights. They ruled out the budget options (Pampa Lodge, Kau) as "too budget for this trip" but also didn't default to the most expensive (Awasi at $19,500+, Tierra at $18,000+). Erik leaned toward Las Torres at ~$10,800 &mdash; the best value in the upper tier, not the most expensive option available.</p>
-  <div class="evidence">Evidence: Ruled out budget lodges, leaned mid-premium (Las Torres), considered Ritz-Carlton Santiago at $350&ndash;450/night.</div>
-</div>
-
-<div class="persona-card">
-  <div class="trait">Value-aware despite high budget.</div>
-  <p>The lodge comparison doc carefully mapped price vs. feature tradeoffs (transfer time, included excursions, Wi-Fi, pool access). They didn't just pick the most expensive option. The $5,100 price difference between Las Torres and Rio Serrano was weighed against specific experience benefits (trailhead access, excursion variety), not dismissed.</p>
-  <div class="evidence">Evidence: Detailed feature comparison table, Grey Glacier add-on cost noted as a differentiator ($274).</div>
-</div>
-
-<div class="hypothesis">
-  <div class="label">Hypothesis</div>
-  <p>They're comfortable spending $300&ndash;600/night on hotels and expect quality service, but they research and compare rather than defaulting to the highest price point. A $400/night boutique hotel that delivers a distinctive experience may be preferred over a $700/night generic luxury chain.</p>
-</div>
-
-<h2>Activity Level &amp; Pace</h2>
-
-<div class="persona-card">
-  <div class="trait">Moderate activity preferred over sustained intensity.</div>
-  <p>The Chile trip was deferred specifically because the core draw (Torres del Paine) requires 8&ndash;12 hour hikes at high difficulty. They built rest days and lighter alternatives into the itinerary (horseback riding, Cuernos viewpoint at 4 hours instead of full hike at 8 hours). They ruled out the puma tracking excursion ($1,300&ndash;2,200 pp) partly because Jan 4 was "better as a lighter day after two big hikes."</p>
-  <div class="evidence">Evidence: Puma tracking ruled out for pace reasons (not just cost), trip deferred due to hiking intensity.</div>
-</div>
-
-<div class="persona-card">
-  <div class="trait">Walking and exploring, not trekking.</div>
-  <p>The non-Patagonia days in the Chile itinerary were: wine tasting, neighborhood walking in Valparaiso, Santiago city exploration, Cerro San Cristobal. These are urban/cultural activities with organic physical movement, not planned exercise.</p>
-  <div class="evidence">Evidence: Chile itinerary days 1, 2, 3, 8, 9 were all cultural/food-focused.</div>
-</div>
-
-<div class="hypothesis">
-  <div class="label">Hypothesis</div>
-  <p>Ideal activity level: 2&ndash;4 hours of walking/exploring per day, with the option to do more on a given day. No multi-hour endurance activities. Day trips to nature are welcome if the main activity is scenic (driving, boat rides, short walks) rather than athletic.</p>
+  <div class="trait">Walking food tours</div>
+  <p>A recurring favorite, especially in cities with strong ethnic cuisine. Combines food discovery with neighborhood exploration.</p>
 </div>
 
 <h2>Planning Style</h2>
 
-<div class="persona-card">
-  <div class="trait">Lisa drives initial research; Erik refines and executes.</div>
-  <p>Lisa did the original planning session that produced destinations, hotels, flights, excursions, and budget tiers. Erik then verified pricing on booking sites, narrowed lodge options with detailed comparisons, sent inquiry emails, and built the trip status documentation. The workflow is collaborative but with clear roles.</p>
-  <div class="evidence">Evidence: "What's Been Done" section attributes 5 items to Lisa (research) and 6 to Erik (verification, comparison, emails).</div>
+<div class="duo-grid">
+  <div class="persona-card lisa">
+    <div class="name">Lisa</div>
+    <div class="trait">Prefers a clear plan, research-driven</div>
+    <p>Wants to know what's happening and when. Reads food blogs, guide books, and published reviews. A well-referenced recommendation carries weight. Having things mapped out reduces stress and lets her enjoy the trip.</p>
+  </div>
+  <div class="persona-card erik">
+    <div class="name">Erik</div>
+    <div class="trait">More willing to go with the flow</div>
+    <p>Comfortable with open blocks and spontaneous decisions. Adapts on the fly. Appreciates Lisa's research and benefits from the structure.</p>
+  </div>
 </div>
 
-<div class="persona-card">
-  <div class="trait">Research-heavy before committing.</div>
-  <p>The Chile trip had zero bookings made despite thorough research on 8 lodges, 6+ restaurants, flight routes, wine tours, and a 9-day itinerary. They were still in the "booking" phase, with open questions routed to Lisa for decisions. This suggests they prefer to have all information before pulling the trigger, rather than booking incrementally.</p>
-  <div class="evidence">Evidence: "Bookings Made: 0 of 8" despite research status being "Done."</div>
+<div class="conclusion">
+  <div class="label">Together</div>
+  <p>The ideal plan has clear structure with built-in flexibility. Key meals and activities are booked or identified in advance, but some afternoons and evenings are left open. "Planned but reactive." Lisa drives initial research; Erik refines and executes logistics. Plans revolve around activity and dining options.</p>
 </div>
 
 <h2>Travel Logistics</h2>
 
 <div class="persona-card">
   <div class="trait">Nonstop or minimal connections preferred.</div>
-  <p>The Chile plan specifically identified the United nonstop route via Houston as the decided flight option. When Atacama was considered, the extra internal flights were cited as "wasted travel days." They optimize for time at the destination, not in transit.</p>
-  <div class="evidence">Evidence: "Fly United via Houston (IAH)" locked in early, Atacama dropped partly for transit overhead.</div>
+  <p>Optimize for time at the destination. One connection is acceptable for international trips if unavoidable. Direct flights strongly preferred for domestic.</p>
 </div>
 
-<div class="hypothesis">
-  <div class="label">Hypothesis</div>
-  <p>For international trips, one connection is acceptable if unavoidable. For domestic trips (Palm Springs), direct flights are strongly preferred. Internal flights within a multi-city trip are fine if the destinations justify the time cost &mdash; the Atacama objection was about the destination being sold out, not the flight itself.</p>
-</div>
-
-<h2>NYE Expectations</h2>
+<h2>NYE</h2>
 
 <div class="persona-card">
   <div class="trait">NYE is a planned event, not incidental.</div>
-  <p>The Chile plan placed NYE in Valparaiso specifically for the fireworks spectacle ("one of South America's biggest fireworks shows, right over the bay"). They chose a hotel with rooftop views. The dining guide asked Lisa to decide between booking a special restaurant vs. eating at the hotel rooftop. NYE is meant to be memorable.</p>
-  <div class="evidence">Evidence: Valparaiso selected for NYE fireworks, Hotel Fauna chosen for rooftop view, NYE dinner treated as a decision point.</div>
+  <p>They want to plan for it specifically &mdash; a memorable setting, good dinner, and a sense of occasion. Doesn't have to be extravagant, but should be intentional.</p>
 </div>
 
 <h2>Summary Profile</h2>
@@ -160,23 +213,31 @@
   <tbody>
     <tr>
       <td>Dining</td>
-      <td>1&ndash;2 fine dining, rest quality casual. Food scene matters for destination choice.</td>
+      <td>Primary motivation. Lisa drives, has restrictions (dairy allergy, no red meat/gluten). Quality over prestige. Walking food tours.</td>
     </tr>
     <tr>
       <td>Lodging</td>
-      <td>$300&ndash;600/night. Boutique/distinctive over generic luxury. Value-conscious.</td>
+      <td>Nice but not luxury for its own sake. Good gym a plus for Lisa. Boutique/distinctive over generic. Value-conscious.</td>
     </tr>
     <tr>
       <td>Activity</td>
-      <td>Moderate. Walking, exploring, cultural. No endurance activities.</td>
+      <td>Two things per day: day activity + evening activity with meals anchoring the schedule. Walking, museums, art, food tours.</td>
     </tr>
     <tr>
       <td>Pace</td>
-      <td>Relaxed with 1&ndash;2 planned activities per day. Rest days built in.</td>
+      <td>Planned but reactive. Some afternoons for hotel relaxation. Heavy brunch = lighter lunch.</td>
+    </tr>
+    <tr>
+      <td>Weather</td>
+      <td>Erik runs warm, Lisa runs cold. Packing guidance important. Moderate climates ideal.</td>
+    </tr>
+    <tr>
+      <td>Culture</td>
+      <td>Art, museums, shows, literary sites. Walking tours with food. Lisa's high bar for Asian food.</td>
     </tr>
     <tr>
       <td>Planning</td>
-      <td>Research-heavy, collaborative. Lisa proposes, Erik refines.</td>
+      <td>Lisa: research-heavy, wants a clear plan with references. Erik: flexible, refines logistics.</td>
     </tr>
     <tr>
       <td>Flights</td>
@@ -184,16 +245,17 @@
     </tr>
     <tr>
       <td>NYE</td>
-      <td>A planned highlight. Fireworks, special dinner, memorable setting.</td>
+      <td>Planned highlight. Intentional, memorable, not necessarily extravagant.</td>
     </tr>
     <tr>
       <td>Budget</td>
-      <td>$12&ndash;18k for 9-day international trip (2 people). Scales down for shorter domestic trips.</td>
+      <td>Value-conscious. Nice experiences, not conspicuous consumption. Erik checks the bill, Lisa checks the reviews.</td>
     </tr>
   </tbody>
 </table>
 
-<p style="margin-top: 2rem;">See also: <a href="trip-constraints.html">Trip Constraints</a> for dates, budget tiers, and hard requirements. <a href="palm-springs-research.html">Palm Springs</a> and <a href="colombia-research.html">Colombia</a> for the two alternatives being researched.</p>
+<p style="margin-top: 2rem;">See also: <a href="trip-constraints.html">Trip Constraints</a> for dates, budget tiers, and hard requirements. <a href="palm-springs-research.html">Palm Springs</a> and <a href="colombia-research.html">Colombia</a> for destinations being researched.</p>
 
+<!-- published: PENDING @ PENDING -->
 </body>
 </html>
