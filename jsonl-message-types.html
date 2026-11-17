@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSONL Message Types — Claude Code Session Transcripts</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .priority { font-size: 0.75rem; padding: 0.15em 0.5em; border-radius: 3px; font-weight: 600; }
+  .priority.high { background: #2d6a4f; color: #b7e4c7; }
+  .priority.medium { background: #5a4a1e; color: #f0d060; }
+  .priority.low { background: #333; color: #888; }
+  .priority.very-low { background: #222; color: #555; }
+  .msg-type { font-family: var(--mono); font-size: 0.95rem; }
+  .count { color: var(--text-muted); font-size: 0.85rem; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+  th, td { text-align: left; padding: 0.4rem 0.75rem; border-bottom: 1px solid var(--border); }
+  th { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  td code { background: var(--code-bg, #1a1a2e); padding: 0.1em 0.4em; border-radius: 3px; font-size: 0.85rem; }
+  .tool-list { columns: 2; column-gap: 2rem; }
+  .tool-list li { break-inside: avoid; margin-bottom: 0.3rem; }
+  @media (max-width: 600px) { .tool-list { columns: 1; } }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+</nav>
+
+<h1>JSONL Message Types</h1>
+<p class="subtitle">Reference for Claude Code session transcript format — 7 message types, sorted by viewer priority.</p>
+
+<p>Claude Code session transcripts are stored as newline-delimited JSON (JSONL). Each line is a message object with a <code>type</code> field. This reference covers all 7 types, their internal structure, and recommendations for building viewers and analysis tools.</p>
+
+<p>Counts below are from a representative corpus of ~69K messages across multiple sessions.</p>
+
+<h2>Message Types</h2>
+
+<h3><span class="msg-type">assistant</span> <span class="count">17,693 messages</span> <span class="priority high">HIGH</span></h3>
+
+<p>Agent responses — text output and tool calls. This is where the work happens. The <code>message.content</code> array contains blocks:</p>
+
+<table>
+<tr><th>Block type</th><th>Count</th><th>Description</th></tr>
+<tr><td><code>tool_use</code></td><td>~12,000</td><td>Tool invocations — the actual work</td></tr>
+<tr><td><code>text</code></td><td>4,359</td><td>Agent's text output (reasoning, chat)</td></tr>
+<tr><td><code>thinking</code></td><td>384</td><td>Extended thinking blocks</td></tr>
+</table>
+
+<p>Top tools called:</p>
+<ul class="tool-list">
+<li><code>Bash</code> (4,666) — Shell commands</li>
+<li><code>mcp__chat-bridge__reply</code> (3,604) — Chat messages</li>
+<li><code>Read</code> (1,637) — File reads</li>
+<li><code>Edit</code> (1,248) — File edits</li>
+<li><code>Grep</code> (610) — Code search</li>
+<li><code>Write</code> (436) — File creation</li>
+<li><code>ToolSearch</code> (234) — Deferred tool loading</li>
+<li><code>Agent</code> (142) — Subagent dispatch</li>
+<li><code>TaskUpdate</code> (135) — Task state changes</li>
+<li><code>TaskCreate</code> (72) — Task creation</li>
+<li><code>Glob</code> (66) — File pattern matching</li>
+<li><code>WebSearch</code> (45) — Web search</li>
+<li><code>WebFetch</code> (23) — URL fetch</li>
+</ul>
+
+<p>Key fields: <code>timestamp</code>, <code>sessionId</code>, <code>requestId</code>, <code>cwd</code>, <code>gitBranch</code>, <code>isSidechain</code></p>
+
+<h3><span class="msg-type">user</span> <span class="count">14,413 messages</span> <span class="priority high">HIGH</span> / <span class="priority low">LOW</span></h3>
+
+<p>Human input and tool results. Two kinds:</p>
+
+<table>
+<tr><th>Kind</th><th>Count</th><th>Description</th></tr>
+<tr><td>Human messages</td><td>1,448</td><td>Actual user input. <code>message.content</code> is a string.</td></tr>
+<tr><td>Tool results</td><td>12,958</td><td>Return values from tool calls. <code>message.content</code> is an array of <code>tool_result</code> blocks.</td></tr>
+</table>
+
+<p>Origin kinds distinguish where the message came from:</p>
+
+<table>
+<tr><th>Origin</th><th>Count</th><th>Description</th></tr>
+<tr><td><code>(none)</code></td><td>13,034</td><td>Tool results and direct terminal input</td></tr>
+<tr><td><code>channel</code></td><td>867</td><td>Messages from chat-bridge (voice/web UI)</td></tr>
+<tr><td><code>task-notification</code></td><td>518</td><td>Background task completions</td></tr>
+</table>
+
+<p>Key fields: <code>origin.kind</code>, <code>permissionMode</code>, <code>isMeta</code>, <code>promptId</code></p>
+
+<h3><span class="msg-type">system</span> <span class="count">1,750 messages</span> <span class="priority medium">MEDIUM</span></h3>
+
+<p>Internal lifecycle events. Useful for understanding session structure.</p>
+
+<table>
+<tr><th>Subtype</th><th>Count</th><th>Description</th></tr>
+<tr><td><code>stop_hook_summary</code></td><td>1,194</td><td>Hook execution after each turn (sysbus signals, etc.)</td></tr>
+<tr><td><code>turn_duration</code></td><td>487</td><td>Timing data for each agent turn</td></tr>
+<tr><td><code>compact_boundary</code></td><td>58</td><td>Context window compaction — older messages summarized</td></tr>
+<tr><td><code>api_error</code></td><td>13</td><td>API failures (rate limits, network errors)</td></tr>
+</table>
+
+<p>Key fields: <code>subtype</code>, <code>hookInfos</code>, <code>stopReason</code>, <code>level</code></p>
+
+<h3><span class="msg-type">queue-operation</span> <span class="count">4,378 messages</span> <span class="priority low">LOW</span></h3>
+
+<p>Internal message routing. Operations: <code>enqueue</code> (2,189), <code>dequeue</code> (1,388), <code>remove</code> (801).</p>
+
+<p>These track how user messages flow through the internal queue. Each enqueue/dequeue pair is one message being processed.</p>
+
+<p>Key fields: <code>operation</code>, <code>content</code></p>
+
+<h3><span class="msg-type">progress</span> <span class="count">31,143 messages</span> <span class="priority very-low">VERY LOW</span></h3>
+
+<p>Streaming and hook progress events. Filter these out by default — they are noise for most purposes.</p>
+
+<table>
+<tr><th>Subtype</th><th>Count</th><th>Description</th></tr>
+<tr><td><code>hook_progress</code></td><td>30,476</td><td>Pre/post tool hooks (permission checks, sysbus signals)</td></tr>
+<tr><td><code>agent_progress</code></td><td>588</td><td>Subagent streaming tokens</td></tr>
+<tr><td><code>query_update</code></td><td>45</td><td>Search query refinements</td></tr>
+<tr><td><code>search_results_received</code></td><td>45</td><td>Search results arriving</td></tr>
+</table>
+
+<p>Key fields: <code>data.type</code>, <code>toolUseID</code>, <code>parentToolUseID</code></p>
+
+<h3><span class="msg-type">file-history-snapshot</span> <span class="count">182 messages</span> <span class="priority low">LOW</span></h3>
+
+<p>Periodic snapshots of tracked file states. Used for undo/restore. Contains <code>snapshot.trackedFileBackups</code> with file contents at that point in time.</p>
+
+<h3><span class="msg-type">last-prompt</span> <span class="count">30 messages</span> <span class="priority low">LOW</span></h3>
+
+<p>Session bookmarks. Records the last user prompt for session resumption. Contains <code>lastPrompt</code> (the text) and <code>sessionId</code>.</p>
+
+<h2>Common Fields</h2>
+
+<p>Most messages share these fields:</p>
+
+<table>
+<tr><th>Field</th><th>Description</th></tr>
+<tr><td><code>type</code></td><td>Message type (one of the 7 above)</td></tr>
+<tr><td><code>uuid</code></td><td>Unique message ID</td></tr>
+<tr><td><code>parentUuid</code></td><td>Parent message (conversation threading)</td></tr>
+<tr><td><code>timestamp</code></td><td>ISO 8601 timestamp</td></tr>
+<tr><td><code>sessionId</code></td><td>Session UUID</td></tr>
+<tr><td><code>isSidechain</code></td><td>Whether this is a subagent conversation</td></tr>
+<tr><td><code>userType</code></td><td>Always "external" for user-facing sessions</td></tr>
+<tr><td><code>entrypoint</code></td><td>Always "cli"</td></tr>
+<tr><td><code>cwd</code></td><td>Working directory at time of message</td></tr>
+<tr><td><code>version</code></td><td>Claude Code version</td></tr>
+<tr><td><code>gitBranch</code></td><td>Active git branch</td></tr>
+</table>
+
+<h2>Viewer Recommendations</h2>
+
+<div class="card">
+<div class="title">Default view</div>
+<div class="desc">Show <code>assistant</code> (tool_use + text) and <code>user</code> (channel origin only). Hide tool_result, progress, queue-operation.</div>
+</div>
+
+<div class="card">
+<div class="title">Task view</div>
+<div class="desc">Filter to assistant messages containing TaskCreate, TaskUpdate, TaskGet tool_use blocks. Show full context.</div>
+</div>
+
+<div class="card">
+<div class="title">Debug view</div>
+<div class="desc">Show everything including progress and system events.</div>
+</div>
+
+<div class="card">
+<div class="title">Timeline markers</div>
+<div class="desc">Use <code>system.compact_boundary</code> to mark context window resets. Use <code>system.turn_duration</code> for timing analysis.</div>
+</div>
+
+<!-- published: COMMIT_HASH @ TIMESTAMP -->
+</body>
+</html>
