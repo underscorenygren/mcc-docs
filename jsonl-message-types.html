@@ -20,6 +20,9 @@
   .tool-list { columns: 2; column-gap: 2rem; }
   .tool-list li { break-inside: avoid; margin-bottom: 0.3rem; }
   @media (max-width: 600px) { .tool-list { columns: 1; } }
+  .learning { border-left: 3px solid #5dade2; padding: 0.5rem 1rem; margin: 0.75rem 0; background: rgba(93, 173, 226, 0.05); }
+  pre.json { background: #0d1117; padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.8rem; line-height: 1.4; }
+  .snippet-label { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.25rem; }
 </style>
 </head>
 <body>
@@ -31,9 +34,200 @@
 <h1>JSONL Message Types</h1>
 <p class="subtitle">Reference for Claude Code session transcript format — 7 message types, sorted by viewer priority.</p>
 
-<p>Claude Code session transcripts are stored as newline-delimited JSON (JSONL). Each line is a message object with a <code>type</code> field. This reference covers all 7 types, their internal structure, and recommendations for building viewers and analysis tools.</p>
+<h2>Key Learnings</h2>
 
-<p>Counts below are from a representative corpus of ~69K messages across multiple sessions.</p>
+<div class="learning">
+<strong>Teammate conversations are NOT in the main JSONL.</strong> Subagent (teammate) messages only exist in task output files under <code>/tmp/claude-1001/.../tasks/&lt;agentId&gt;.output</code>. The main transcript gets <code>progress</code> events (type <code>agent_progress</code>) that relay what the teammate is doing, but these are always <code>isSidechain: false</code>. Zero <code>isSidechain: true</code> messages appear in the main JSONL.
+</div>
+
+<div class="learning">
+<strong><code>isSidechain</code> and <code>run_in_background</code> are orthogonal.</strong> <code>isSidechain</code> means "subagent conversation" — it only appears in task output files. <code>run_in_background</code> is a Bash tool parameter meaning "don't block the conversation." A background Bash command from the supervisor has <code>isSidechain: false</code>.
+</div>
+
+<div class="learning">
+<strong>Task output files don't contain exit signals.</strong> Background Bash files end with whatever the command last printed. Teammate JSONL files end at the last agent message. The exit/completion signal only exists in the main JSONL as a <code>task-notification</code> user message (or <code>queue-operation</code> enqueue).
+</div>
+
+<div class="learning">
+<strong>Two file formats in /tmp/tasks/.</strong> Plain text = background Bash command output. JSONL (first char <code>{</code>) = teammate agent transcript. The filename is either a short alphanumeric ID (Bash) or a longer hex agent ID (teammate).
+</div>
+
+<div class="learning">
+<strong><code>slug</code> is a random session name.</strong> Like Docker container names — human-readable, cosmetic only. Example: <code>"slug": "optimized-plotting-eclipse"</code>. Not used for routing or lookup.
+</div>
+
+<h2>Background Task Lifecycle — Annotated Example</h2>
+
+<p>A supervisor dispatches <code>sleep 10</code> as a background Bash command. Here is every message that appears in the main JSONL, in order.</p>
+
+<h3>Step 1: Tool dispatch</h3>
+<p class="snippet-label">The supervisor's assistant message contains a tool_use block. Note <code>run_in_background: true</code> and <code>isSidechain: false</code> — this is the main thread, not a subagent.</p>
+<pre class="json">{
+  "parentUuid": "da2ca598-...",
+  "isSidechain": false,
+  "type": "assistant",
+  "message": {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "toolu_018VsYPFDWg6SBKZsUxbFfgR",
+        "name": "Bash",
+        "input": {
+          "command": "sleep 10",
+          "description": "Sleep 10 seconds for data inspection",
+          "run_in_background": true
+        }
+      }
+    ]
+  }
+}</pre>
+
+<h3>Step 2: Immediate tool_result</h3>
+<p class="snippet-label">The harness returns immediately with a task ID and output file path. The command is running but hasn't finished.</p>
+<pre class="json">{
+  "isSidechain": false,
+  "type": "user",
+  "message": {
+    "role": "user",
+    "content": [
+      {
+        "tool_use_id": "toolu_018VsYPFDWg6SBKZsUxbFfgR",
+        "type": "tool_result",
+        "content": "Command running in background with ID: bpw0aypub. Output is being written to: /tmp/claude-1001/.../tasks/bpw0aypub.output"
+      }
+    ]
+  },
+  "toolUseResult": {
+    "backgroundTaskId": "bpw0aypub"
+  }
+}</pre>
+
+<h3>Step 3: Completion notification</h3>
+<p class="snippet-label">10 seconds later, a <code>queue-operation</code> enqueues the notification, then it arrives as a <code>user</code> message with XML-structured content. This is the only exit signal in the main JSONL.</p>
+<pre class="json">{
+  "type": "queue-operation",
+  "operation": "enqueue",
+  "content": "&lt;task-notification&gt;\n&lt;task-id&gt;bpw0aypub&lt;/task-id&gt;\n&lt;tool-use-id&gt;toolu_018VsYPFDWg6SBKZsUxbFfgR&lt;/tool-use-id&gt;\n&lt;status&gt;completed&lt;/status&gt;\n&lt;summary&gt;Background command \"Sleep 10 seconds\" completed (exit code 0)&lt;/summary&gt;\n&lt;/task-notification&gt;"
+}</pre>
+<pre class="json">{
+  "isSidechain": false,
+  "type": "user",
+  "message": {
+    "role": "user",
+    "content": "&lt;task-notification&gt;\n&lt;task-id&gt;bpw0aypub&lt;/task-id&gt;\n&lt;status&gt;completed&lt;/status&gt;\n&lt;summary&gt;Background command \"Sleep 10 seconds\" completed (exit code 0)&lt;/summary&gt;\n&lt;/task-notification&gt;"
+  }
+}</pre>
+
+<h2>Teammate Lifecycle — Annotated Example</h2>
+
+<p>A supervisor dispatches a teammate via the <code>Agent</code> tool to run <code>sleep 5</code>. Here is what appears in the main JSONL vs the task output file.</p>
+
+<h3>Step 1: Agent tool dispatch</h3>
+<p class="snippet-label">The supervisor calls the Agent tool. This is a regular <code>assistant</code> message, <code>isSidechain: false</code>.</p>
+<pre class="json">{
+  "isSidechain": false,
+  "type": "assistant",
+  "message": {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "toolu_014yss8RQ66CT5ZiafmxaxgH",
+        "name": "Agent",
+        "input": {
+          "description": "Sleep 5 seconds for trace",
+          "prompt": "Run this command: sleep 5. That's it.",
+          "model": "haiku"
+        }
+      }
+    ]
+  }
+}</pre>
+
+<h3>Step 2: Progress relay — prompt delivered</h3>
+<p class="snippet-label">The main JSONL receives <code>progress</code> events with <code>data.type: "agent_progress"</code> that relay the teammate's activity. Note: <code>isSidechain: false</code> — these are the main thread's view of the subagent.</p>
+<pre class="json">{
+  "isSidechain": false,
+  "type": "progress",
+  "data": {
+    "type": "agent_progress",
+    "agentId": "a4640a5c49d8f7782",
+    "prompt": "Run this command: sleep 5. That's it.",
+    "message": {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [{ "type": "text", "text": "Run this command: sleep 5..." }]
+      }
+    }
+  },
+  "toolUseID": "agent_msg_011Ch8yrEmTDPpp9yzfvWK9B",
+  "parentToolUseID": "toolu_014yss8RQ66CT5ZiafmxaxgH"
+}</pre>
+
+<h3>Step 3: Progress relay — tool result</h3>
+<p class="snippet-label">The teammate's Bash output is relayed as another <code>agent_progress</code> event.</p>
+<pre class="json">{
+  "isSidechain": false,
+  "type": "progress",
+  "data": {
+    "type": "agent_progress",
+    "agentId": "a4640a5c49d8f7782",
+    "message": {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [{
+          "tool_use_id": "toolu_01X5u2noNLczX8CK3PNFV62m",
+          "type": "tool_result",
+          "content": "(Bash completed with no output)"
+        }]
+      }
+    }
+  }
+}</pre>
+
+<h3>Step 4: Agent tool_result</h3>
+<p class="snippet-label">When the teammate finishes, the Agent tool returns a tool_result to the supervisor — same pattern as any other tool call.</p>
+
+<h3>What's in the task output file</h3>
+<p class="snippet-label">The file <code>/tmp/.../tasks/a4640a5c49d8f7782.output</code> contains the teammate's full JSONL conversation. These messages have <code>isSidechain: true</code> and <code>agentId</code> set. This is the <strong>only</strong> place these messages exist — they are not in the main JSONL.</p>
+<pre class="json">// First line: the prompt delivered to the teammate
+{
+  "isSidechain": true,
+  "agentId": "a4640a5c49d8f7782",
+  "type": "user",
+  "message": {
+    "role": "user",
+    "content": "Run this command: sleep 5. That's it."
+  }
+}
+// Subsequent lines: assistant responses, tool_use, tool_result, progress...
+// Same 7 message types, but all marked isSidechain: true</pre>
+
+<h2>Data Location Summary</h2>
+
+<table>
+<tr><th>What</th><th>Where</th><th>Format</th></tr>
+<tr>
+  <td>Main session transcript</td>
+  <td><code>~/.claude/projects/&lt;project&gt;/&lt;sessionId&gt;.jsonl</code></td>
+  <td>JSONL, all <code>isSidechain: false</code></td>
+</tr>
+<tr>
+  <td>Teammate transcripts</td>
+  <td><code>/tmp/claude-1001/.../tasks/&lt;agentId&gt;.output</code></td>
+  <td>JSONL, all <code>isSidechain: true</code></td>
+</tr>
+<tr>
+  <td>Background Bash output</td>
+  <td><code>/tmp/claude-1001/.../tasks/&lt;taskId&gt;.output</code></td>
+  <td>Plain text (stdout/stderr)</td>
+</tr>
+</table>
+
+<p>To distinguish task output files: if the first character is <code>{</code>, it's a teammate JSONL transcript. Otherwise, it's plain text from a background Bash command.</p>
 
 <h2>Message Types</h2>
 
@@ -106,23 +300,23 @@
 
 <p>Internal message routing. Operations: <code>enqueue</code> (2,189), <code>dequeue</code> (1,388), <code>remove</code> (801).</p>
 
-<p>These track how user messages flow through the internal queue. Each enqueue/dequeue pair is one message being processed.</p>
+<p>These track how user messages flow through the internal queue. Each enqueue/dequeue pair is one message being processed. Task notifications are enqueued here before being delivered as <code>user</code> messages.</p>
 
 <p>Key fields: <code>operation</code>, <code>content</code></p>
 
 <h3><span class="msg-type">progress</span> <span class="count">31,143 messages</span> <span class="priority very-low">VERY LOW</span></h3>
 
-<p>Streaming and hook progress events. Filter these out by default — they are noise for most purposes.</p>
+<p>Streaming and hook progress events. Filter these out by default — they are noise for most purposes. <strong>Exception:</strong> <code>agent_progress</code> events are the only way to observe teammate activity from the main JSONL.</p>
 
 <table>
 <tr><th>Subtype</th><th>Count</th><th>Description</th></tr>
 <tr><td><code>hook_progress</code></td><td>30,476</td><td>Pre/post tool hooks (permission checks, sysbus signals)</td></tr>
-<tr><td><code>agent_progress</code></td><td>588</td><td>Subagent streaming tokens</td></tr>
+<tr><td><code>agent_progress</code></td><td>588</td><td>Subagent activity relay — the main thread's view of teammate work</td></tr>
 <tr><td><code>query_update</code></td><td>45</td><td>Search query refinements</td></tr>
 <tr><td><code>search_results_received</code></td><td>45</td><td>Search results arriving</td></tr>
 </table>
 
-<p>Key fields: <code>data.type</code>, <code>toolUseID</code>, <code>parentToolUseID</code></p>
+<p>Key fields: <code>data.type</code>, <code>toolUseID</code>, <code>parentToolUseID</code>, <code>data.agentId</code> (for agent_progress)</p>
 
 <h3><span class="msg-type">file-history-snapshot</span> <span class="count">182 messages</span> <span class="priority low">LOW</span></h3>
 
@@ -134,8 +328,6 @@
 
 <h2>Common Fields</h2>
 
-<p>Most messages share these fields:</p>
-
 <table>
 <tr><th>Field</th><th>Description</th></tr>
 <tr><td><code>type</code></td><td>Message type (one of the 7 above)</td></tr>
@@ -143,7 +335,9 @@
 <tr><td><code>parentUuid</code></td><td>Parent message (conversation threading)</td></tr>
 <tr><td><code>timestamp</code></td><td>ISO 8601 timestamp</td></tr>
 <tr><td><code>sessionId</code></td><td>Session UUID</td></tr>
-<tr><td><code>isSidechain</code></td><td>Whether this is a subagent conversation</td></tr>
+<tr><td><code>isSidechain</code></td><td>Always <code>false</code> in main JSONL. <code>true</code> only in task output files (teammate transcripts).</td></tr>
+<tr><td><code>slug</code></td><td>Random human-readable session name (e.g., "optimized-plotting-eclipse"). Cosmetic only.</td></tr>
+<tr><td><code>agentId</code></td><td>Present in task output files and agent_progress events. Identifies the teammate.</td></tr>
 <tr><td><code>userType</code></td><td>Always "external" for user-facing sessions</td></tr>
 <tr><td><code>entrypoint</code></td><td>Always "cli"</td></tr>
 <tr><td><code>cwd</code></td><td>Working directory at time of message</td></tr>
@@ -164,6 +358,16 @@
 </div>
 
 <div class="card">
+<div class="title">Teammate view</div>
+<div class="desc">Filter <code>progress</code> events where <code>data.type === "agent_progress"</code>. Group by <code>data.agentId</code>. For full detail, read the corresponding task output file.</div>
+</div>
+
+<div class="card">
+<div class="title">Background task view</div>
+<div class="desc">Track background commands: find <code>tool_use</code> blocks with <code>run_in_background: true</code>, match to <code>task-notification</code> user messages via the <code>tool-use-id</code> field. Gap between dispatch and notification = execution time.</div>
+</div>
+
+<div class="card">
 <div class="title">Debug view</div>
 <div class="desc">Show everything including progress and system events.</div>
 </div>
@@ -173,6 +377,8 @@
 <div class="desc">Use <code>system.compact_boundary</code> to mark context window resets. Use <code>system.turn_duration</code> for timing analysis.</div>
 </div>
 
-<!-- published: d1b2e45 @ 2026-11-17T18:01:05Z -->
+<p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 2rem;">Counts from a representative corpus of ~69K messages across multiple sessions. JSON snippets captured from a live session on Nov 17, 2026.</p>
+
+<!-- published: COMMIT_HASH @ TIMESTAMP -->
 </body>
 </html>
