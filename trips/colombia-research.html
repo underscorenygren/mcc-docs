@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Colombia Multi-City — Trip Research</title>
+<title>Colombia — Trip Research</title>
 <link rel="stylesheet" href="../style.css">
 <style>
   .summary-grid {
@@ -62,6 +62,11 @@
     font-size: 0.85rem;
     margin-top: 0.3rem;
   }
+  .hotel-card .dietary {
+    color: var(--yellow);
+    font-size: 0.8rem;
+    margin-top: 0.3rem;
+  }
   .day-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -105,51 +110,79 @@
   }
   .badge-nye { background: rgba(224,159,62,0.15); color: var(--yellow); }
   .badge-food { background: rgba(82,183,136,0.15); color: var(--green); }
+  .badge-depri { background: rgba(252,165,165,0.15); color: var(--red); }
+  .persona-note {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 0.6rem 1rem;
+    margin: 0.8rem 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .persona-note .label {
+    font-size: 0.68rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
 </style>
 </head>
 <body>
 
 <nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
-  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+  <a href="../index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
   <span style="color: var(--text-muted);"> / </span>
   <a href="trip-constraints.html" style="color: #5dade2; text-decoration: none;">Trip Planning</a>
 </nav>
 
-<h1>Colombia Multi-City</h1>
-<p class="subtitle">Bogota &rarr; Cartagena (NYE) &rarr; Medellin. Dec 29, 2026 &ndash; Jan 6, 2027.</p>
+<h1>Colombia</h1>
+<p class="subtitle">Cartagena (NYE) &rarr; Medellin. Intimate couples trip. Dec 30, 2026 &ndash; Jan 5, 2027.</p>
+
+<div class="callout green">
+  <p><strong>Route change:</strong> Bogota removed from the itinerary. Lisa has been &mdash; she describes it as pretty but a "party scene." Neither is interested in a big NYE party. This is an intimate couples trip, not a city-hopping sprint. Two cities, slow pace, good food.</p>
+</div>
 
 <div class="summary-grid">
   <div class="summary-card">
     <div class="label">Duration</div>
-    <div class="value">9 days</div>
-    <div class="detail">Dec 29 &ndash; Jan 6. Same dates as Chile plan.</div>
+    <div class="value">7 days</div>
+    <div class="detail">Dec 30 &ndash; Jan 5. Shorter than original 9-day plan.</div>
   </div>
   <div class="summary-card">
     <div class="label">Cities</div>
-    <div class="value">3</div>
-    <div class="detail">Bogota (2 nights), Cartagena (3 nights), Medellin (2 nights)</div>
+    <div class="value">2</div>
+    <div class="detail">Cartagena (4 nights), Medellin (2 nights)</div>
   </div>
   <div class="summary-card">
     <div class="label">Flight Time</div>
-    <div class="value">~5h direct</div>
-    <div class="detail">IAH &rarr; BOG, United or Avianca nonstop</div>
+    <div class="value">~4.5h direct</div>
+    <div class="detail">IAH &rarr; CTG (United or Avianca via BOG, ~6h with connection)</div>
   </div>
   <div class="summary-card">
     <div class="label">Est. Budget (2 ppl)</div>
-    <div class="value">$8,000&ndash;14,000</div>
-    <div class="detail">Flights + luxury hotels + dining + activities</div>
+    <div class="value">$5,500&ndash;9,000</div>
+    <div class="detail">Flights + boutique hotels + dining + activities</div>
   </div>
 </div>
 
-<h2>Why Colombia</h2>
+<h2>Why Colombia (Updated)</h2>
 
-<div class="callout green">
-  <p>Based on the <a href="traveler-personas.html">traveler personas</a>: Colombia hits every preference &mdash; world-class food scene (Leo, El Cielo, Celele), cultural depth, walkable historic cities, warm weather, and moderate activity level. The pace is naturally relaxed: you explore neighborhoods, eat well, and absorb culture. No endurance activities required. And Cartagena's NYE &mdash; fireworks over the Caribbean, champagne at midnight in a colonial fortress &mdash; is as memorable as Valparaiso.</p>
+<div class="persona-note">
+  <div class="label">Persona fit</div>
+  <p>Caribbean seafood is naturally dairy-free and often gluten-free (ceviche, grilled fish, arepas). Walking food tours in Getsemani hit the ethnic-cuisine-on-foot pattern both prefer. Cartagena's walled city is museums + walking + plazas at exactly the right pace. Medellin adds art, spring climate, and neighborhood cafes. No endurance activities. Two things per day with breaks.</p>
 </div>
 
-<h2>Recommended Route</h2>
+<ul>
+  <li><strong>Food scene aligns with both profiles.</strong> Erik gets adventurous street food and value; Lisa gets well-researched, accommodation-friendly fine dining. Caribbean cuisine is naturally friendly to her restrictions.</li>
+  <li><strong>Weather is favorable under El Nino.</strong> Unlike California (wetter), El Nino makes Colombia <em>drier</em> and warmer. IDEAM forecasts below-average precipitation and above-average temperatures Dec 2026&ndash;Mar 2027. Dry season with extra dry.</li>
+  <li><strong>Intimate NYE, not a party.</strong> Cartagena has options ranging from fortress galas to quiet rooftop dinners to walking out into the plaza at midnight. You pick the vibe.</li>
+  <li><strong>Good art and culture.</strong> Museum of Antioquia (Botero), Museo de Arte Moderno, street art everywhere, colonial architecture. Museums as daytime activity fits the two-per-day pattern.</li>
+  <li><strong>Direct flights from Houston.</strong> IAH &rarr; CTG connections via BOG are frequent on United and Avianca (~6h total). Open-jaw return MDE &rarr; IAH.</li>
+</ul>
 
-<p>The route is designed around the NYE anchor: Cartagena for New Year's Eve, with Bogota on the front end (culture and food) and Medellin on the back end (spring climate, cafes, street art).</p>
+<h2>Recommended Route</h2>
 
 <table>
   <thead>
@@ -162,37 +195,34 @@
   </thead>
   <tbody>
     <tr>
-      <td>Dec 29&ndash;31</td>
-      <td>Bogota</td>
-      <td>2</td>
-      <td>Arrive, decompress, food scene, culture</td>
-    </tr>
-    <tr>
-      <td>Dec 31&ndash;Jan 3</td>
+      <td>Dec 30&ndash;Jan 3</td>
       <td>Cartagena</td>
-      <td>3</td>
-      <td>NYE on the Caribbean, old city, beaches, food</td>
+      <td>4</td>
+      <td>Arrive, decompress, NYE, old city, food, beaches</td>
     </tr>
     <tr>
       <td>Jan 3&ndash;5</td>
       <td>Medellin</td>
       <td>2</td>
-      <td>Spring climate, neighborhoods, cafes, Guatape day trip option</td>
+      <td>Spring climate, art, neighborhoods, cafes</td>
     </tr>
     <tr>
-      <td>Jan 5&ndash;6</td>
+      <td>Jan 5</td>
       <td>Fly home</td>
       <td>&mdash;</td>
-      <td>MDE &rarr; IAH (connecting via BOG or direct on United/Avianca)</td>
+      <td>MDE &rarr; IAH (connecting via BOG or direct)</td>
     </tr>
   </tbody>
 </table>
 
-<p style="font-size: 0.85rem; color: var(--text-muted);"><strong>Alternative:</strong> Swap the order to Bogota &rarr; Medellin &rarr; Cartagena, ending at the beach. This puts Cartagena last (more relaxed ending) but means NYE is in Medellin instead. Cartagena has the stronger NYE scene.</p>
+<div class="persona-note">
+  <div class="label">Pacing</div>
+  <p>4 nights in Cartagena gives room for a slow NYE recovery day and an afternoon just relaxing at the hotel. No rushing between cities. Medellin is the lighter, decompression leg before flying home.</p>
+</div>
 
 <h2>Flights</h2>
 
-<h3>International: Houston &rarr; Bogota</h3>
+<h3>International: Houston &rarr; Cartagena</h3>
 
 <table>
   <thead>
@@ -200,24 +230,26 @@
       <th>Route</th>
       <th>Airlines</th>
       <th>Duration</th>
-      <th>Frequency</th>
-      <th>Price (RT, 2 ppl)</th>
+      <th>Price (RT, 2 ppl, open-jaw)</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>IAH &rarr; BOG (direct)</td>
+      <td>IAH &rarr; CTG (via BOG)</td>
       <td>United, Avianca</td>
-      <td>~4h 55m</td>
-      <td>14+ direct/week (United alone)</td>
+      <td>~6h (1 stop)</td>
       <td>$1,100&ndash;1,500</td>
+    </tr>
+    <tr>
+      <td>MDE &rarr; IAH (return, via BOG)</td>
+      <td>United, Avianca</td>
+      <td>~7&ndash;9h (1 stop)</td>
+      <td>Included in open-jaw RT</td>
     </tr>
   </tbody>
 </table>
 
-<p style="font-size: 0.85rem; color: var(--text-muted);">Late December pricing is higher (~$760 pp RT). Book early. Direct flights run daily on both United and Avianca. <a href="https://www.google.com/travel/flights?q=Flights+from+IAH+to+BOG+on+2026-12-29+return+2027-01-06&curr=USD" target="_blank" rel="noopener">Google Flights</a> &middot; <a href="https://www.kayak.com/flights/IAH-BOG/2026-12-29/2027-01-06/2adults" target="_blank" rel="noopener">Kayak</a></p>
-
-<h3>Internal Flights</h3>
+<h3>Internal Flight</h3>
 
 <table>
   <thead>
@@ -230,210 +262,177 @@
   </thead>
   <tbody>
     <tr>
-      <td>BOG &rarr; CTG (Bogota &rarr; Cartagena)</td>
-      <td>Avianca, LATAM, JetSmart, Wingo</td>
-      <td>~1h 40m</td>
-      <td>$100&ndash;200</td>
-    </tr>
-    <tr>
-      <td>CTG &rarr; MDE (Cartagena &rarr; Medellin)</td>
+      <td>CTG &rarr; MDE</td>
       <td>Avianca, LATAM, JetSmart</td>
       <td>~1h 15m</td>
       <td>$100&ndash;200</td>
     </tr>
-    <tr>
-      <td>MDE &rarr; IAH (Medellin &rarr; Houston)</td>
-      <td>United (via BOG), Avianca</td>
-      <td>~7&ndash;9h (1 stop)</td>
-      <td>Included in RT international ticket (open-jaw)</td>
-    </tr>
   </tbody>
 </table>
 
-<p style="font-size: 0.85rem; color: var(--text-muted);"><strong>Booking tip:</strong> Book an open-jaw international ticket (IAH &rarr; BOG, MDE &rarr; IAH) to avoid backtracking to Bogota. Internal flights (BOG &rarr; CTG, CTG &rarr; MDE) book separately on Avianca or LATAM. Colombia has 232 domestic routes &mdash; flights are frequent and cheap. Avianca holds 54% of domestic market share.</p>
+<p style="font-size: 0.85rem; color: var(--text-muted);"><strong>Booking tip:</strong> Book open-jaw (IAH &rarr; CTG, MDE &rarr; IAH) to avoid backtracking. One internal flight only (CTG &rarr; MDE). Simpler than the 3-city route.</p>
 
-<div class="city-header">Bogota</div>
-<div class="city-sub">Dec 29&ndash;31 &mdash; 2 nights. Altitude: 2,640m (8,660 ft). Temp: ~57&deg;F (14&deg;C). Dry season.</div>
-
-<h3>Hotels</h3>
-
-<div class="hotel-card">
-  <div class="name">Four Seasons Hotel Casa Medina</div>
-  <div class="meta">Zona G (food district). Restored 1946 mansion. 62 rooms. Restaurant, bar, spa.</div>
-  <div class="price">~$400&ndash;600/night (holiday season)</div>
-  <div class="note">The reference luxury hotel in Bogota. Walking distance to the best restaurants. Bogota Getaway offer sometimes gives 20% off direct bookings. <a href="https://www.fourseasons.com/bogota/" target="_blank" rel="noopener">fourseasons.com/bogota</a></div>
-</div>
-
-<div class="hotel-card">
-  <div class="name">W Bogota</div>
-  <div class="meta">Usaquen district. Modern, design-forward. Rooftop bar, pool.</div>
-  <div class="price">~$250&ndash;400/night</div>
-  <div class="note">Younger vibe, good location near Usaquen flea market and restaurants. <a href="https://www.marriott.com/hotels/travel/bogwh-w-bogota/" target="_blank" rel="noopener">marriott.com</a></div>
-</div>
-
-<div class="hotel-card">
-  <div class="name">Sofitel Bogota Victoria Regia</div>
-  <div class="meta">Zona T. French luxury chain. Classic style.</div>
-  <div class="price">~$200&ndash;350/night</div>
-  <div class="note">Solid chain option in the entertainment district. Less distinctive than Casa Medina but reliable.</div>
-</div>
-
-<h3>Restaurants <span class="badge badge-food">Food capital</span></h3>
-
-<p>Bogota's Zona G (the "G" stands for "gastronomico") is one of Latin America's densest fine dining corridors.</p>
-
-<div class="hotel-card">
-  <div class="name">Leo Cocina y Cava (LEO)</div>
-  <div class="meta">Chef Leonor Espinosa. Latin America's 50 Best. Colombian ingredients from every region.</div>
-  <div class="price">~$300&ndash;450 for 2 (tasting menu + pairing)</div>
-  <div class="note">Signature ingredients include big-butted ants from Santander and fermented yuca from the Amazon. The defining Colombian fine dining experience. Book weeks ahead. <a href="https://www.lfrancois.com/es/leo-colombia" target="_blank" rel="noopener">Website</a></div>
-</div>
-
-<div class="hotel-card">
-  <div class="name">El Cielo</div>
-  <div class="meta">Chef Juan Manuel Barrientos (first Colombian Michelin star, for the Miami location). 12-course tasting menu.</div>
-  <div class="price">~$250&ndash;350 for 2 (tasting menu + pairing)</div>
-  <div class="note">Theatrical, multi-sensory dining. Wine pairings. <a href="https://www.elcielorestaurant.com" target="_blank" rel="noopener">elcielorestaurant.com</a></div>
-</div>
-
-<div class="hotel-card">
-  <div class="name">Harry Sasson</div>
-  <div class="meta">106-year-old red-brick mansion. Live-fire cooking. Steak, seafood, robata.</div>
-  <div class="price">~$150&ndash;250 for 2</div>
-  <div class="note">The classic power-dining spot in Bogota. Less avant-garde than Leo/El Cielo but consistently excellent. Reservations essential.</div>
-</div>
-
-<div class="hotel-card">
-  <div class="name">Villanos en Bermudas</div>
-  <div class="meta">Young chefs (Mexican + Argentine). Colombia's most ambitious restaurant.</div>
-  <div class="price">~$200&ndash;300 for 2</div>
-  <div class="note">Small, creative, hard to get a table. If the vibe is right, this could be the highlight meal of the trip.</div>
-</div>
-
-<h3>Activities (Bogota)</h3>
-
-<ul>
-  <li><strong>Usaquen Flea Market</strong> (Sundays) &mdash; artisan goods, street food, live music. Walkable from W Bogota.</li>
-  <li><strong>La Candelaria</strong> &mdash; historic center, Botero Museum (free), Gold Museum. Street art, colonial architecture. 2&ndash;3 hour walking exploration.</li>
-  <li><strong>Monserrate</strong> &mdash; cable car/funicular to 10,341 ft viewpoint over the city. Restaurant at the top. ~1&ndash;2 hours.</li>
-  <li><strong>Paloquemao Market</strong> &mdash; massive covered market. Tropical fruits, flowers, local food stalls. Best in the morning.</li>
-  <li><strong>Coffee tasting</strong> &mdash; specialty cafes in Chapinero serve single-origin Colombian coffee. Azahar, Libertario, Amor Perfecto.</li>
-</ul>
+<!-- ============ CARTAGENA ============ -->
 
 <div class="city-header">Cartagena <span class="badge badge-nye">NYE</span></div>
-<div class="city-sub">Dec 31&ndash;Jan 3 &mdash; 3 nights. Caribbean coast. Temp: 77&ndash;88&deg;F (25&ndash;31&deg;C). Dry season.</div>
+<div class="city-sub">Dec 30&ndash;Jan 3 &mdash; 4 nights. Caribbean coast. Temp: 77&ndash;88&deg;F (25&ndash;31&deg;C). Dry season (drier than usual under El Nino).</div>
+
+<div class="persona-note">
+  <div class="label">Weather note</div>
+  <p><strong>Erik runs warm:</strong> Cartagena is hot and humid. Plan indoor breaks (museums, hotel pool) during midday. Morning and evening are the best activity windows. <strong>Lisa runs cold:</strong> AC in restaurants and hotels can be aggressive &mdash; bring a light layer for indoor dining.</p>
+</div>
 
 <h3>Hotels</h3>
-
-<div class="hotel-card">
-  <div class="name">Sofitel Legend Santa Clara</div>
-  <div class="meta">Former 17th-century convent in the walled city. Largest pool in Cartagena. 4 bars.</div>
-  <div class="price">~$450&ndash;650/night</div>
-  <div class="note">Hosts its own NYE celebration: festive buffet dinner, live music, fireworks viewing from the Santa Clara Chapel. The most event-ready luxury hotel for NYE. <a href="https://www.sofitellegendsantaclara.com" target="_blank" rel="noopener">sofitellegendsantaclara.com</a></div>
-</div>
 
 <div class="hotel-card">
   <div class="name">Hotel Casa San Agustin</div>
-  <div class="meta">Boutique in the old city. Frescoed ceilings, hand-painted tiles, coral stone walls. 31 rooms.</div>
+  <div class="meta">Boutique in the walled city. Frescoed ceilings, hand-painted tiles, coral stone walls. 31 rooms. Pool.</div>
   <div class="price">~$500&ndash;700/night</div>
-  <div class="note">The most distinctive boutique option. Romantic, colonial, intimate. If the Chile research leaning toward boutique hotels (Hotel Fauna in Valparaiso) carries over, this is the equivalent. <a href="https://www.hotelcasasanagustin.com" target="_blank" rel="noopener">hotelcasasanagustin.com</a></div>
+  <div class="note">The most distinctive boutique option. Romantic, colonial, intimate. Character over chain luxury. This is the kind of place that justifies the spend &mdash; you're paying for the building, not the brand.</div>
 </div>
 
 <div class="hotel-card">
   <div class="name">Hotel Charleston Santa Teresa</div>
-  <div class="meta">Another converted convent. Rooftop pool with city views. Central walled city location.</div>
+  <div class="meta">Converted convent. Rooftop pool with city views. Central walled city.</div>
   <div class="price">~$350&ndash;500/night</div>
-  <div class="note">More affordable luxury option in the walled city. Good rooftop for NYE fireworks viewing.</div>
-</div>
-
-<h3>NYE in Cartagena</h3>
-
-<p>Cartagena is Colombia's #1 NYE destination. The walled city (Ciudad Amurallada) and Getsemani run parallel programs: hotel galas, street parties, rooftop celebrations, and fireworks over the bay.</p>
-
-<div class="hotel-card">
-  <div class="name">Baluarte San Francisco Javier &mdash; NYE Gala</div>
-  <div class="meta">Historic fortress. Welcome drink, wine dinner, champagne toast at midnight, 12 grapes tradition, fireworks.</div>
-  <div class="price">Needs verification &mdash; likely $150&ndash;300/person</div>
-  <div class="note">Spectacular setting: a colonial-era fortress on the water. Fireworks display from the venue. <a href="https://www.eventbrite.com/e/new-years-eve-202627-at-baluarte-san-francisco-javier-cartagena-tickets-2003429625942" target="_blank" rel="noopener">Eventbrite listing</a></div>
+  <div class="note">More affordable. Good rooftop for watching NYE fireworks. Solid gym. <a href="https://www.hotelcharlestonsantateresa.com" target="_blank" rel="noopener">Website</a></div>
 </div>
 
 <div class="hotel-card">
-  <div class="name">Ana &mdash; NYE Dinner &amp; Party</div>
-  <div class="meta">Old city restaurant. Multi-course dinner, open bar, midnight champagne, live DJ.</div>
+  <div class="name">Sofitel Legend Santa Clara</div>
+  <div class="meta">Former 17th-century convent. Largest pool in Cartagena. 4 bars. Hosts its own NYE gala.</div>
+  <div class="price">~$450&ndash;650/night</div>
+  <div class="note">The big-hotel option. Good gym and pool. The NYE gala is an option but skews more "event" than intimate. <a href="https://www.sofitellegendsantaclara.com" target="_blank" rel="noopener">Website</a></div>
+</div>
+
+<h3>NYE in Cartagena &mdash; Intimate Options</h3>
+
+<p>Cartagena is Colombia's #1 NYE destination, but it's not all big parties. The walled city offers a range from quiet dinners to casual street celebrations.</p>
+
+<div class="hotel-card">
+  <div class="name">Private rooftop dinner at hotel</div>
+  <div class="meta">Casa San Agustin or Charleston rooftop. Dinner for two, champagne, fireworks view.</div>
+  <div class="price">Varies &mdash; arrange with concierge</div>
+  <div class="note">The most intimate option. Watch fireworks over the bay from a private table. No crowd, no DJ, no gala.</div>
+</div>
+
+<div class="hotel-card">
+  <div class="name">El Beso Restaurante &mdash; "Besame a la Medianoche"</div>
+  <div class="meta">Intimate NYE dinner. "Love, gastronomy, and celebration" in the heart of Cartagena.</div>
   <div class="price">Needs verification</div>
-  <div class="note"><a href="https://www.eventbrite.com/e/new-years-eve-2027-dinner-party-at-ana-cartagena-old-city-tickets-2003611183987" target="_blank" rel="noopener">Eventbrite listing</a></div>
+  <div class="note">Small restaurant, couples-oriented NYE event. Worth inquiring.</div>
 </div>
 
 <div class="hotel-card">
-  <div class="name">Street celebrations</div>
-  <div class="meta">Plaza Santo Domingo and Plaza San Pedro Claver fill with locals and tourists at midnight.</div>
+  <div class="name">Marea &mdash; NYE Tasting Menu</div>
+  <div class="meta">Waterfront. Five-course tasting menu paired with premium wines.</div>
+  <div class="price">Needs verification</div>
+  <div class="note">Upscale but not a party. Dining-focused NYE with a view.</div>
+</div>
+
+<div class="hotel-card">
+  <div class="name">Walk the plazas at midnight</div>
+  <div class="meta">Plaza Santo Domingo, Plaza San Pedro Claver. 12 grapes tradition, fireworks, dancing.</div>
   <div class="price">Free</div>
-  <div class="note">The Colombian NYE tradition: 12 grapes at midnight (one for each month wish), fireworks, dancing in the streets. Walk out of your hotel into the party.</div>
+  <div class="note">The Colombian tradition: 12 grapes at midnight (one wish per month). Walk out of your hotel, join the celebration for 20 minutes, walk back. No commitment, no ticket. Can combine with an earlier dinner reservation.</div>
+</div>
+
+<div class="persona-note">
+  <div class="label">NYE recommendation</div>
+  <p>Book a good dinner (Celele or Marea) with an early-ish reservation (8:30&ndash;9pm), then walk to the plaza for the midnight moment. Intimate dinner + organic street celebration. No gala, no open bar, no DJ.</p>
 </div>
 
 <h3>Restaurants <span class="badge badge-food">Caribbean fusion</span></h3>
 
 <div class="hotel-card">
   <div class="name">Celele</div>
-  <div class="meta">Getsemani. Award-winning. Caribbean-Colombian with indigenous ingredients.</div>
+  <div class="meta">Getsemani. Award-winning. Caribbean-Colombian with indigenous ingredients. Latin America's 50 Best.</div>
   <div class="price">~$200&ndash;300 for 2 (tasting menu)</div>
-  <div class="note">The most innovative restaurant in Cartagena. On Latin America's 50 Best. Reservation essential.</div>
+  <div class="dietary">Lisa: Caribbean tasting menus tend to be seafood-heavy, naturally dairy-light. Ask about gluten in sauces. Worth the compromise if needed &mdash; this is the must-eat.</div>
+  <div class="note">The most innovative restaurant in Cartagena. Reservation essential &mdash; book weeks ahead for NYE week.</div>
 </div>
 
 <div class="hotel-card">
-  <div class="name">Mar y Zielo</div>
-  <div class="meta">Historic Center. Signature cuisine, seafood focus.</div>
-  <div class="price">~$120&ndash;200 for 2</div>
+  <div class="name">Marea</div>
+  <div class="meta">Waterfront. Seafood-forward, modern Colombian.</div>
+  <div class="price">~$150&ndash;250 for 2</div>
+  <div class="dietary">Lisa: Seafood-centric menu is naturally friendly. Grilled fish, ceviche, no dairy or gluten in core dishes.</div>
 </div>
 
 <div class="hotel-card">
   <div class="name">La Cevicheria</div>
   <div class="meta">Iconic ceviche spot. Anthony Bourdain famously ate here.</div>
   <div class="price">~$60&ndash;100 for 2</div>
-  <div class="note">Casual, seafood-focused. Worth the wait.</div>
+  <div class="dietary">Lisa: Ceviche is dairy-free and gluten-free by nature. This is a safe and excellent choice.</div>
+  <div class="note">Casual, seafood-focused. Worth the wait. Good lunch between activities.</div>
 </div>
 
 <div class="hotel-card">
-  <div class="name">Cazuela de Mariscos (street food)</div>
-  <div class="meta">Seafood stew. Available at markets and casual spots throughout Getsemani.</div>
+  <div class="name">Pezetarian</div>
+  <div class="meta">Health-conscious seafood. Gluten-free and vegan options on the menu.</div>
+  <div class="price">~$50&ndash;80 for 2</div>
+  <div class="dietary">Lisa: Explicitly accommodates dietary restrictions. Good casual option.</div>
+</div>
+
+<div class="hotel-card">
+  <div class="name">Street food &mdash; Getsemani</div>
+  <div class="meta">Cazuela de mariscos (seafood stew), arepas, ceviche from market stalls.</div>
   <div class="price">~$10&ndash;20 for 2</div>
-  <div class="note">The defining local dish. Try it at Bazurto Market or a Getsemani corner spot.</div>
+  <div class="dietary">Lisa: Arepas are corn-based (GF). Cazuela is typically dairy-free. Ask about butter in specific preparations.</div>
+  <div class="note">Erik's territory: cheap, adventurous, authentic. Bazurto Market for the full local experience.</div>
+</div>
+
+<h3>Walking Food Tour</h3>
+
+<div class="hotel-card">
+  <div class="name">Cartagena Walled City Food Tour</div>
+  <div class="meta">2&ndash;3 hours walking through the old city and Getsemani. 8&ndash;10 tastings. Afro-Indigenous-European fusion cuisine history.</div>
+  <div class="price">~$50&ndash;80/person</div>
+  <div class="note">This is the walking-food-tour-with-ethnic-cuisine pattern both love. Covers ceviche, arepas, tropical fruit, coconut-based dishes, and the African/Spanish/indigenous culinary story of the Caribbean coast. Evening tours (5&ndash;9pm) are cooler and catch vendors at peak. <a href="https://www.getyourguide.com/en-gb/cartagena-l362/shared-street-food-tour-t440644/" target="_blank" rel="noopener">GetYourGuide</a> &middot; <a href="https://www.viator.com/tours/Cartagena/Cartagena-Food-Tour/d4498-59388P51" target="_blank" rel="noopener">Viator (private)</a></div>
 </div>
 
 <h3>Activities (Cartagena)</h3>
 
 <ul>
-  <li><strong>Walled City walking</strong> &mdash; just wander. Colonial architecture, street art, plazas, churches. 2&ndash;4 hours of organic exploring.</li>
-  <li><strong>Getsemani neighborhood</strong> &mdash; the hip neighborhood outside the walls. Street art, cafes, nightlife. Walk from the walled city.</li>
-  <li><strong>Rosario Islands day trip</strong> &mdash; boat to the archipelago (~1 hour). Snorkeling, beaches, seafood lunch. Full-day excursion. The "easy nature" option.</li>
-  <li><strong>Castillo San Felipe</strong> &mdash; the massive hilltop fortress. 1&ndash;2 hour visit. Good sunset views.</li>
-  <li><strong>Sunset cocktails at Cafe del Mar</strong> &mdash; on the city walls, overlooking the ocean. The classic Cartagena evening activity.</li>
+  <li><strong>Walled City walking</strong> &mdash; just wander. Colonial architecture, street art, plazas, churches. 2&ndash;4 hours of organic exploring. Good morning activity before the heat.</li>
+  <li><strong>Getsemani neighborhood</strong> &mdash; the hip neighborhood outside the walls. Street art, cafes. Walk from the walled city.</li>
+  <li><strong>Castillo San Felipe</strong> &mdash; the massive hilltop fortress. 1&ndash;2 hour visit. Good sunset views. <em>Erik note: afternoon heat + hill climb = bring water.</em></li>
+  <li><strong>Rosario Islands day trip</strong> &mdash; boat to the archipelago (~1h). Snorkeling, beaches, seafood lunch. Full-day. The "easy nature" option for a day when you want less walking.</li>
+  <li><strong>Sunset cocktails at Cafe del Mar</strong> &mdash; on the city walls, overlooking the ocean. The classic Cartagena evening ritual.</li>
+  <li><strong>Hotel afternoon</strong> &mdash; pool, rest, recharge. Plan at least one of the four afternoons for this. <em>Lisa note: the AC break is welcome after morning exploring in the heat.</em></li>
 </ul>
 
+<!-- ============ MEDELLIN ============ -->
+
 <div class="city-header">Medellin</div>
-<div class="city-sub">Jan 3&ndash;5 &mdash; 2 nights. Valley at 1,500m (4,900 ft). Temp: 72&ndash;82&deg;F (22&ndash;28&deg;C). "City of Eternal Spring."</div>
+<div class="city-sub">Jan 3&ndash;5 &mdash; 2 nights. Valley at 1,500m (4,900 ft). Temp: 72&ndash;82&deg;F (22&ndash;28&deg;C). "City of Eternal Spring." Drier than usual under El Nino.</div>
+
+<div class="persona-note">
+  <div class="label">Weather note</div>
+  <p>Medellin's climate is the sweet spot for both. Warm days, mild evenings &mdash; comfortable for Erik without being cold for Lisa. Light layers for evening. No extreme heat, no AC dependency.</p>
+</div>
 
 <h3>Hotels</h3>
 
 <div class="hotel-card">
   <div class="name">The Charlee Hotel</div>
-  <div class="meta">El Poblado (Provenza). Rooftop pool, restaurant, bar. Design hotel.</div>
+  <div class="meta">El Poblado (Provenza). Rooftop pool, restaurant, bar. Design hotel. Gym.</div>
   <div class="price">~$200&ndash;350/night</div>
-  <div class="note">The most stylish option in El Poblado. Walkable to Provenza's restaurants and nightlife. <a href="https://www.thecharlee.com" target="_blank" rel="noopener">thecharlee.com</a></div>
+  <div class="note">The most stylish option in El Poblado. Walkable to Provenza's restaurants. Has a gym (Lisa). <a href="https://www.thecharlee.com" target="_blank" rel="noopener">thecharlee.com</a></div>
 </div>
 
 <div class="hotel-card">
   <div class="name">Binn Hotel</div>
   <div class="meta">El Poblado. Boutique. Rooftop views, restaurant.</div>
   <div class="price">~$150&ndash;250/night</div>
-  <div class="note">Well-reviewed boutique option. Good balance of style and price.</div>
+  <div class="note">Good balance of style and price. Erik's value pick.</div>
 </div>
 
 <div class="hotel-card">
   <div class="name">Patio del Mundo</div>
   <div class="meta">El Poblado. Boutique guesthouse. Intimate, art-filled.</div>
   <div class="price">~$100&ndash;180/night</div>
-  <div class="note">More personal and distinctive. Good if boutique character matters more than hotel amenities.</div>
+  <div class="note">More personal and distinctive. Character over amenities. No gym.</div>
 </div>
 
 <h3>Restaurants</h3>
@@ -442,6 +441,7 @@
   <div class="name">Carmen</div>
   <div class="meta">Parque Lleras. Cordon Bleu-trained chefs. Colombian ingredients, international techniques.</div>
   <div class="price">~$120&ndash;200 for 2</div>
+  <div class="dietary">Lisa: Menu has seafood and vegetable-forward options. Chef is known for accommodating dietary needs at this level.</div>
   <div class="note">The fine dining anchor in Medellin. Reservation recommended.</div>
 </div>
 
@@ -455,21 +455,28 @@
   <div class="name">Mondongo's</div>
   <div class="meta">Traditional Antioqueno cuisine. The local institution.</div>
   <div class="price">~$30&ndash;60 for 2</div>
-  <div class="note">Bandeja paisa (the massive traditional platter), mondongo soup. Casual, authentic, iconic.</div>
+  <div class="dietary">Lisa: Bandeja paisa is meat-heavy &mdash; order a la carte. Arepas and empanadas are corn-based (GF). Mondongo soup has tripe (no beef per se, but offal).</div>
+  <div class="note">Erik's kind of place: authentic, cheap, institution. Try the local flavors.</div>
 </div>
 
 <h3>Activities (Medellin)</h3>
 
 <ul>
-  <li><strong>Comuna 13</strong> &mdash; guided walking tour of the neighborhood transformed by escalators and street art. 2&ndash;3 hours. The defining Medellin experience.</li>
-  <li><strong>El Poblado / Provenza</strong> &mdash; walk the tree-lined streets, cafes, boutiques. The Laureles neighborhood is the more local alternative.</li>
-  <li><strong>Guatape day trip</strong> &mdash; colorful lakeside town, 2 hours from Medellin. Climb the 740-step Piedra del Penol for the view. Full day excursion. Worth it if the energy is there.</li>
+  <li><strong>Museum of Antioquia</strong> &mdash; Botero collection (paintings + sculptures), plus colonial and contemporary Colombian art. Plaza Botero outside has 23 bronze sculptures. 2&ndash;3 hours. <em>Both: art museum + plaza walking. The kind of morning activity that works perfectly.</em></li>
+  <li><strong>Museo de Arte Moderno</strong> &mdash; modern and contemporary art from Colombian and international artists. Smaller, focused. 1&ndash;2 hours.</li>
+  <li><strong>Museo Casa de la Memoria</strong> &mdash; reflects on Colombia's history of violence. Moving and important. <em>Erik: the kind of heavy, meaningful museum experience you gravitate toward.</em></li>
+  <li><strong>Comuna 13</strong> &mdash; guided walking tour. Street art, escalators, music, neighborhood transformation story. 2&ndash;3 hours. The defining Medellin experience.</li>
+  <li><strong>El Poblado / Provenza</strong> &mdash; walk the tree-lined streets, cafes, boutiques. Good for a slow afternoon.</li>
+  <li><strong>Metro cable</strong> &mdash; ride the city's cable car for valley views. Connects to Parque Arvi nature reserve. 2&ndash;3 hours.</li>
   <li><strong>Botanical Garden</strong> &mdash; free, peaceful, beautiful. Good morning activity.</li>
-  <li><strong>Coffee farm tour</strong> &mdash; day trips to the Coffee Region (Eje Cafetero) are possible from Medellin but long (3+ hours each way). Better as a focused trip another time.</li>
-  <li><strong>Metro cable</strong> &mdash; ride the city's cable car system for valley views. Connects to Parque Arvi nature reserve at the top. 2&ndash;3 hours.</li>
+  <li><strong>Guatape day trip (optional)</strong> &mdash; colorful lakeside town, 2 hours out. 740 steps to the Piedra del Penol viewpoint. Full day. Only if the energy is there &mdash; this is the most active option.</li>
 </ul>
 
-<h2>Weather</h2>
+<h2>Weather &amp; El Nino</h2>
+
+<div class="callout green">
+  <p><strong>El Nino favors Colombia.</strong> Unlike California (where Super El Nino brings record rain), El Nino makes Colombia drier and warmer. IDEAM forecasts below-average precipitation Dec 2026&ndash;Mar 2027. This is dry season with extra dry. No rain risk for this trip.</p>
+</div>
 
 <table>
   <thead>
@@ -478,112 +485,103 @@
       <th>High</th>
       <th>Low</th>
       <th>Conditions</th>
+      <th>Packing</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>Bogota (Dec 29&ndash;31)</td>
-      <td>66&deg;F (19&deg;C)</td>
-      <td>45&deg;F (7&deg;C)</td>
-      <td>Dry season. Cool, clear skies. Pack layers &mdash; altitude makes evenings chilly.</td>
-    </tr>
-    <tr>
-      <td>Cartagena (Dec 31&ndash;Jan 3)</td>
+      <td>Cartagena (Dec 30&ndash;Jan 3)</td>
       <td>88&deg;F (31&deg;C)</td>
       <td>77&deg;F (25&deg;C)</td>
-      <td>Hot, sunny, dry. Humidity high but no rain. Light clothing, sunscreen.</td>
+      <td>Hot, sunny, dry. Humidity high.</td>
+      <td>Light clothing, sunscreen, hat. Light layer for AC indoors. Erik: extra water.</td>
     </tr>
     <tr>
       <td>Medellin (Jan 3&ndash;5)</td>
       <td>82&deg;F (28&deg;C)</td>
       <td>63&deg;F (17&deg;C)</td>
-      <td>Warm days, mild evenings. Comfortable year-round. Occasional brief afternoon shower.</td>
+      <td>Warm days, mild evenings. Comfortable.</td>
+      <td>Light layers for evening. Lisa: a jacket for after-dark walks.</td>
     </tr>
   </tbody>
 </table>
 
-<p style="font-size: 0.85rem; color: var(--text-muted);">December&ndash;January is dry season across most of Colombia. This is peak tourist season but also the best weather window. All three cities are pleasant &mdash; the temperature swing between Bogota (cool) and Cartagena (tropical) is dramatic, similar to the Santiago-to-Patagonia shift in the Chile plan.</p>
-
 <h2>Safety</h2>
 
-<p>The U.S. State Department rates Colombia at Level 3 ("Reconsider Travel") due to crime and civil unrest in specific regions. However, the three tourist cities are well-established and safe with standard precautions:</p>
+<p>U.S. State Department: Level 3 ("Reconsider Travel") due to specific rural regions. The tourist cities are well-established and safe with standard precautions:</p>
 
 <ul>
-  <li><strong>Bogota:</strong> Tourist districts (Chapinero, Zona Rosa, Usaquen, Zona G) are well-policed and walkable. Use registered taxis or Uber (widely available).</li>
-  <li><strong>Cartagena:</strong> The walled city and Getsemani are well-patrolled, lively, and safe into the night. The main risk is petty theft (pickpockets in crowded areas).</li>
-  <li><strong>Medellin:</strong> El Poblado and Laureles are the visitor zones &mdash; safe, walkable, full of restaurants and cafes. Use Uber or registered transport.</li>
+  <li><strong>Cartagena:</strong> Walled city and Getsemani are well-patrolled, lively, safe into the night. Main risk is petty theft (pickpockets in crowds).</li>
+  <li><strong>Medellin:</strong> El Poblado and Laureles are the visitor zones &mdash; safe, walkable, full of restaurants and cafes.</li>
 </ul>
 
-<p style="font-size: 0.85rem; color: var(--text-muted);">Practical: use Uber (legal and ubiquitous), don't flash expensive jewelry, stay in tourist neighborhoods at night. These are the same precautions you'd take in any Latin American city. The Level 3 advisory reflects specific rural areas, not Bogota/Cartagena/Medellin.</p>
+<p style="font-size: 0.85rem; color: var(--text-muted);">Use Uber (legal, ubiquitous), don't flash jewelry, stay in tourist neighborhoods at night. Same precautions as any Latin American city.</p>
 
 <h2>Visa &amp; Logistics</h2>
 
 <ul>
-  <li><strong>Visa:</strong> US passport holders get 90-day visa-free entry. Stamped at immigration on arrival.</li>
-  <li><strong>Currency:</strong> Colombian Peso (COP). ~4,100 COP = $1 USD (as of late 2026). Credit cards widely accepted in tourist areas. ATMs available.</li>
-  <li><strong>Language:</strong> Spanish. Tourist areas in all three cities have English-speaking staff at hotels and upscale restaurants. Outside of tourist zones, basic Spanish is very helpful.</li>
-  <li><strong>Altitude:</strong> Bogota is at 8,660 ft. Take it easy the first day &mdash; altitude can cause mild headache and fatigue. Cartagena and Medellin are at lower elevations with no altitude concern.</li>
+  <li><strong>Visa:</strong> US passport holders get 90-day visa-free entry.</li>
+  <li><strong>Currency:</strong> Colombian Peso (COP). ~4,100 COP = $1 USD. Credit cards widely accepted in tourist areas.</li>
+  <li><strong>Language:</strong> Spanish. Hotels and upscale restaurants speak English. Basic Spanish helpful elsewhere.</li>
+  <li><strong>No altitude concern:</strong> Without Bogota, neither city has altitude issues. Cartagena is sea level, Medellin is at 4,900 ft (mild).</li>
 </ul>
 
 <h2>Suggested Itinerary</h2>
 
 <div class="day-card">
-  <div class="day-title">Dec 29 (Mon) &mdash; Arrive Bogota</div>
+  <div class="day-title">Dec 30 (Tue) &mdash; Arrive Cartagena</div>
   <div class="day-detail">
-    Morning flight IAH &rarr; BOG (direct, ~5h). Check into Four Seasons Casa Medina. Slow afternoon &mdash; acclimate to altitude. Walk Zona G. Dinner at Harry Sasson.
+    Morning flight IAH &rarr; CTG (~6h with connection). Check into Casa San Agustin. Slow afternoon &mdash; walk the walled city, get oriented. Sunset cocktails at Cafe del Mar. Casual dinner: La Cevicheria or Pezetarian.
   </div>
 </div>
 
 <div class="day-card">
-  <div class="day-title">Dec 30 (Tue) &mdash; Bogota Exploring</div>
+  <div class="day-title">Dec 31 (Wed) &mdash; NYE</div>
   <div class="day-detail">
-    Morning: Paloquemao Market (tropical fruits, flowers, local food). Midday: La Candelaria walking &mdash; Botero Museum, Gold Museum, street art. Afternoon: Monserrate cable car for city views. Dinner: LEO (tasting menu, the highlight meal).
+    Morning: walking food tour of Getsemani (2&ndash;3h, Afro-Indigenous-Caribbean flavors). Afternoon: hotel pool, rest, get ready. Evening: dinner at Celele or Marea (book 8:30pm). Walk to Plaza Santo Domingo for midnight &mdash; 12 grapes, fireworks over the bay, champagne in the streets. Walk back to hotel.
   </div>
 </div>
 
 <div class="day-card">
-  <div class="day-title">Dec 31 (Wed) &mdash; Fly to Cartagena + NYE</div>
+  <div class="day-title">Jan 1 (Thu) &mdash; Recovery + Exploration</div>
   <div class="day-detail">
-    Morning flight BOG &rarr; CTG (~1h 40m). Check into Sofitel Legend Santa Clara or Casa San Agustin. Afternoon: walk the walled city, Getsemani. Evening: NYE dinner at the hotel gala or Baluarte San Francisco Javier fortress. Midnight: fireworks over the Caribbean, 12 grapes tradition, champagne in the streets.
+    Late start. Brunch in the walled city. Afternoon: Castillo San Felipe (fortress, views, 1&ndash;2h) or just pool + hotel. Light evening: walk Getsemani, street food, early bed.
   </div>
 </div>
 
 <div class="day-card">
-  <div class="day-title">Jan 1 (Thu) &mdash; Cartagena Recovery + Exploration</div>
+  <div class="day-title">Jan 2 (Fri) &mdash; Rosario Islands or Second City Day</div>
   <div class="day-detail">
-    Late start. Brunch in Getsemani. Afternoon: Castillo San Felipe or poolside at the hotel. Sunset cocktails at Cafe del Mar on the city walls. Dinner: Celele (tasting menu).
-  </div>
-</div>
-
-<div class="day-card">
-  <div class="day-title">Jan 2 (Fri) &mdash; Rosario Islands Day Trip</div>
-  <div class="day-detail">
-    Full-day boat trip to Rosario Islands (~1h each way). Snorkeling, beach time, seafood lunch on the island. Return to Cartagena for a light dinner. Or: skip the islands and do a second day exploring the old city + ceviche at La Cevicheria.
+    <strong>Option A:</strong> Full-day boat to Rosario Islands. Snorkeling, beach, seafood lunch on the island. Relaxed, nature-forward.<br>
+    <strong>Option B:</strong> Second day exploring the old city. Morning museum or church tour, lunch at Mar y Zielo, afternoon walk. Sunset at Cafe del Mar again (it's worth repeating).
   </div>
 </div>
 
 <div class="day-card">
   <div class="day-title">Jan 3 (Sat) &mdash; Fly to Medellin</div>
   <div class="day-detail">
-    Morning flight CTG &rarr; MDE (~1h 15m). Check into The Charlee. Afternoon: walk El Poblado / Provenza. Coffee at Pergamino or Hija Mia. Dinner: Carmen.
+    Morning flight CTG &rarr; MDE (~1h 15m). Check into The Charlee. Afternoon: walk El Poblado / Provenza. Coffee at Pergamino. Dinner: Carmen.
   </div>
 </div>
 
 <div class="day-card">
   <div class="day-title">Jan 4 (Sun) &mdash; Medellin</div>
   <div class="day-detail">
-    Morning: guided tour of Comuna 13 (street art, escalators, music). Afternoon: Botanical Garden or metro cable to Parque Arvi. Evening: casual dinner, Mondongo's or street food. <strong>Or:</strong> full-day Guatape trip (colorful town, Piedra del Penol rock, lake views &mdash; more active).
+    Morning: Museum of Antioquia + Plaza Botero (Botero sculptures). Lunch near the museum. Afternoon: guided tour of Comuna 13 (street art, escalators, 2&ndash;3h). <strong>Or:</strong> swap Comuna 13 for Botanical Garden + metro cable to Parque Arvi. Evening: Mondongo's or Sambombi for casual dinner.
   </div>
 </div>
 
 <div class="day-card">
   <div class="day-title">Jan 5 (Mon) &mdash; Fly Home</div>
   <div class="day-detail">
-    Morning coffee in Laureles. MDE &rarr; IAH (connecting via BOG, or direct if available). Arrive Houston evening.
+    Morning coffee in Laureles neighborhood. MDE &rarr; IAH (connecting via BOG). Arrive Houston evening.
   </div>
 </div>
 
-<p style="font-size: 0.85rem; color: var(--text-muted);"><strong>Pacing note:</strong> This itinerary has 1&ndash;2 activities per day with generous free time. No multi-hour hikes. The longest excursion is the Rosario Islands boat trip, which is beach relaxation with a scenic ride. Guatape is the most active option (740 steps to the viewpoint) and is listed as an alternative, not a default.</p>
+<div class="persona-note">
+  <div class="label">Pacing check</div>
+  <p>Every day has at most two planned activities. Jan 1 is explicitly a recovery day. Jan 2 has a relaxed option (islands/beach) and a walkable option. No multi-hour endurance anything. Heavy meals anchor the schedule &mdash; light lunch after a food tour morning, real dinner in the evening.</p>
+</div>
 
 <h2>Budget Estimate (2 people)</h2>
 
@@ -602,19 +600,14 @@
       <td>$1,500</td>
     </tr>
     <tr>
-      <td>Internal flights (BOG&rarr;CTG + CTG&rarr;MDE, 2 ppl)</td>
-      <td>$300</td>
-      <td>$400</td>
+      <td>Internal flight (CTG&rarr;MDE, 2 ppl)</td>
+      <td>$150</td>
+      <td>$200</td>
     </tr>
     <tr>
-      <td>Bogota hotel (2 nights)</td>
-      <td>$600 (W Bogota)</td>
-      <td>$1,000 (Four Seasons)</td>
-    </tr>
-    <tr>
-      <td>Cartagena hotel (3 nights)</td>
-      <td>$1,200 (Charleston)</td>
-      <td>$2,000 (Casa San Agustin)</td>
+      <td>Cartagena hotel (4 nights)</td>
+      <td>$1,600 (Charleston)</td>
+      <td>$2,400 (Casa San Agustin)</td>
     </tr>
     <tr>
       <td>Medellin hotel (2 nights)</td>
@@ -622,63 +615,61 @@
       <td>$700 (Charlee)</td>
     </tr>
     <tr>
-      <td>Fine dining (3 meals: LEO, Celele, Carmen)</td>
-      <td>$600</td>
-      <td>$900</td>
-    </tr>
-    <tr>
-      <td>Other meals (7 days)</td>
+      <td>Fine dining (2 meals: Celele, Carmen)</td>
+      <td>$350</td>
       <td>$500</td>
-      <td>$800</td>
     </tr>
     <tr>
-      <td>NYE event/dinner</td>
-      <td>$300</td>
+      <td>NYE dinner</td>
+      <td>$200</td>
+      <td>$400</td>
+    </tr>
+    <tr>
+      <td>Other meals (6 days)</td>
+      <td>$400</td>
       <td>$600</td>
     </tr>
     <tr>
-      <td>Activities (tours, boats, tickets)</td>
-      <td>$300</td>
-      <td>$500</td>
+      <td>Walking food tour</td>
+      <td>$120</td>
+      <td>$160</td>
+    </tr>
+    <tr>
+      <td>Activities (tours, boats, museums)</td>
+      <td>$200</td>
+      <td>$400</td>
     </tr>
     <tr>
       <td>Transport (Uber, local transfers)</td>
-      <td>$150</td>
-      <td>$250</td>
+      <td>$100</td>
+      <td>$200</td>
     </tr>
     <tr style="border-top: 2px solid var(--border);">
       <td><strong>Total (2 people)</strong></td>
-      <td><strong style="color: var(--green);">~$5,500&ndash;7,000</strong></td>
-      <td><strong style="color: var(--yellow);">~$8,500&ndash;10,500</strong></td>
+      <td><strong style="color: var(--green);">~$4,700&ndash;5,500</strong></td>
+      <td><strong style="color: var(--yellow);">~$7,000&ndash;9,000</strong></td>
     </tr>
   </tbody>
 </table>
 
-<p style="font-size: 0.85rem; color: var(--text-muted);">Colombia is significantly cheaper than Chile for equivalent luxury. The Chile mid-range budget was $17&ndash;18k; this trip at the premium tier is $8.5&ndash;10.5k. The savings come from lower hotel costs (even at the best hotels) and cheaper food &mdash; a tasting menu at LEO costs roughly what a nice dinner at Borago costs.</p>
-
-<h2>Why This Could Work</h2>
-
-<ul>
-  <li><strong>Food scene is world-class.</strong> LEO, El Cielo, Celele, Harry Sasson, Carmen &mdash; three cities with distinct culinary identities. Bogota has avant-garde Colombian, Cartagena has Caribbean seafood fusion, Medellin has regional Antioqueno. This matches the food-forward travel style.</li>
-  <li><strong>Right activity level.</strong> Walking neighborhoods, visiting museums, taking cable cars, sitting in plazas. Everything is optional and low-intensity. The only "active" option (Guatape) is listed as an alternative.</li>
-  <li><strong>NYE in Cartagena is memorable.</strong> Fireworks over the Caribbean, colonial fortress galas, 12 grapes at midnight, dancing in the streets. This rivals the Valparaiso NYE they were planning.</li>
-  <li><strong>Direct flights from Houston.</strong> IAH &rarr; BOG is 5 hours nonstop on United or Avianca. Same airline, same airport as the Chile plan.</li>
-  <li><strong>Better value.</strong> Premium tier here ($8.5&ndash;10.5k) costs less than Chile's budget tier ($12&ndash;13k). The dollars go further without sacrificing quality.</li>
-  <li><strong>Cultural depth.</strong> Three distinct cities with different histories, climates, and characters. More variety than Chile's Santiago+Patagonia split.</li>
-  <li><strong>No endurance activities.</strong> Nothing in this itinerary requires sustained physical effort. The Chile trip was deferred for hiking intensity &mdash; that concern does not apply here.</li>
-</ul>
+<p style="font-size: 0.85rem; color: var(--text-muted);">Cheaper than the 3-city version and significantly cheaper than Chile. Even at premium tier, this is under $9k for a week-long international trip with boutique hotels and fine dining. The dollar goes far in Colombia.</p>
 
 <h2>Tradeoffs</h2>
 
 <ul>
-  <li><strong>Three cities = more logistics.</strong> Two internal flights, three hotel check-ins. More moving parts than a single-destination trip. This is the same number of cities as Chile (Santiago, Valparaiso, Patagonia) but with air travel between all three.</li>
-  <li><strong>Safety perception.</strong> Colombia's Level 3 advisory can be unsettling even when the tourist cities are safe. Some people are more comfortable with this than others.</li>
-  <li><strong>Language.</strong> Spanish is essential outside tourist zones. Hotels and upscale restaurants speak English, but taxis, markets, and casual spots may not. This was also true for Chile.</li>
-  <li><strong>Peak season.</strong> December/January is high season. Hotels and flights will be at peak pricing. Book early &mdash; especially Cartagena hotels for NYE.</li>
-  <li><strong>Bogota altitude.</strong> At 8,660 ft, the first day may involve mild altitude effects (headache, fatigue). Not a dealbreaker, but worth noting. Drink water, take it easy.</li>
+  <li><strong>One fewer city = less variety.</strong> Dropping Bogota means missing LEO, El Cielo, the Gold Museum, and Monserrate. But Lisa's been to Bogota &mdash; the novelty is lower. And two cities is a better pace for a couples trip.</li>
+  <li><strong>Cartagena is touristy at NYE.</strong> Peak season, peak pricing, peak crowds in the walled city. Book hotels and restaurants early. The tradeoff: you get a naturally festive atmosphere without having to seek it out.</li>
+  <li><strong>Safety perception.</strong> Colombia's Level 3 advisory can be unsettling even when tourist cities are safe.</li>
+  <li><strong>Language.</strong> Spanish essential outside tourist zones. Hotels and upscale restaurants speak English.</li>
+  <li><strong>Heat in Cartagena.</strong> 88&deg;F with humidity. Erik will want shade and water breaks. Indoor activities during peak heat (1&ndash;3pm).</li>
 </ul>
 
-<p style="margin-top: 2rem;">Compare with: <a href="palm-springs-research.html">Palm Springs NYE trip</a> (shorter, domestic, low-effort). See <a href="trip-constraints.html">Trip Constraints</a> and <a href="traveler-personas.html">Traveler Personas</a> for context.</p>
+<h2>Bogota <span class="badge badge-depri">Deprioritized</span></h2>
 
+<p>Removed from the main route. Lisa has been &mdash; describes it as pretty but a "party scene." Neither is looking for that on this trip. If you want to add Bogota back as a 1-night stopover (arrive late, leave early for Cartagena), the food scene justifies a dinner at LEO or Villanos en Bermudas. But it's not necessary.</p>
+
+<p style="margin-top: 2rem;">Compare with: <a href="palm-springs-research.html">Palm Springs</a> (shorter, domestic, El Nino rain risk). See <a href="trip-constraints.html">Trip Constraints</a> and <a href="traveler-personas.html">Traveler Personas</a> for context.</p>
+
+<!-- published: PENDING @ PENDING -->
 </body>
 </html>
