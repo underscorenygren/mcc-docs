@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NYE Trip Decision Pre-Plan</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+  .option-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+    margin: 1rem 0;
+  }
+  .option-card .name {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #fff;
+    margin-bottom: 0.3rem;
+  }
+  .option-card .flight {
+    color: var(--blue);
+    font-size: 0.85rem;
+  }
+  .option-card .weather-tag {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-right: 0.3rem;
+  }
+  .tag-good { background: rgba(110,231,183,0.15); color: var(--green); }
+  .tag-risk { background: rgba(252,165,165,0.15); color: var(--red); }
+  .tag-neutral { background: rgba(148,163,184,0.15); color: var(--text-muted); }
+  .decision-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  .factor-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  .factor-card .label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .factor-card .value {
+    font-weight: 700;
+    color: #fff;
+    margin-top: 0.2rem;
+  }
+  .factor-card .detail {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+  }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="../index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+  <span style="color: var(--text-muted);"> / </span>
+  <a href="trip-constraints.html" style="color: #5dade2; text-decoration: none;">Trip Planning</a>
+</nav>
+
+<h1>NYE Trip Decision Pre-Plan</h1>
+<p class="subtitle">Comparing warm-weather options for Dec 29, 2026 &ndash; Jan 5, 2027. Last-minute booking, intimate couples trip.</p>
+
+<div class="callout yellow">
+  <p><strong>Super El Nino is the wildcard this winter.</strong> NOAA has declared a Very Strong El Nino &mdash; 69% chance it exceeds anything since 1950. It makes California and the US Southwest wetter, but makes Colombia and the Caribbean drier. Weather risk varies dramatically by destination.</p>
+</div>
+
+<h2>Key Decision Factors</h2>
+
+<div class="decision-grid">
+  <div class="factor-card">
+    <div class="label">Trip style</div>
+    <div class="value">Intimate couples trip</div>
+    <div class="detail">Not a big party. Quiet NYE dinner, walk into celebrations, walk back. No galas, no DJ, no open bar packages.</div>
+  </div>
+  <div class="factor-card">
+    <div class="label">Timing</div>
+    <div class="value">Last minute</div>
+    <div class="detail">Booking late for peak season. Availability and pricing may be constrained. Flexibility on exact dates helps.</div>
+  </div>
+  <div class="factor-card">
+    <div class="label">NYE option</div>
+    <div class="value">Jessica &amp; Ric</div>
+    <div class="detail">Celebrating with Jessica and Ric is an option. This could anchor the destination choice if they have a plan.</div>
+  </div>
+  <div class="factor-card">
+    <div class="label">Budget</div>
+    <div class="value">Value-conscious</div>
+    <div class="detail">Nice but not luxury for its own sake. Erik watches the bill, Lisa watches the reviews.</div>
+  </div>
+</div>
+
+<h2>El Nino Weather Impact by Region</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Region</th>
+      <th>El Nino Effect</th>
+      <th>Dec&ndash;Jan Outlook</th>
+      <th>Risk Level</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Southern California (Palm Springs)</td>
+      <td>Wetter, stormier</td>
+      <td>Above-normal precipitation. 8/10 models predict possible record-wet months Jan&ndash;Mar. Flash flood risk in desert terrain.</td>
+      <td><span class="weather-tag tag-risk">High risk</span></td>
+    </tr>
+    <tr>
+      <td>Colombia</td>
+      <td>Drier, hotter</td>
+      <td>Below-average precipitation Dec&ndash;Mar. Dry season amplified. IDEAM forecasts megadrought conditions.</td>
+      <td><span class="weather-tag tag-good">Favorable</span></td>
+    </tr>
+    <tr>
+      <td>Caribbean (general)</td>
+      <td>Hotter, drier south; wetter north</td>
+      <td>Northern Caribbean (Bahamas, Turks) may see above-normal rain. Southern Caribbean (Aruba, Curacao) drier. Drought risk in parts.</td>
+      <td><span class="weather-tag tag-neutral">Mixed</span></td>
+    </tr>
+    <tr>
+      <td>Mexico &mdash; Caribbean coast (Cancun, Riviera Maya, Tulum)</td>
+      <td>Wetter northwest, variable east</td>
+      <td>Yucatan peninsula is typically dry Dec&ndash;Jan. El Nino effect is weaker here than Pacific coast. Fewer hurricanes (El Nino suppresses Atlantic activity).</td>
+      <td><span class="weather-tag tag-good">Likely OK</span></td>
+    </tr>
+    <tr>
+      <td>Mexico &mdash; Pacific coast (Puerto Vallarta, Cabo)</td>
+      <td>Wetter, more storms</td>
+      <td>Northwest Mexico forecast for above-average December precipitation. 56 cold fronts expected (6 above average).</td>
+      <td><span class="weather-tag tag-risk">Moderate risk</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="font-size: 0.85rem; color: var(--text-muted);">Sources: <a href="https://www.noaa.gov/news-release/el-nino-looms-large-over-us-winter-outlook" target="_blank" rel="noopener">NOAA Winter Outlook</a>, <a href="https://yaleclimateconnections.org/2026/10/climate-change-plus-a-super-el-nino-could-add-up-to-a-record-wet-winter-for-california/" target="_blank" rel="noopener">Yale Climate Connections</a>, <a href="https://caribbeanpulse.org/2026/08/27/el-nino-strengthens-as-caribbean-faces-growing-heat-and-drought-threat-into-2027/" target="_blank" rel="noopener">Caribbean Pulse</a>, <a href="https://www.bnamericas.com/en/news/el-nino-will-remain-very-strong-until-the-first-quarter-of-2027-colombia-maintains-the-measures-and-calls-for-sustained-savings-of-energy-water-and-gas" target="_blank" rel="noopener">BNamericas (Colombia)</a></p>
+
+<h2>Destination Options</h2>
+
+<div class="option-card">
+  <div class="name">Colombia (Cartagena + Medellin)</div>
+  <div class="flight">IAH &rarr; CTG via BOG, ~6h. Open-jaw return MDE &rarr; IAH.</div>
+  <p><span class="weather-tag tag-good">El Nino: Drier</span> 7 days. 2 cities. $5.5&ndash;9k for two.</p>
+  <p>The most developed option. Intimate NYE in Cartagena (rooftop dinner + plaza walk at midnight). World-class food scene aligned with both personas. Caribbean seafood is naturally friendly to Lisa's restrictions. Walking food tours, museums, art, coffee farm tour for Erik. No altitude issues (Bogota dropped). Warm weather with Medellin as a perfect-climate decompression leg.</p>
+  <p><strong>Pros:</strong> Best food scene, best El Nino weather, lowest cost, most cultural depth.<br>
+  <strong>Cons:</strong> International logistics, Spanish helpful, safety perception, peak-season Cartagena is crowded.<br>
+  <strong>Full research:</strong> <a href="colombia-research.html">Colombia Research</a></p>
+</div>
+
+<div class="option-card">
+  <div class="name">Palm Springs</div>
+  <div class="flight">IAH &rarr; PSP, ~3.5h direct (American, United).</div>
+  <p><span class="weather-tag tag-risk">El Nino: Wetter</span> 3&ndash;5 days. Domestic. $2&ndash;4k for two.</p>
+  <p>Short, easy, low-effort. Desert aesthetic, mid-century architecture, good restaurants. But Super El Nino makes this the highest weather risk of any option. Desert soil doesn't absorb rain &mdash; flash flooding in a storm. Dec 21&ndash;31 is the wettest window. If a storm hits, outdoor activities are wiped out and there's not much to fall back on indoors.</p>
+  <p><strong>Pros:</strong> Shortest flight, simplest logistics, cheapest, familiar (domestic).<br>
+  <strong>Cons:</strong> Highest El Nino rain risk, limited indoor fallbacks, less cultural depth.<br>
+  <strong>Full research:</strong> <a href="palm-springs-research.html">Palm Springs Research</a></p>
+</div>
+
+<div class="option-card">
+  <div class="name">Mexico &mdash; Tulum / Riviera Maya</div>
+  <div class="flight">IAH &rarr; CUN, ~2.5h direct (United, American, Spirit).</div>
+  <p><span class="weather-tag tag-good">El Nino: Likely OK</span> 5&ndash;7 days. $4&ndash;8k for two.</p>
+  <p>Short flight, warm, beach + ruins + cenotes. Tulum has a food scene that's exploded in recent years (Arca, Hartwood, Mur Mur). Cenote swimming is unique and low-effort. Chichen Itza or Coba for ruins. NYE is typically beach bonfires and restaurant dinners &mdash; can be as intimate as you want. El Nino impact is weaker on the Yucatan than Pacific Mexico.</p>
+  <p><strong>Pros:</strong> Shortest international flight, warm, beach + culture combo, good food scene, cenotes.<br>
+  <strong>Cons:</strong> Tulum is trendy/crowded at NYE, prices inflated, some spots feel performative rather than authentic. Lisa's Asian food bar won't be met here.</p>
+</div>
+
+<div class="option-card">
+  <div class="name">Mexico &mdash; Oaxaca City</div>
+  <div class="flight">IAH &rarr; OAX, ~3h (connecting via MEX).</div>
+  <p><span class="weather-tag tag-neutral">El Nino: Neutral</span> 5&ndash;7 days. $3&ndash;6k for two.</p>
+  <p>One of Mexico's best food cities &mdash; mole, mezcal, tlayudas, street food culture. Walking food tours are the main activity. Art galleries, textile markets, Monte Alban ruins. Intimate and culturally rich. Not a beach destination &mdash; it's a mountain city at ~5,000 ft with pleasant dry-season weather (70s&deg;F). NYE is local and low-key.</p>
+  <p><strong>Pros:</strong> Best food scene in Mexico, walking food tours, mezcal, art/culture, affordable, intimate.<br>
+  <strong>Cons:</strong> No beach, connecting flight required, Lisa runs cold (evenings are cool at altitude).</p>
+</div>
+
+<div class="option-card">
+  <div class="name">Puerto Rico (San Juan)</div>
+  <div class="flight">IAH &rarr; SJU, ~3.5h direct (United, JetBlue).</div>
+  <p><span class="weather-tag tag-neutral">El Nino: Mixed</span> 5&ndash;7 days. $4&ndash;7k for two.</p>
+  <p>No passport needed (US territory). Old San Juan is walkable, colorful, and has a growing food scene. Caribbean food + Spanish colonial architecture + rum distilleries + El Yunque rainforest. NYE in Old San Juan is festive but can be intimate (rooftop restaurant + walk the cobblestones at midnight). Beach day trips to Vieques or Culebra.</p>
+  <p><strong>Pros:</strong> No passport, direct flight, US territory (easy logistics), walkable old city, food scene improving.<br>
+  <strong>Cons:</strong> Northern Caribbean may see above-normal rain under El Nino, food scene not as deep as Colombia or Oaxaca.</p>
+</div>
+
+<div class="option-card">
+  <div class="name">Curacao or Aruba</div>
+  <div class="flight">IAH &rarr; CUR or AUA, ~4.5h (connecting via MIA or direct on some carriers).</div>
+  <p><span class="weather-tag tag-good">El Nino: Drier</span> 5&ndash;7 days. $5&ndash;8k for two.</p>
+  <p>Southern Caribbean &mdash; outside the hurricane belt and drier under El Nino. Curacao has Willemstad (colorful Dutch colonial, UNESCO), good food scene, and a more authentic feel than Aruba. Aruba is more resort-oriented. Both are warm, dry, and compact. NYE is typically beach/restaurant celebrations.</p>
+  <p><strong>Pros:</strong> Best El Nino weather in the Caribbean, warm, Curacao has cultural depth, outside hurricane belt.<br>
+  <strong>Cons:</strong> Connecting flights from Houston, smaller food scene than Colombia, Aruba is resort-heavy.</p>
+</div>
+
+<h2>Quick Comparison</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Destination</th>
+      <th>Flight</th>
+      <th>El Nino</th>
+      <th>Food</th>
+      <th>Culture</th>
+      <th>Budget (2 ppl)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Colombia</strong></td>
+      <td>6h (1 stop)</td>
+      <td><span class="weather-tag tag-good">Drier</span></td>
+      <td>World-class</td>
+      <td>Deep</td>
+      <td>$5.5&ndash;9k</td>
+    </tr>
+    <tr>
+      <td>Palm Springs</td>
+      <td>3.5h direct</td>
+      <td><span class="weather-tag tag-risk">Rain risk</span></td>
+      <td>Good</td>
+      <td>Light</td>
+      <td>$2&ndash;4k</td>
+    </tr>
+    <tr>
+      <td>Tulum</td>
+      <td>2.5h direct</td>
+      <td><span class="weather-tag tag-good">Likely OK</span></td>
+      <td>Good+</td>
+      <td>Moderate</td>
+      <td>$4&ndash;8k</td>
+    </tr>
+    <tr>
+      <td>Oaxaca</td>
+      <td>3h (1 stop)</td>
+      <td><span class="weather-tag tag-neutral">Neutral</span></td>
+      <td>Excellent</td>
+      <td>Deep</td>
+      <td>$3&ndash;6k</td>
+    </tr>
+    <tr>
+      <td>Puerto Rico</td>
+      <td>3.5h direct</td>
+      <td><span class="weather-tag tag-neutral">Mixed</span></td>
+      <td>Good</td>
+      <td>Moderate</td>
+      <td>$4&ndash;7k</td>
+    </tr>
+    <tr>
+      <td>Curacao</td>
+      <td>4.5h (1 stop)</td>
+      <td><span class="weather-tag tag-good">Drier</span></td>
+      <td>Moderate</td>
+      <td>Moderate</td>
+      <td>$5&ndash;8k</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Open Questions</h2>
+
+<ul>
+  <li><strong>Jessica &amp; Ric:</strong> Do they have a NYE plan? If they're going somewhere specific, that could anchor the decision. If they're open, any of these work for a foursome (Colombia and Tulum especially accommodate groups well).</li>
+  <li><strong>Beach vs. city:</strong> Is beach time important, or is a city trip (Oaxaca, Colombia) the preference? Cartagena and Tulum give you both; Oaxaca is city-only.</li>
+  <li><strong>Risk tolerance on Palm Springs:</strong> If you're OK with a 30&ndash;40% chance of rain days, it's still the easiest option. If a rained-out NYE is unacceptable, skip it.</li>
+  <li><strong>Passport situation:</strong> Both passports current? If not, Puerto Rico (no passport needed) becomes more attractive.</li>
+  <li><strong>Last-minute availability:</strong> Need to check actual hotel/flight availability at these dates. The booking teammate will follow up with deep links.</li>
+</ul>
+
+<h2>Next Steps</h2>
+
+<ol>
+  <li>Check with Jessica &amp; Ric on their NYE plans</li>
+  <li>Decide on 2&ndash;3 finalists from this list</li>
+  <li>Booking teammate will generate deep links (booking.com, direct hotel) with live pricing for the finalists</li>
+  <li>Book flights first (most constrained), then hotels</li>
+</ol>
+
+<p style="margin-top: 2rem;">Related: <a href="colombia-research.html">Colombia Research</a> &middot; <a href="palm-springs-research.html">Palm Springs Research</a> &middot; <a href="traveler-personas.html">Traveler Personas</a> &middot; <a href="trip-constraints.html">Trip Constraints</a></p>
+
+<!-- published: PENDING @ PENDING -->
+</body>
+</html>
