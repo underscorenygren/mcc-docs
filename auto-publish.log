@@ -78,3 +78,41 @@ Everything up-to-date
 To https://github.com/underscorenygren/mcc-docs.git
    79a6f7c..fabee15  main -> main
 2026-11-16T16:27:16Z published: trips/chile/chile-dining.html,trips/chile/chile-lodge-comparison.html,trips/chile/chile-trip-status.html,trips/colombia-research.html,trips/palm-springs-research.html,trips/traveler-personas.html,trips/trip-constraints.html
+[main 0fbcdd3] auto-publish: index.html
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+To https://github.com/underscorenygren/mcc-docs.git
+   d484e3c..0fbcdd3  main -> main
+2026-11-17T19:14:34Z published: index.html
+[main f7e6932] auto-publish: activity-viewer-research.html,index.html
+ 2 files changed, 396 insertions(+)
+ create mode 100644 activity-viewer-research.html
+To https://github.com/underscorenygren/mcc-docs.git
+   3a500a2..f7e6932  main -> main
+2026-11-17T19:15:05Z published: activity-viewer-research.html,index.html
+[main db12ffc] auto-publish: index.html
+ 1 file changed, 21 insertions(+), 14 deletions(-)
+To https://github.com/underscorenygren/mcc-docs.git
+   6e744e0..db12ffc  main -> main
+2026-11-17T22:49:18Z published: index.html
+[main db0e7cc] auto-publish: trips/colombia-research.html,trips/decision-preplan.html,trips/palm-springs-research.html,trips/traveler-personas.html,trips/trip-constraints.html
+ 5 files changed, 185 insertions(+)
+To https://github.com/underscorenygren/mcc-docs.git
+   d647fb7..db0e7cc  main -> main
+2026-11-17T23:06:22Z published: trips/colombia-research.html,trips/decision-preplan.html,trips/palm-springs-research.html,trips/traveler-personas.html,trips/trip-constraints.html
+[main 8ccc158] auto-publish: collab-decisions.html
+ 1 file changed, 260 insertions(+)
+ create mode 100644 collab-decisions.html
+To https://github.com/underscorenygren/mcc-docs.git
+   db0e7cc..8ccc158  main -> main
+2026-11-17T23:26:26Z published: collab-decisions.html
+[main e481387] auto-publish: message-classifier-design.html
+ 1 file changed, 389 insertions(+)
+ create mode 100644 message-classifier-design.html
+To https://github.com/underscorenygren/mcc-docs.git
+   4e4b2bd..e481387  main -> main
+2026-11-18T16:14:07Z published: message-classifier-design.html
+[main 903a9ae] auto-publish: index.html
+ 1 file changed, 7 insertions(+)
+To https://github.com/underscorenygren/mcc-docs.git
+   e481387..903a9ae  main -> main
+2026-11-18T16:14:38Z published: index.html
