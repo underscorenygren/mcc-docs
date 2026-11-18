@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taskmaster Sidecar — Design Research</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+</nav>
+
+<h1>Taskmaster Sidecar — Design Research</h1>
+<p class="subtitle">Patterns for a PM sidecar that observes work, synthesizes status, and suggests next actions from an intake queue.</p>
+
+<p>
+  A comprehensive survey of patterns for a "taskmaster" sidecar process that acts as a project manager
+  alongside an interactive coding agent. Covers prior art, communication patterns, activity detection,
+  work suggestion algorithms, and a recommended architecture.
+</p>
+<p style="color: var(--text-muted); font-size: 0.88rem;">
+  Design brief: <code>assets/plans/taskmaster-sidecar.md</code>.
+  Spore intake queue: <code>mcc-tasks/spores/active.json</code>.
+  Triage logic: <code>mcc-tasks/spore-triage.md</code>.
+</p>
+
+<h2>1. Prior Art Survey</h2>
+
+<h3>1.1 Devin Bots (Cognition, Nov 2026)</h3>
+
+<p>
+  Cognition's Devin Bots are the closest analog to the taskmaster concept. A Devin Bot is a persistent
+  manager agent that supervises teams of worker Devin instances over multi-week projects.
+</p>
+
+<h4>Architecture</h4>
+<ul>
+  <li><strong>Brain / Devbox split.</strong> The reasoning engine (brain) is stateless and cloud-hosted. The execution environment (devbox) is a containerized workspace with full shell, browser, and editor access. The manager outlives any individual worker session.</li>
+  <li><strong>Persistent memory.</strong> Bots retain context across sessions and weeks. Memory is not reset between task delegations — the Bot remembers the full project arc.</li>
+  <li><strong>Model routing (Devin Fusion).</strong> The manager selects different models per stage: a frontier model for planning and review, faster/cheaper models for routine code generation.</li>
+  <li><strong>Worker delegation.</strong> The Bot decomposes work into discrete tickets, spawns individual Devin sessions for each, monitors CI results, and merges PRs that pass. The Android Bot example: 1,134 PRs merged with only 183 human messages (1 human message per ~6 PRs).</li>
+  <li><strong>Authority model.</strong> Engineers define guardrails up front — which systems can be accessed, what can change, when approval is needed. Decisions requiring human judgment land in a "Needs You" inbox.</li>
+  <li><strong>Communication.</strong> Bots join Slack as team members and reach out when blocked or needing decisions.</li>
+</ul>
+
+<div class="card">
+  <div class="desc">
+    <strong>Takeaway:</strong> Devin Bots validate the "persistent PM agent alongside workers" model. Their authority system (human-defined guardrails + escalation inbox) maps directly to the suggest-only vs. auto-dispatch question. Start with suggest-only, graduate to auto-dispatch for low-risk items as trust builds.
+  </div>
+</div>
+
+<h3>1.2 Cursor Background Agents (Cloud Agents)</h3>
+
+<p>Cursor's Cloud Agents run in isolated cloud VMs, each getting a full development environment.</p>
+
+<ul>
+  <li><strong>Isolated VMs.</strong> Each agent gets its own Ubuntu VM with browser, shell, editor. No shared state between agents.</li>
+  <li><strong>Branch-based handoff.</strong> Agents work on a separate branch, push results, open a PR.</li>
+  <li><strong>Observation.</strong> Users can follow the conversation live, take control of the remote desktop, or watch via live view.</li>
+  <li><strong>Parallelism.</strong> Up to 8 agents simultaneously. No coordination between agents.</li>
+  <li><strong>Multi-entrypoint dispatch.</strong> Tasks from desktop app, web UI, iOS, Slack, Linear, GitHub, Bitbucket, or API.</li>
+</ul>
+
+<div class="card">
+  <div class="desc">
+    <strong>Takeaway:</strong> Cursor validates "dispatch and forget" but has no PM layer. Each agent is independent. No process observes overall project state and suggests what to work on next. That gap is exactly what the taskmaster fills.
+  </div>
+</div>
+
+<h3>1.3 AutoGPT / BabyAGI Task Decomposition</h3>
+
+<p>Three ideas from the 2023 agent craze that survived to 2026:</p>
+
+<ol>
+  <li><strong>The Tool Loop with Hard Stops.</strong> LLMs use tools in a loop with environmental feedback. Modern implementations added max iteration limits, spending caps, and real environmental feedback (test runners, compilers) replacing self-assessment.</li>
+  <li><strong>External Memory as Plain Files.</strong> Vector databases proved unnecessary overhead. Successful agents use structured markdown files persisted outside the context window. Task lists became <em>descriptive aids</em> rather than <em>execution drivers</em>.</li>
+  <li><strong>Human Checkpoints.</strong> Auto-GPT's optional approval prompts evolved into graduated permission systems: auto mode, manual mode, plan mode.</li>
+</ol>
+
+<p>BabyAGI's three-agent loop is the most relevant pattern:</p>
+<ul>
+  <li><strong>Task Creation Agent</strong>: generates new sub-tasks from objective + completed results</li>
+  <li><strong>Prioritization Agent</strong>: reorders the queue by importance and logical sequencing</li>
+  <li><strong>Execution Agent</strong>: runs the top-priority task</li>
+</ul>
+
+<p>BabyAGI-2o (2026) replaced the flat priority queue with a hierarchical task graph with explicit dependency tracking — matching the spore system's <code>blocked_by</code> mechanism.</p>
+
+<div class="card">
+  <div class="desc">
+    <strong>Takeaway:</strong> The taskmaster maps to BabyAGI's creation + prioritization agents combined. It should NOT be the execution agent. Keep those roles separate. The supervisor executes; the taskmaster triages and suggests.
+  </div>
+</div>
+
+<h3>1.4 CrewAI Process Types</h3>
+
+<p>CrewAI offers two orchestration models:</p>
+
+<ul>
+  <li><strong>Sequential Process:</strong> Tasks run in fixed order. Simple but inflexible.</li>
+  <li><strong>Hierarchical Process:</strong> A Manager Agent receives the overall goal, delegates to specialized workers, validates outputs, and can reassign failed tasks.</li>
+</ul>
+
+<p>
+  <strong>Delegation control.</strong> CrewAI learned the hard way that delegation must be tightly controlled.
+  Delegation is now disabled by default. Individual contributors with delegation enabled tend to loop endlessly.
+  Only manager agents should delegate.
+</p>
+
+<div class="card">
+  <div class="desc">
+    <strong>Takeaway:</strong> The taskmaster should be the only process that suggests/delegates work. Delegation should flow: human triages intake &rarr; taskmaster suggests &rarr; supervisor executes.
+  </div>
+</div>
+
+<h3>1.5 Linear Triage Intelligence</h3>
+
+<p>Linear's AI triage (Business plan) performs automated assessment when issues enter triage:</p>
+<ul>
+  <li>Cross-references against historical workspace data</li>
+  <li>Suggests team ownership, assignee, labels</li>
+  <li>Checks for duplicate existing issues</li>
+  <li>Learns prioritization patterns from team behavior</li>
+  <li>Sets initial priority level based on description analysis</li>
+</ul>
+
+<div class="card">
+  <div class="desc">
+    <strong>Takeaway:</strong> Linear's triage is a good model for the taskmaster's intake processing. It reads context and suggests metadata without executing. The <code>spore-triage.md</code> algorithm already does this manually — the taskmaster automates it.
+  </div>
+</div>
+
+<h3>1.6 GitHub Copilot Workspace</h3>
+
+<p>Copilot Workspace converts natural-language task descriptions into multi-file plans and code changes:</p>
+<ul>
+  <li>Produces editable specs (current state vs. desired state)</li>
+  <li>File-level plans (actions per file)</li>
+  <li>Concrete diffs for human inspection</li>
+  <li>Hybrid model routing (Claude, Gemini, GPT-4o)</li>
+  <li>55% issue resolution rate in benchmarks</li>
+</ul>
+
+<div class="card">
+  <div class="desc">
+    <strong>Takeaway:</strong> The taskmaster's suggestions should follow a similar spec/plan/implementation pipeline — present the spore, the proposed approach, the files involved, and the acceptance criteria before dispatch.
+  </div>
+</div>
+
+<hr>
+
+<h2>2. Sidecar Communication Patterns</h2>
+
+<p>
+  The taskmaster and supervisor are two long-running processes on the same host that need to exchange state.
+  Viable patterns, ranked by fit:
+</p>
+
+<h3>2.1 Shared State File (JSON)</h3>
+
+<pre><code>┌───────────┐    data/taskmaster-state.json    ┌───────────┐
+│ Supervisor │◄──────── read/write ──────────►│ Taskmaster │
+└───────────┘                                  └───────────┘</code></pre>
+
+<p><strong>Pros:</strong> Dead simple. No infrastructure. Survives restarts. Human-inspectable. Both Claude Code sessions can read/write natively.</p>
+<p><strong>Cons:</strong> No atomicity on concurrent writes. Polling required. No ordering guarantees.</p>
+<p><strong>Locking strategy:</strong> Atomic writes (write to temp file, then rename). Effectively atomic on Linux for small JSON.</p>
+
+<h3>2.2 Append-Only Event Log (JSONL)</h3>
+
+<pre><code>┌───────────┐    data/taskmaster-events.jsonl    ┌───────────┐
+│ Supervisor │──── append ──────────────────────►│            │
+│            │◄── append ────────────────────────│ Taskmaster │
+└───────────┘                                    └───────────┘</code></pre>
+
+<p><strong>Pros:</strong> Append-only = no corruption risk (atomic for lines &lt; PIPE_BUF, 4096 bytes on Linux). Full audit trail. Aligns with "log is the agent" pattern from event-sourced reactive graphs. Both processes can tail for new events.</p>
+<p><strong>Cons:</strong> State must be reconstructed by replaying the log. Log grows unbounded without compaction.</p>
+
+<h3>2.3 Chatbus Channel</h3>
+
+<pre><code>┌───────────┐    chatbus (agent=taskmaster)     ┌───────────┐
+│ Supervisor │◄──────── pub/sub ──────────────►│ Taskmaster │
+└───────────┘                                   └───────────┘</code></pre>
+
+<p><strong>Pros:</strong> Already built. Real-time delivery. Messages persist in <code>bus-messages.jsonl</code>. UI can display taskmaster messages in the activity feed.</p>
+<p><strong>Cons:</strong> Requires chatbus running. Supervisor misses messages if it restarts.</p>
+
+<h3>2.4 Comparison Matrix</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Pattern</th>
+      <th>Complexity</th>
+      <th>Persistence</th>
+      <th>Real-time</th>
+      <th>Audit trail</th>
+      <th>Process independence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Shared JSON file</td><td>Low</td><td>Yes</td><td>No (poll)</td><td>No</td><td>Yes</td></tr>
+    <tr><td>Append-only JSONL</td><td>Medium</td><td>Yes</td><td>Tail-based</td><td>Yes</td><td>Yes</td></tr>
+    <tr><td>Chatbus channel</td><td>Medium</td><td>Partial</td><td>Yes</td><td>Yes (bus log)</td><td>No (bus dep)</td></tr>
+    <tr><td>Unix socket</td><td>High</td><td>No</td><td>Yes</td><td>No</td><td>No</td></tr>
+  </tbody>
+</table>
+
+<h3>2.5 Recommendation: Hybrid — JSONL log + chatbus notifications</h3>
+
+<pre><code>┌───────────┐                                    ┌───────────┐
+│            │── append event ►[events.jsonl]◄── append ──│            │
+│ Supervisor │                                    │ Taskmaster │
+│            │◄── chatbus notify ─────────────────│            │
+└───────────┘                                    └───────────┘</code></pre>
+
+<ul>
+  <li><strong>JSONL log</strong> (<code>data/taskmaster-events.jsonl</code>): source of truth. Both processes append. Survives restarts.</li>
+  <li><strong>Chatbus</strong>: real-time notification channel. Taskmaster posts suggestions to <code>agent=taskmaster</code>.</li>
+  <li><strong>Fallback</strong>: if chatbus is down, supervisor polls the JSONL file on a 30-second interval.</li>
+</ul>
+
+<hr>
+
+<h2>3. Activity Detection</h2>
+
+<p>The taskmaster must know whether the supervisor is busy (don't interrupt) or idle (suggest work).</p>
+
+<h3>3.1 Available Signals</h3>
+
+<p><strong>Signal 1: JSONL transcript modification rate.</strong>
+Claude Code writes tool calls to a JSONL transcript. Active: file growing (new lines in last 60 seconds). Idle: no new lines for &gt;5 minutes.</p>
+
+<p style="color: var(--text-muted); font-size: 0.88rem;">
+  Production data from GitHub Copilot at scale: median agent session has 15 LLM calls and 13 tool invocations.
+  Container idle between turns averages 243 seconds (4 min). User idle between turns averages 1,512 seconds (25 min).
+</p>
+
+<p><strong>Signal 2: Chatbus message recency.</strong> Recent message (&lt;2 min): engaged. No message (&gt;10 min): may be idle.</p>
+
+<p><strong>Signal 3: Active teammate count.</strong> Teammates running: orchestrating. No teammates: idle or interactive.</p>
+
+<p><strong>Signal 4: Time since last user message.</strong> Recent (&lt;5 min): actively directing. Stale (&gt;30 min): may have stepped away.</p>
+
+<p><strong>Signal 5: Time of day.</strong> Outside working hours, more aggressive about suggesting autonomous work.</p>
+
+<h3>3.2 Activity Scoring Function</h3>
+
+<pre><code>activity_score(signals) -> float [0.0 = idle, 1.0 = busy]
+
+  jsonl_rate    = clamp(lines_per_minute / 5.0, 0, 1)      # 5+ lines/min = busy
+  chat_recency  = clamp(1 - (seconds_since_chat / 600), 0, 1) # decays over 10 min
+  user_recency  = clamp(1 - (seconds_since_user / 1800), 0, 1) # decays over 30 min
+  teammate_load = clamp(active_teammates / 3.0, 0, 1)       # 3+ teammates = busy
+
+  score = max(
+    jsonl_rate * 0.5,           # tool activity is strongest signal
+    chat_recency * 0.3,         # recent chat means engaged
+    user_recency * 0.2,         # recent user message means directed
+    teammate_load * 0.15        # teammates running = orchestrating
+  )
+
+  return score</code></pre>
+
+<p><strong>Thresholds:</strong></p>
+<ul>
+  <li><code>score &gt; 0.4</code>: <strong>Busy.</strong> Do not suggest. Only post status updates.</li>
+  <li><code>score 0.15 - 0.4</code>: <strong>Light activity.</strong> Queue suggestion, deliver on next idle window.</li>
+  <li><code>score &lt; 0.15</code>: <strong>Idle.</strong> Suggest next work item.</li>
+</ul>
+
+<h3>3.3 Detection Implementation</h3>
+
+<pre><code>Every 30 seconds:
+  1. stat() the JSONL transcript → line count delta
+  2. Read last chatbus message timestamp
+  3. Count running teammate processes
+  4. Read last user message timestamp from chatbus
+  5. Compute activity_score()
+  6. If score &lt; threshold AND suggestion queued:
+     → deliver suggestion via chatbus
+  7. Write score + signals to state file for debugging</code></pre>
+
+<hr>
+
+<h2>4. Work Suggestion Algorithm</h2>
+
+<h3>4.1 Input: The Spore Intake Queue</h3>
+
+<pre><code>Supervisor intake = spores where:
+  state = "todo"
+  assignee = "supervisor"
+  NOT blocked (all blocked_by entries are done or absent)</code></pre>
+
+<h3>4.2 Priority Ordering</h3>
+
+<pre><code>score(spore) =
+  priority_weight(spore.priority) * 100     # P0=500, P1=400, P2=300, P3=200
+  + age_bonus(spore.created_at)              # +1 per day since creation, max 30
+  + dependency_bonus(spore)                  # +50 if other spores are blocked on this one
+  - rejection_penalty(spore)                 # -200 if rejected in last 2 hours
+  - staleness_penalty(spore)                 # -100 if attempted and failed in last 24h
+
+priority_weight:
+  0 -> 500 (critical)
+  1 -> 400 (high)
+  2 -> 300 (medium)
+  3 -> 200 (low)
+
+dependency_bonus(spore):
+  count = number of spores where spore.id is in their blocked_by
+  return min(count * 25, 100)  # up to +100 for being a blocker</code></pre>
+
+<h3>4.3 Dependency-Aware Scheduling</h3>
+
+<p>The taskmaster identifies "critical path" spores — those that unblock the most downstream work:</p>
+
+<pre><code>MCC-11.21 (system stable gate) ─── blocks ──► MCC-6.4 (Linear push sync)
+                                                    │
+                                                    └── blocks ──► MCC-6.5 (drift detection)</code></pre>
+
+<h3>4.4 "Work in Advance" Suggestions</h3>
+
+<p>When the intake queue is empty or all items have been rejected:</p>
+<ol>
+  <li><strong>Spores in <code>backlog</code> state</strong> that could be promoted to <code>todo</code> if context has changed.</li>
+  <li><strong>Review-state spores</strong> that need PR review or merge.</li>
+  <li><strong>Stale <code>in_progress</code> spores</strong> where the worker may have crashed.</li>
+  <li><strong>GitHub issues</strong> not yet tracked as spores (via GitHub API scan).</li>
+  <li><strong>Code maintenance</strong> — test coverage gaps, stale branches, dependency updates.</li>
+</ol>
+
+<h3>4.5 Cooldown and Rejection Tracking</h3>
+
+<pre><code>// data/taskmaster-state.json (rejection tracking)
+{
+  "rejected": {
+    "MCC-11.9": {
+      "rejected_at": "2026-11-18T14:30:00Z",
+      "reason": "user: not now",
+      "cooldown_hours": 2
+    }
+  },
+  "last_suggestion_at": "2026-11-18T14:25:00Z",
+  "suggestion_count_today": 7
+}</code></pre>
+
+<p><strong>Cooldown rules:</strong></p>
+<ul>
+  <li>After rejection: 2-hour cooldown for that specific spore.</li>
+  <li>After any suggestion: 10-minute cooldown before next suggestion.</li>
+  <li>Daily cap: max 20 suggestions per day.</li>
+  <li>After 3 consecutive rejections: extend cooldown to 1 hour between any suggestions.</li>
+</ul>
+
+<h3>4.6 Suggestion Format</h3>
+
+<pre><code>[TASKMASTER] Next: MCC-11.9 — Rebuild seed.html from seeds.json
+Priority: 2 | Unblocks: nothing | Est: small
+Accept? Or say "skip" / "later" / "not now"</code></pre>
+
+<p>Responses: <strong>accept</strong> (dispatch), <strong>skip</strong> (2-hour cooldown), <strong>later</strong> (re-queue), <strong>not now</strong> (1-hour global cooldown).</p>
+
+<hr>
+
+<h2>5. Recommended Architecture</h2>
+
+<h3>5.1 Process Type: Go Shroom with <code>claude --print</code></h3>
+
+<p>
+  The taskmaster should be a <strong>Go shroom</strong> (service type) that periodically shells out to
+  <code>claude --print</code> for reasoning steps. Not a persistent Claude session.
+</p>
+
+<p><strong>Rationale:</strong></p>
+<ul>
+  <li>A persistent Claude session is expensive and unnecessary. The taskmaster needs periodic assessment (every 30-60 seconds), not continuous reasoning.</li>
+  <li>A Go service handles timers, file watching, chatbus integration, and GitHub API calls natively.</li>
+  <li>When LLM reasoning is needed ("is this spore still relevant?"), it shells out to <code>claude --print</code> with a focused prompt — the batch worker pattern proven by octocat.</li>
+  <li>Go services are cheap to run. A Claude session costs tokens per turn.</li>
+</ul>
+
+<h3>5.2 Architecture Diagram</h3>
+
+<pre><code>┌────────────────────────────────────────────────────────────────┐
+│                         Host Machine                           │
+│                                                                │
+│  ┌──────────────┐          ┌──────────────────────┐           │
+│  │  Supervisor   │          │     Taskmaster        │           │
+│  │  (Claude Code │          │     (Go shroom)       │           │
+│  │   session)    │          │                      │           │
+│  │              │          │  ┌────────────────┐  │           │
+│  │  reads ──────┼──────────┼──┤ Activity       │  │           │
+│  │              │          │  │ Detector       │  │           │
+│  │  writes ─────┼──────────┼──┤ (30s poll)     │  │           │
+│  │              │          │  └───────┬────────┘  │           │
+│  │              │          │          │            │           │
+│  │              │          │  ┌───────▼────────┐  │           │
+│  │  receives ◄──┼──chatbus─┼──┤ Suggestion     │  │           │
+│  │  messages    │          │  │ Engine         │  │           │
+│  │              │          │  └───────┬────────┘  │           │
+│  │              │          │          │            │           │
+│  │              │          │  ┌───────▼────────┐  │           │
+│  │              │          │  │ Spore Reader   │  │           │
+│  │              │          │  │ (active.json)  │  │           │
+│  │              │          │  └────────────────┘  │           │
+│  └──────────────┘          └──────────────────────┘           │
+│                                                                │
+│  Shared files:                                                 │
+│  ├── data/taskmaster-events.jsonl  (event log)                │
+│  ├── data/taskmaster-state.json    (derived state + cooldowns)│
+│  ├── mcc-tasks/spores/active.json  (spore queue, read-only)  │
+│  └── Claude JSONL transcripts      (activity signal)          │
+└────────────────────────────────────────────────────────────────┘</code></pre>
+
+<h3>5.3 State Format</h3>
+
+<p><strong>Event log</strong> (<code>data/taskmaster-events.jsonl</code>):</p>
+<pre><code>{"ts":"...","from":"taskmaster","type":"suggest","spore":"MCC-11.9","score":350}
+{"ts":"...","from":"supervisor","type":"accept","spore":"MCC-11.9"}
+{"ts":"...","from":"supervisor","type":"completed","spore":"MCC-11.9","pr":"#5"}
+{"ts":"...","from":"taskmaster","type":"suggest","spore":"MCC-11.10","score":330}
+{"ts":"...","from":"supervisor","type":"skip","spore":"MCC-11.10","reason":"later"}</code></pre>
+
+<p><strong>Derived state</strong> (<code>data/taskmaster-state.json</code>):</p>
+<pre><code>{
+  "activity_score": 0.12,
+  "activity_signals": {
+    "jsonl_lines_per_min": 0,
+    "seconds_since_chat": 1200,
+    "seconds_since_user": 3600,
+    "active_teammates": 0
+  },
+  "current_suggestion": null,
+  "rejected": {},
+  "suggestion_count_today": 3,
+  "last_suggestion_at": "2026-11-18T14:25:05Z",
+  "intake_queue": ["MCC-11.9", "MCC-11.10", "MCC-11.12"]
+}</code></pre>
+
+<h3>5.4 Communication Mechanism</h3>
+
+<pre><code>Taskmaster → Supervisor:
+  1. Append event to JSONL log
+  2. Post chatbus message: agent=taskmaster, text="[suggestion details]"
+  3. Supervisor receives via MCP chat-bridge
+
+Supervisor → Taskmaster:
+  1. Append event to JSONL log (accept/skip/reject)
+  2. OR: supervisor writes to state file (simpler for v1)
+  3. Taskmaster picks up on next poll cycle (30s)</code></pre>
+
+<h3>5.5 Authority Model</h3>
+
+<p><strong>Phase 1: Suggest-only.</strong>
+The taskmaster suggests work. All suggestions require explicit acceptance.</p>
+
+<p><strong>Phase 2: Auto-dispatch for low-risk.</strong>
+After trust is established, auto-dispatch spores that meet ALL of: priority &ge; 2, clear acceptance criteria, &le; 3 files, passing tests, human idle &gt;1 hour.</p>
+
+<p><strong>Phase 3: Full PM.</strong>
+The taskmaster manages the entire intake queue: triages, dispatches, monitors, updates spore state. Human involvement is limited to setting priorities and reviewing PRs.</p>
+
+<hr>
+
+<h2>6. Implementation Phases</h2>
+
+<h3>Phase 1: Activity Monitor (1-2 days)</h3>
+<p>Go service that polls JSONL transcript, chatbus, teammate count every 30 seconds. Computes activity score. Writes <code>data/taskmaster-state.json</code>. No LLM calls, no suggestions — just observation.</p>
+<p style="color: var(--text-muted); font-size: 0.88rem;"><strong>Validates:</strong> Signal accuracy, polling overhead, state file format.</p>
+
+<h3>Phase 2: Intake Reader + Suggestion Engine (2-3 days)</h3>
+<p>Read <code>active.json</code>, apply intake filter, score and rank by priority + dependency bonus. When idle: post suggestion to chatbus. Cooldown tracking in state file.</p>
+<p style="color: var(--text-muted); font-size: 0.88rem;"><strong>Validates:</strong> Suggestion quality, timing accuracy, cooldown behavior.</p>
+
+<h3>Phase 3: Completion Tracking (1-2 days)</h3>
+<p>Observe supervisor activity: PR merges, commits, chatbus "done" messages. Match completed work to in-progress spores. Append completion events to JSONL log.</p>
+<p style="color: var(--text-muted); font-size: 0.88rem;"><strong>Validates:</strong> Work detection accuracy, spore lifecycle automation.</p>
+
+<h3>Phase 4: LLM-Assisted Triage (2-3 days)</h3>
+<p>When a spore's relevance is unclear, shell out to <code>claude --print</code> with the spore description + project context. Decisions: still relevant? ready to work? needs human input?</p>
+<p style="color: var(--text-muted); font-size: 0.88rem;"><strong>Validates:</strong> LLM triage quality, cost per triage cycle.</p>
+
+<h3>Phase 5: Auto-Dispatch (1-2 days)</h3>
+<p>Risk assessment function. Auto-dispatch qualifying spores: create branch, dispatch teammate, record in event log. Kill switch via state file flag.</p>
+<p style="color: var(--text-muted); font-size: 0.88rem;"><strong>Validates:</strong> Autonomous operation, trust model, error handling.</p>
+
+<h3>Phase 6: Dashboard Integration (1 day)</h3>
+<p>Surface taskmaster state in the supervisor dashboard. New tile showing: activity score, current suggestion, intake queue depth, recent completions.</p>
+
+<hr>
+
+<h2>Appendix A: Event Schema</h2>
+
+<pre><code>type TaskmasterEvent = {
+  ts: string;          // ISO 8601 timestamp
+  from: "taskmaster" | "supervisor" | "human";
+  type: EventType;
+  spore?: string;      // spore ID (MCC-X)
+  score?: number;      // suggestion score
+  reason?: string;     // rejection reason, completion note
+  pr?: string;         // PR number
+  branch?: string;     // branch name
+  meta?: Record&lt;string, unknown&gt;;
+};
+
+type EventType =
+  | "suggest"          // taskmaster suggests a spore
+  | "accept"           // supervisor accepts suggestion
+  | "skip"             // supervisor skips (short cooldown)
+  | "reject"           // supervisor rejects (long cooldown)
+  | "later"            // supervisor defers (re-queue)
+  | "dispatch"         // work dispatched to teammate
+  | "completed"        // work completed
+  | "triage"           // triage assessment recorded
+  | "activity"         // activity score snapshot
+  | "auto_dispatch"    // auto-dispatched (phase 5)
+  | "config"           // configuration change</code></pre>
+
+<h2>Appendix B: Sources</h2>
+
+<ul style="font-size: 0.88rem; color: var(--text-muted);">
+  <li>Devin AI Architecture — Brain/Devbox split, Fusion model routing</li>
+  <li>Introducing Devin Bots (Cognition, Nov 2026) — Persistent manager agents</li>
+  <li>Cursor Background Agents — Cloud VM agents, branch-based handoff</li>
+  <li>AutoGPT/BabyAGI: Ideas That Survived to 2026 — Tool loop, external memory, human checkpoints</li>
+  <li>CrewAI Architecture — Sequential vs hierarchical process types</li>
+  <li>Linear AI Triage — Automated issue triage</li>
+  <li>GitHub Copilot Workspace — Spec/plan/implementation pipeline</li>
+  <li>The Log is the Agent (arxiv) — Event-sourced reactive graphs for agentic systems</li>
+  <li>Agentic Coding at Scale (GitHub Copilot) — Production activity metrics</li>
+  <li>Sidecar Pattern — Sidecar communication best practices</li>
+</ul>
+
+<!-- published: COMMIT_HASH @ TIMESTAMP -->
+</body>
+</html>
