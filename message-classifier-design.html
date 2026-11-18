@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Message-to-Spore Classifier &mdash; Design Doc</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .arch-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+  .stage-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+    margin: 1rem 0;
+  }
+  .stage-card .stage-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+  .stage-card.pre-filter .stage-label { color: #6ee7b7; }
+  .stage-card.llm .stage-label { color: #8b5cf6; }
+  .stage-card.feedback .stage-label { color: #fde68a; }
+  .prompt-block {
+    background: #0f172a;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.8rem;
+    font-size: 0.82rem;
+    white-space: pre-wrap;
+    overflow-x: auto;
+  }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+</nav>
+
+<h1>Message-to-Spore Classifier</h1>
+<p class="subtitle">Design doc &mdash; classify chatbus messages as new spores, existing spore updates, commands, or noise.</p>
+
+<p>Version 1 &mdash; 2026-11-18</p>
+
+<h2>TL;DR</h2>
+
+<p>A bus-follower shroom watches chatbus messages in real time and classifies each one as: <strong>new spore</strong>, <strong>existing spore update</strong>, <strong>system command</strong>, or <strong>noise</strong>. A procedural pre-filter handles 60&ndash;80% of messages without an LLM call. The remaining ambiguous messages go to a lightweight LLM classifier with a compressed spore index as context. The system runs as a Go service subscribing to the chatbus, same pattern as the existing bus-follower.</p>
+
+<h2>Architecture</h2>
+
+<pre class="arch-diagram">
+                      chatbus (HTTP pub/sub)
+                             |
+                             | /subscribe agent=spore-classifier
+                             v
+                 +-----------------------+
+                 |   spore-classifier    |
+                 |   (Go service)        |
+                 +-----------------------+
+                 |                       |
+                 |  1. Pre-filter         |
+                 |     - commands (!push) |
+                 |     - noise (acks)     |
+                 |     - spore ID refs    |
+                 |                       |
+                 |  2. LLM classifier     |
+                 |     (ambiguous only)   |
+                 |     claude -p / API    |
+                 |                       |
+                 |  3. Apply result       |
+                 |     - new_entity       |
+                 |     - existing_spore   |
+                 |     - noise            |
+                 |     - command          |
+                 +-----------+-----------+
+                             |
+                +------------+------------+
+                |                         |
+                v                         v
+      spore-query append          spore-query update
+      (new spore via CLI)         (existing spore via CLI)
+                |                         |
+                v                         v
+          active.json updated, committed, pushed
+</pre>
+
+<p>The spore-classifier is a new Go service, same pattern as <code>cmd/bus-follower</code>. It subscribes to the chatbus via <code>busclient.Subscribe()</code>, processes each message through the classification pipeline, and writes results to the spore system via the <code>spore-query.js</code> CLI.</p>
+
+<h2>Classification Taxonomy</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Label</th>
+      <th>Description</th>
+      <th>Action</th>
+      <th>Example</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>new_entity</code></td>
+      <td>Message introduces a genuinely new idea, task, or project with no existing spore</td>
+      <td>Create new spore</td>
+      <td>&ldquo;We should build a Slack bot&rdquo;</td>
+    </tr>
+    <tr>
+      <td><code>existing_spore</code></td>
+      <td>Message relates to an already-tracked spore</td>
+      <td>Update spore (add source, state, outcome)</td>
+      <td>&ldquo;The voice WS fix is deployed&rdquo;</td>
+    </tr>
+    <tr>
+      <td><code>command</code></td>
+      <td>System command, not work-related</td>
+      <td>Ignore (handled by other systems)</td>
+      <td>&ldquo;!status&rdquo;, &ldquo;!push&rdquo;</td>
+    </tr>
+    <tr>
+      <td><code>noise</code></td>
+      <td>Chitchat, acknowledgments, greetings, ambient transcription</td>
+      <td>Ignore</td>
+      <td>&ldquo;ok&rdquo;, &ldquo;sounds good&rdquo;</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Sub-classifications</h3>
+
+<p>For <code>existing_spore</code>: returns <code>spore_id</code> (e.g., MCC-7) and <code>update_type</code> (status_change, new_info, decision, outcome, reference).</p>
+
+<p>For <code>new_entity</code>: returns <code>suggested_title</code>, <code>suggested_seed</code>, <code>suggested_state</code>, and <code>confidence</code> (0.0&ndash;1.0). Entities with confidence &lt; 0.7 are flagged for human review.</p>
+
+<h2>Stage 1: Procedural Pre-Filter</h2>
+
+<div class="stage-card pre-filter">
+  <div class="stage-label">Pre-filter &mdash; zero LLM cost</div>
+  <p>Runs synchronously on every message. Handles the obvious cases:</p>
+  <ul>
+    <li><strong>Source filtering:</strong> Skip outbound (supervisor replies, bot messages)</li>
+    <li><strong>Command detection:</strong> <code>/^![\w]+/</code> &rarr; <code>command</code></li>
+    <li><strong>Noise detection:</strong> Short messages matching ack patterns (&lt;10 chars, &ldquo;ok&rdquo;, &ldquo;sure&rdquo;, &ldquo;thanks&rdquo;)</li>
+    <li><strong>Explicit spore ID:</strong> <code>/MCC-\d+(\.\d+)?/</code> &rarr; <code>existing_spore</code> with extracted ID</li>
+    <li><strong>Context window:</strong> Follow-ups within 60s of a classified message inherit that spore</li>
+    <li><strong>New entity keywords:</strong> &ldquo;we should&rdquo;, &ldquo;let&rsquo;s build&rdquo;, &ldquo;new idea&rdquo; &rarr; fast-track to LLM with bias hint</li>
+  </ul>
+</div>
+
+<h3>Pre-filter pass rate</h3>
+
+<table>
+  <thead>
+    <tr><th>Category</th><th>Est. %</th><th>Handling</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Outbound (supervisor replies)</td><td>~50%</td><td>Skipped</td></tr>
+    <tr><td>Commands</td><td>~2%</td><td>Pre-filter: command</td></tr>
+    <tr><td>Noise/acks</td><td>~10%</td><td>Pre-filter: noise</td></tr>
+    <tr><td>Explicit spore ID refs</td><td>~5%</td><td>Pre-filter: existing_spore</td></tr>
+    <tr><td>Context window</td><td>~5%</td><td>Pre-filter: existing_spore</td></tr>
+    <tr><td><strong>Ambiguous (LLM needed)</strong></td><td><strong>~28%</strong></td><td><strong>LLM classifier</strong></td></tr>
+  </tbody>
+</table>
+
+<h2>Stage 2: LLM Classifier</h2>
+
+<div class="stage-card llm">
+  <div class="stage-label">LLM Classifier &mdash; ambiguous messages only</div>
+  <p>For the ~28% of messages that survive the pre-filter, call an LLM with a compressed spore index.</p>
+</div>
+
+<h3>Spore index compression</h3>
+
+<p>Full <code>active.json</code> is ~56k chars (~14k tokens). Instead, build a compressed index:</p>
+
+<ul>
+  <li><strong>Tier 1 &mdash; Active spore summary (~640 tokens):</strong> Non-done spores with id, title, seed, state only</li>
+  <li><strong>Tier 2 &mdash; Seed list (~100 tokens):</strong> All seed slugs with one-line descriptions</li>
+  <li><strong>Tier 3 &mdash; Recently mentioned spores (~200 tokens):</strong> Last 10 spore IDs with full descriptions</li>
+</ul>
+
+<p>Total context: ~1,000 tokens per call. Scales to ~200 spores before needing further compression.</p>
+
+<h3>Prompt template</h3>
+
+<pre class="prompt-block">SYSTEM:
+You classify chat messages for a software project's work tracking system.
+
+Given a message and the current tracked items (spores), classify as one of:
+- new_entity: genuinely new idea/task/bug not covered by any existing spore
+- existing_spore: relates to an existing spore (provide the spore ID)
+- noise: not work-related (greetings, acknowledgments, ambient audio)
+- command: a system command
+
+Output STRICT JSON only.
+
+Schema:
+{"label": "new_entity"|"existing_spore"|"noise"|"command",
+ "spore_id": "MCC-X" | null,
+ "confidence": 0.0-1.0,
+ "reasoning": "one sentence",
+ "suggested_title": "..." | null,
+ "suggested_seed": "..." | null}
+
+Rules:
+- Prefer existing_spore over new_entity.
+- Short follow-ups are noise if no clear spore context.
+- When uncertain, choose existing_spore with closest match, confidence &lt; 0.5.
+
+USER:
+ACTIVE_SPORES: {tier_1_summary}
+SEEDS: {tier_2_seeds}
+RECENT_CONTEXT: {tier_3_recent_spores}
+BIAS_HINT: {pre_filter_hint or "none"}
+MESSAGE:
+From: {msg.from}
+Text: {msg.text}
+
+Classify this message.</pre>
+
+<h3>Model selection</h3>
+
+<table>
+  <thead>
+    <tr><th>Option</th><th>Latency</th><th>Cost/call</th><th>Quality</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Claude Haiku 3.5</td><td>~200ms</td><td>~$0.0003</td><td>Good for classification</td></tr>
+    <tr><td>Claude Sonnet 4</td><td>~800ms</td><td>~$0.003</td><td>Better for edge cases</td></tr>
+    <tr><td><code>claude -p</code> (CLI)</td><td>~2&ndash;5s</td><td>Subscription</td><td>Current bus-follower pattern</td></tr>
+  </tbody>
+</table>
+
+<p>Recommendation: <strong>Haiku 3.5 via API</strong> for production. Fall back to Sonnet for messages where Haiku returns confidence &lt; 0.5.</p>
+
+<h2>Stage 3: Iterative Refinement</h2>
+
+<div class="stage-card feedback">
+  <div class="stage-label">Feedback loop</div>
+  <ul>
+    <li><strong>Corrections log:</strong> When supervisor manually creates a spore the classifier missed, log the correction</li>
+    <li><strong>Periodic review:</strong> If patterns emerge in corrections, add keywords to pre-filter</li>
+    <li><strong>Prompt tuning:</strong> Include 3&ndash;5 recent corrections as few-shot examples</li>
+    <li><strong>Confidence calibration:</strong> Track predicted confidence vs actual correctness</li>
+  </ul>
+</div>
+
+<h3>Anti-duplication</h3>
+
+<ol>
+  <li><strong>Title similarity:</strong> Fuzzy match against all active spore titles. Similarity &gt; 0.7 &rarr; flag for review</li>
+  <li><strong>Seed scope:</strong> Cross-seed dedup &mdash; &ldquo;fix the websocket&rdquo; might match MCC-7 even without mentioning voice-bridge</li>
+  <li><strong>Cooldown:</strong> After creating a new spore, suppress new_entity for the same seed for 60 seconds</li>
+</ol>
+
+<h2>Cost &amp; Latency</h2>
+
+<table>
+  <thead>
+    <tr><th>Metric</th><th>Value</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>User messages/day</td><td>~500</td></tr>
+    <tr><td>Pre-filter handled</td><td>~300 (60%)</td></tr>
+    <tr><td>LLM calls/day</td><td>~200 (40%)</td></tr>
+    <tr><td>LLM cost/day</td><td>~$0.06</td></tr>
+    <tr><td>New spores created/day</td><td>~5&ndash;10</td></tr>
+    <tr><td>Existing spore updates/day</td><td>~20&ndash;30</td></tr>
+  </tbody>
+</table>
+
+<p>At 10x volume, LLM cost stays under $1/day. The classifier runs asynchronously &mdash; no user-visible latency.</p>
+
+<h2>Error Cost Analysis</h2>
+
+<table>
+  <thead>
+    <tr><th>Error type</th><th>Cost</th><th>Target rate</th><th>Mitigation</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>False positive (duplicate spore)</td>
+      <td>Clutter, manual cleanup</td>
+      <td>&lt; 5%</td>
+      <td>Title similarity, confidence threshold, cooldown</td>
+    </tr>
+    <tr>
+      <td>False negative (missed idea)</td>
+      <td>Lost idea unless user says &ldquo;spore this&rdquo;</td>
+      <td>&lt; 10%</td>
+      <td>Bias toward existing_spore over noise</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Duplicates are cheaper to fix than lost ideas, but erode trust. Balance: <strong>auto-create only at confidence &gt; 0.7</strong>, otherwise queue for human review.</p>
+
+<h2>Data Flow</h2>
+
+<pre class="arch-diagram">
+  User message arrives on chatbus
+           |
+           v
+  +------------------+
+  | Pre-filter        |  --&gt; command/noise: drop
+  +------------------+
+           |
+           | ambiguous
+           v
+  +------------------+
+  | LLM classifier    |  --&gt; existing_spore: spore-query update MCC-X
+  +------------------+
+           |
+           | new_entity (confidence &gt;= 0.7)
+           v
+  +------------------+
+  | Anti-dedup check  |  --&gt; similar title found: queue for review
+  +------------------+
+           |
+           | unique
+           v
+  +------------------+
+  | spore-query append|  --&gt; new spore created
+  +------------------+
+           |
+           v
+  Chat-bridge: "New spore: MCC-35 &mdash; &lt;title&gt;"
+</pre>
+
+<h2>Implementation Plan</h2>
+
+<table>
+  <thead>
+    <tr><th>Phase</th><th>Scope</th><th>Key deliverables</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>1. Pre-filter only</strong></td>
+      <td>Go service skeleton, all procedural rules, dry-run mode</td>
+      <td><code>cmd/spore-classifier/</code>, unit tests, compose entry</td>
+    </tr>
+    <tr>
+      <td><strong>2. LLM integration</strong></td>
+      <td>Add LLM call for ambiguous messages, compressed spore index</td>
+      <td>classifier.go, index.go, integration tests</td>
+    </tr>
+    <tr>
+      <td><strong>3. Auto-create</strong></td>
+      <td>Wire to spore-query, anti-dedup, confidence gate, chat-bridge notifications</td>
+      <td>writer.go, dedup.go, E2E test</td>
+    </tr>
+    <tr>
+      <td><strong>4. Feedback loop</strong></td>
+      <td>Corrections log, few-shot examples, accuracy tracking</td>
+      <td>feedback.go, dashboard</td>
+    </tr>
+    <tr>
+      <td><strong>5. API migration</strong></td>
+      <td>Replace <code>claude -p</code> with Haiku API for ~200ms latency</td>
+      <td>Optional, only if volume demands it</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Open Questions</h2>
+
+<ol>
+  <li><strong>Auto-create vs queue-for-review:</strong> Should the classifier ever auto-create spores, or always queue for human confirmation?</li>
+  <li><strong>Update granularity:</strong> Adding sources is safe. Changing state (&ldquo;it&rsquo;s deployed&rdquo; &rarr; done) is riskier. Limit to source additions initially?</li>
+  <li><strong>Multi-message batching:</strong> Process one-at-a-time (simpler, low volume) or batch?</li>
+  <li><strong>Voice transcription quality:</strong> Garbled voice messages (&ldquo;Emmy-see-see seven&rdquo; = MCC-7) need lenient matching.</li>
+  <li><strong>Conversation threading:</strong> Chatbus has no threading. Context window is a heuristic proxy.</li>
+</ol>
+
+<!-- published: PENDING @ PENDING -->
+</body>
+</html>
