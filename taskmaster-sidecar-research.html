@@ -222,6 +222,23 @@
   <li><strong>Fallback</strong>: if chatbus is down, supervisor polls the JSONL file on a 30-second interval.</li>
 </ul>
 
+<h4>Atomicity Guarantees</h4>
+
+<table>
+  <thead>
+    <tr><th>Concern</th><th>Guarantee</th><th>Rationale</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Single-writer append</td><td>Atomic</td><td>Linux <code>O_APPEND</code> writes under ~4KB are atomic at the kernel level. Our event lines are small JSON — well under threshold.</td></tr>
+    <tr><td>Multi-writer append</td><td>Not guaranteed</td><td>Unnecessary — each agent session is a single writer to its own log. Taskmaster writes to a separate events file.</td></tr>
+    <tr><td>Crash recovery</td><td>Last line may be partial</td><td>Reader skips malformed trailing line. All prior lines intact.</td></tr>
+    <tr><td>Durability (fsync)</td><td>Buffered, not synced</td><td>Acceptable for activity tracking — not a database. Power loss may lose last few buffered writes.</td></tr>
+    <tr><td>Cross-agent coordination</td><td>Via chatbus</td><td>JSONL handles per-agent ordered logs; chatbus handles real-time fan-out and coordination.</td></tr>
+  </tbody>
+</table>
+
+<p>Key constraint: each process owns its own append stream. No two writers append to the same JSONL file concurrently, so the POSIX <code>O_APPEND</code> guarantee (atomic for writes ≤ <code>PIPE_BUF</code>, typically 4096 bytes) is sufficient.</p>
+
 <hr>
 
 <h2>3. Activity Detection</h2>
