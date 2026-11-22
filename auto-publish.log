@@ -116,3 +116,20 @@ To https://github.com/underscorenygren/mcc-docs.git
 To https://github.com/underscorenygren/mcc-docs.git
    e481387..903a9ae  main -> main
 2026-11-18T16:14:38Z published: index.html
+[main 51d2cd8] auto-publish: taskmaster-sidecar-research.html
+ 1 file changed, 539 insertions(+)
+ create mode 100644 taskmaster-sidecar-research.html
+To https://github.com/underscorenygren/mcc-docs.git
+   abf54f2..51d2cd8  main -> main
+2026-11-18T17:04:43Z published: taskmaster-sidecar-research.html
+[main 55604c8] auto-publish: pm-report-2026-11-22.html
+ 1 file changed, 153 insertions(+)
+ create mode 100644 pm-report-2026-11-22.html
+To https://github.com/underscorenygren/mcc-docs.git
+   e3b741b..55604c8  main -> main
+2026-11-22T18:43:31Z published: pm-report-2026-11-22.html
+[main 62dc29c] auto-publish: pm-report-2026-11-22.html
+ 1 file changed, 45 insertions(+), 115 deletions(-)
+To https://github.com/underscorenygren/mcc-docs.git
+   55604c8..62dc29c  main -> main
+2026-11-22T18:44:03Z published: pm-report-2026-11-22.html
