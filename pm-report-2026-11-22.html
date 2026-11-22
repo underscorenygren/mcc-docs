@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Report — November 22, 2026</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.stat { background: var(--surface); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+.stat .num { font-size: 2rem; font-weight: 700; color: var(--accent, #5dade2); }
+.stat .label { font-size: 0.85rem; color: var(--dim); margin-top: 0.25rem; }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
+th { color: var(--dim); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; }
+tr:hover td { background: rgba(93,173,226,0.05); }
+.tag-done { color: #2ecc71; }
+.tag-active { color: #f39c12; }
+.tag-todo { color: #5dade2; }
+.tag-backlog { color: var(--dim); }
+.section-header { margin-top: 2rem; padding-bottom: 0.25rem; border-bottom: 2px solid var(--accent, #5dade2); }
+.timeline { margin: 1rem 0; }
+.timeline-item { padding: 0.4rem 0; border-left: 2px solid var(--border); padding-left: 1rem; margin-left: 0.5rem; }
+.timeline-date { font-size: 0.8rem; color: var(--dim); }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+</nav>
+
+<h1>Project Report</h1>
+<p class="subtitle">Mushroom Cloud Computing — status as of November 22, 2026</p>
+
+<h2 class="section-header">At a Glance</h2>
+
+<div class="stat-grid">
+  <div class="stat"><div class="num">49</div><div class="label">Completed</div></div>
+  <div class="stat"><div class="num">1</div><div class="label">In Progress</div></div>
+  <div class="stat"><div class="num">8</div><div class="label">Planned</div></div>
+  <div class="stat"><div class="num">7</div><div class="label">Backlog</div></div>
+  <div class="stat"><div class="num">69</div><div class="label">Total Spores</div></div>
+</div>
+
+<h2 class="section-header">What Shipped</h2>
+
+<p>Major deliverables completed since the spore system was introduced (Nov 14):</p>
+
+<h3>Infrastructure &amp; Platform</h3>
+<ul>
+  <li><strong>Spore tracking system</strong> — full data model, CLI, web views with filters, focus drill-down, blocked dependencies, seed/spore taxonomy. The canonical work tracker.</li>
+  <li><strong>Activity viewer</strong> — real-time parsed JSONL transcripts showing what the supervisor is doing, with reasoning-only default filter.</li>
+  <li><strong>Visual snapshot testing</strong> — Playwright + JSONL fixture harness for UI regression testing.</li>
+  <li><strong>Taskmaster hygiene ticker</strong> — periodic spore health checks with dual chatbus + MCP delivery, nag dedup, cooldown.</li>
+  <li><strong>Component-level health</strong> — recovery-first connection handling, liveness checks on resume.</li>
+  <li><strong>Node version unification</strong> — all repos pinned to Node 22.</li>
+  <li><strong>System architecture doc</strong> — comprehensive reference covering all services, communication planes, and agent types.</li>
+</ul>
+
+<h3>Voice &amp; Audio</h3>
+<ul>
+  <li><strong>Voice WebSocket stability</strong> — heartbeat timeout triggers reconnect instead of permanent disconnect.</li>
+  <li><strong>Audio distortion fix</strong> — cleared stale buffers on suspend/resume, wired web visibility events, fixed duration calculation.</li>
+  <li><strong>TTS failure recovery</strong> — sends tts_end on failure to prevent client hang.</li>
+  <li><strong>Mobile liveness check</strong> — reconnect and health check on resume from background.</li>
+</ul>
+
+<h3>Mobile</h3>
+<ul>
+  <li><strong>Supervisor dashboard</strong> — swipeable pager layout with activity, spores, and tasks tiles.</li>
+  <li><strong>Auto-submit on idle</strong> — 8s timeout for mobile chat where Enter is unreliable.</li>
+  <li><strong>EAS build fixed</strong> — vendored mcc-activity client for cloud build compatibility.</li>
+</ul>
+
+<h3>Web UI</h3>
+<ul>
+  <li><strong>Three-column supervisor layout</strong> — voice/chat/tasks with activity and spores tiles.</li>
+  <li><strong>Spores tile</strong> — live WebSocket, grouped layout, filter buttons.</li>
+  <li><strong>Screenshot requirement</strong> — all feature PRs must include screenshots.</li>
+</ul>
+
+<h3>Integrations</h3>
+<ul>
+  <li><strong>Linear integration</strong> — API connected, webhooks deployed with HMAC verification, schema mapped. Push sync and drift detection planned.</li>
+  <li><strong>Slack connector</strong> — bidirectional chatbus bridge + multi-channel routing.</li>
+  <li><strong>Email pipeline</strong> — email → mcc-notes transcription wired.</li>
+  <li><strong>Auth token refresh</strong> — fixed em-dash crontab bug, sign-out UI added.</li>
+</ul>
+
+<h2 class="section-header">Currently Active</h2>
+
+<table>
+  <tr><th>ID</th><th>Title</th><th>Since</th></tr>
+  <tr>
+    <td class="tag-active">MCC-43</td>
+    <td>Standalone realtime voice project — new repo, Realtime API exploration</td>
+    <td>Nov 20</td>
+  </tr>
+</table>
+
+<h2 class="section-header">Planned Next</h2>
+
+<table>
+  <tr><th>ID</th><th>Title</th><th>Priority</th></tr>
+  <tr><td class="tag-todo">MCC-6</td><td>Linear integration — evaluation (on Erik)</td><td>P1</td></tr>
+  <tr><td class="tag-todo">MCC-11.10</td><td>Rebuild PM report from spore data — procedural metrics</td><td>P2</td></tr>
+  <tr><td class="tag-todo">MCC-9</td><td>Lisabot — standalone Slack agent</td><td>P2</td></tr>
+  <tr><td class="tag-todo">MCC-11.12</td><td>Shroom dispatch → spore lifecycle integration</td><td>P2</td></tr>
+  <tr><td class="tag-todo">MCC-42</td><td>Activity viewer source abstraction + summarization</td><td>—</td></tr>
+  <tr><td class="tag-todo">MCC-46</td><td>Taskmaster evaluation — assess ticker and workflow</td><td>—</td></tr>
+  <tr><td class="tag-todo">MCC-6.4</td><td>Write spores to Linear (push sync)</td><td>—</td></tr>
+  <tr><td class="tag-todo">MCC-6.5</td><td>Drift detection between local spores and Linear</td><td>—</td></tr>
+</table>
+
+<h2 class="section-header">Backlog</h2>
+
+<table>
+  <tr><th>ID</th><th>Title</th></tr>
+  <tr><td class="tag-backlog">MCC-9.3</td><td>Give lisabot its own Claude session</td></tr>
+  <tr><td class="tag-backlog">MCC-13</td><td>Private docs hosting (Convex) — deploy frontend</td></tr>
+  <tr><td class="tag-backlog">MCC-15</td><td>Stale branch cleanup</td></tr>
+  <tr><td class="tag-backlog">MCC-16</td><td>mcc-realtime standalone voice app</td></tr>
+  <tr><td class="tag-backlog">MCC-29</td><td>Pixel mushroom visualization of spore system</td></tr>
+  <tr><td class="tag-backlog">MCC-34</td><td>Chat refactor — replace bridge with JSONL socket</td></tr>
+  <tr><td class="tag-backlog">MCC-37</td><td>Multi-stream focus — parallel work contexts</td></tr>
+</table>
+
+<h2 class="section-header">Commit Activity (Nov 14–22)</h2>
+
+<div class="timeline">
+  <div class="timeline-item"><div class="timeline-date">Nov 22</div>Auto-submit mobile chat, architecture doc, audio distortion fix, screenshot requirement</div>
+  <div class="timeline-item"><div class="timeline-date">Nov 21</div>Activity viewer cap, taskmaster ticker delivery fix, spore triage, session review</div>
+  <div class="timeline-item"><div class="timeline-date">Nov 20</div>Realtime subdomain routing, session review automation, testing policy, idle detection</div>
+  <div class="timeline-item"><div class="timeline-date">Nov 18</div>Visual snapshot testing, spore model stable gate, Node 22 unification</div>
+  <div class="timeline-item"><div class="timeline-date">Nov 16</div>Spore CLI + views, triage algorithm, auth token refresh, voice heartbeat fix</div>
+  <div class="timeline-item"><div class="timeline-date">Nov 15</div>Spore system launch: schema, seeds, views, filters, focus. Slack connector. Linear API.</div>
+  <div class="timeline-item"><div class="timeline-date">Nov 14</div>Mobile supervisor dashboard, three-column web layout, activity tiles, email pipeline</div>
+</div>
+
+<h2 class="section-header">Key Decisions</h2>
+
+<ul>
+  <li><strong>Spores over Linear for tracking</strong> — local-first JSON with CLI, Linear for external visibility only.</li>
+  <li><strong>GitHub CI as primary test runner</strong> — no full suites locally, targeted single-file only.</li>
+  <li><strong>Taskmaster dual delivery</strong> — chatbus for logging, direct MCP channel POST for supervisor delivery.</li>
+  <li><strong>Screenshots on feature PRs</strong> — mandatory for all UI-changing PRs.</li>
+  <li><strong>Mobile auto-submit</strong> — 8s idle timeout, mobile-only, compensates for unreliable Enter key.</li>
+</ul>
+
+<!-- published: PENDING @ PENDING -->
+</body>
+</html>
