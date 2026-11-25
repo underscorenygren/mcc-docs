@@ -133,3 +133,9 @@ To https://github.com/underscorenygren/mcc-docs.git
 To https://github.com/underscorenygren/mcc-docs.git
    55604c8..62dc29c  main -> main
 2026-11-22T18:44:03Z published: pm-report-2026-11-22.html
+[main 9b6a636] auto-publish: mobile-auth-proxy.html
+ 1 file changed, 183 insertions(+)
+ create mode 100644 mobile-auth-proxy.html
+To https://github.com/underscorenygren/mcc-docs.git
+   21eb436..9b6a636  main -> main
+2026-11-25T05:18:03Z published: mobile-auth-proxy.html
