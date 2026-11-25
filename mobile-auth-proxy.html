@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobile Auth &amp; Proxy Architecture</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  :root { --bg: #0f172a; --surface: #1e293b; --border: #334155; --text: #e2e8f0; --muted: #94a3b8; --accent: #5dade2; --code-bg: #1a1a2e; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem; line-height: 1.7; }
+  h1 { color: var(--text); margin-bottom: 0.25rem; }
+  h2 { color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-top: 2.5rem; }
+  h3 { color: var(--muted); margin-top: 1.5rem; }
+  .subtitle { color: var(--muted); font-size: 1.1rem; margin-top: 0; }
+  pre { background: var(--code-bg); padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; }
+  code { font-family: 'JetBrains Mono', monospace; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; margin: 1rem 0; }
+  .card-title { font-weight: 600; margin-bottom: 0.5rem; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+  th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .flow { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0; }
+  .flow span { background: var(--surface); border: 1px solid var(--border); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem; }
+  .flow .arrow { background: none; border: none; color: var(--muted); }
+  .tag { display: inline-block; font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 600; }
+  .tag-web { background: #164e63; color: #67e8f9; }
+  .tag-mobile { background: #3b0764; color: #c084fc; }
+</style>
+</head>
+<body>
+
+<nav style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+  <a href="index.html" style="color: #5dade2; text-decoration: none;">MCC Docs</a>
+</nav>
+
+<h1>Mobile Auth &amp; Proxy Architecture</h1>
+<p class="subtitle">How mobile auth differs from web, and why we proxy everything through /mobile/*.</p>
+<p style="color: var(--muted); font-size: 0.85rem;">2026-11-25</p>
+
+<h2>Two Auth Paths</h2>
+
+<p>Web and mobile use completely different authentication mechanisms. This is the root cause of most "works on web, broken on mobile" issues.</p>
+
+<div class="card">
+<div class="card-title"><span class="tag tag-web">Web</span> OAuth2 Cookie Flow</div>
+<div class="flow">
+  <span>Browser</span>
+  <span class="arrow">&rarr;</span>
+  <span>Cloudflare</span>
+  <span class="arrow">&rarr;</span>
+  <span>oauth2-proxy</span>
+  <span class="arrow">&rarr;</span>
+  <span>nginx</span>
+  <span class="arrow">&rarr;</span>
+  <span>upstream</span>
+</div>
+<p style="margin-bottom: 0;">The browser has an <code>_oauth2_proxy</code> cookie set by the Google OAuth flow. Every request passes through oauth2-proxy which validates the cookie and sets <code>X-Auth-Email</code>. All routes — including subdomains like <code>activity.*</code> and <code>tasks.*</code> — work because the cookie is scoped to the domain.</p>
+</div>
+
+<div class="card">
+<div class="card-title"><span class="tag tag-mobile">Mobile</span> Session Token Flow</div>
+<div class="flow">
+  <span>Expo app</span>
+  <span class="arrow">&rarr;</span>
+  <span>Google Sign-In</span>
+  <span class="arrow">&rarr;</span>
+  <span>POST /mobile/session</span>
+  <span class="arrow">&rarr;</span>
+  <span>Bridge validates</span>
+  <span class="arrow">&rarr;</span>
+  <span>Returns session token</span>
+</div>
+<p style="margin-bottom: 0;">The native app uses <code>@react-native-google-signin</code> to get an ID token, posts it to <code>/mobile/session</code>, and receives a <code>mobile_session</code> token. This token is passed as a <code>?session=</code> query parameter on every subsequent request. There are no cookies.</p>
+</div>
+
+<h2>Why Subdomains Don't Work on Mobile</h2>
+
+<p>On web, services are exposed via subdomains:</p>
+<ul>
+  <li><code>activity.mushroomcloudcomputing.com</code> &rarr; mcc-activity (port 9101)</li>
+  <li><code>tasks.mushroomcloudcomputing.com</code> &rarr; mcc-taskmaster (port 9102)</li>
+</ul>
+
+<p>These subdomains go through Cloudflare's proxy, which requires the oauth2-proxy cookie. The mobile app doesn't have this cookie — it has a <code>mobile_session</code> token that only the main domain's nginx understands. So mobile requests to subdomains get a 403 from Cloudflare/oauth2-proxy.</p>
+
+<p>Additionally, Cloudflare's proxy layer blocks WebSocket upgrades on some subdomain configurations, which is why even the web dashboard proxies <code>/spores-ws</code> through the main domain rather than connecting directly to <code>tasks.*</code>.</p>
+
+<h2>The /mobile/* Mirror Pattern</h2>
+
+<p>Every authenticated endpoint the mobile app needs is mirrored under <code>/mobile/*</code> in nginx. These routes:</p>
+
+<ol>
+  <li>Validate the session token via <code>auth_request</code> to <code>/_check_mobile_auth</code></li>
+  <li>Strip the <code>/mobile</code> prefix</li>
+  <li>Proxy to the upstream service</li>
+</ol>
+
+<pre><code># Auth subrequest — validates ?session= param
+location = /_check_mobile_auth {
+    internal;
+    proxy_pass http://bridge:8080/mobile/auth-check?session=$arg_session;
+}
+
+# Example: mobile chat WebSocket
+location /mobile/ws/chat {
+    auth_request /_check_mobile_auth;
+    rewrite ^/mobile/(.*)$ /$1 break;
+    proxy_pass http://bridge:8080;
+    # ... WebSocket headers ...
+}</code></pre>
+
+<h2>Route Map</h2>
+
+<table>
+<tr><th>Mobile Route</th><th>Upstream</th><th>Auth</th><th>Purpose</th></tr>
+<tr><td><code>/mobile/session</code></td><td>bridge:8080</td><td>None (IS the auth step)</td><td>Token exchange</td></tr>
+<tr><td><code>/mobile/ws/audio</code></td><td>bridge:8080</td><td>session token</td><td>Voice PCM streaming</td></tr>
+<tr><td><code>/mobile/ws/chat</code></td><td>bridge:8080</td><td>session token</td><td>Chat WebSocket</td></tr>
+<tr><td><code>/mobile/ws/session</code></td><td>bridge:8080</td><td>session token</td><td>Session state WS</td></tr>
+<tr><td><code>/mobile/fast-respond</code></td><td>bridge:8080</td><td>session token</td><td>Quick text response</td></tr>
+<tr><td><code>/mobile/bus/*</code></td><td>chatbus:9095</td><td>session token</td><td>Chat message bus</td></tr>
+<tr><td><code>/mobile/ws/agent/*/chat</code></td><td>bridge:8080</td><td>session token</td><td>Per-agent chat WS</td></tr>
+<tr><td><code>/mobile/admin/api/*</code></td><td>admin-api:3001</td><td>session token</td><td>Tasks API (read-only on mobile)</td></tr>
+<tr><td><code>/mobile/sysbus/*</code></td><td>sysbus:9097</td><td>None</td><td>System events (read-only)</td></tr>
+<tr><td><code>/mobile/spores-ws</code></td><td>host:9102</td><td>None</td><td>Spores live data (mcc-taskmaster)</td></tr>
+<tr><td><code>/mobile/activity-ws</code></td><td>host:9101</td><td>None</td><td>Activity live data (mcc-activity)</td></tr>
+<tr><td><code>/mobile/*</code></td><td>voice-ui:80</td><td>session token</td><td>SPA fallback</td></tr>
+</table>
+
+<h3>No-auth routes</h3>
+<p>Three routes skip authentication: <code>sysbus</code>, <code>spores-ws</code>, and <code>activity-ws</code>. These are read-only event streams with no sensitive data. Skipping auth avoids complexity with WebSocket token validation on host-based services that run outside Docker.</p>
+
+<h2>WebSocket Auth: Query Params, Not Cookies</h2>
+
+<p>iOS's native WebSocket implementation cannot set cookies on the handshake request. React Native's WebSocket similarly has no cookie jar. The solution: pass the session token as a query parameter.</p>
+
+<pre><code>// Mobile WebSocket factory
+function createMobileWebSocket(session: string) {
+  return (url: string) => {
+    const mirrored = url.replace("/ws/", "/mobile/ws/");
+    const sep = url.includes("?") ? "&amp;" : "?";
+    return new WebSocket(mirrored + sep + "session=" + encodeURIComponent(session));
+  };
+}</code></pre>
+
+<p>Nginx's <code>_check_mobile_auth</code> reads <code>$arg_session</code> from the query string, so this works for both HTTP and WebSocket requests.</p>
+
+<h2>How Mobile Components Get Data</h2>
+
+<div class="card">
+<div class="card-title">Before (broken)</div>
+<ul style="margin-bottom: 0;">
+  <li><strong>Spores:</strong> HTTP fetch to <code>raw.githubusercontent.com/*/spores.json</code> &rarr; 404 (private repo)</li>
+  <li><strong>Activity:</strong> WebSocket to <code>activity.mushroomcloudcomputing.com/ws</code> &rarr; 403 (OAuth blocks)</li>
+  <li><strong>Tasks:</strong> HTTP fetch to <code>/tasks.md</code> &rarr; 403 (behind oauth2-proxy)</li>
+</ul>
+</div>
+
+<div class="card">
+<div class="card-title">After (fixed)</div>
+<ul style="margin-bottom: 0;">
+  <li><strong>Spores:</strong> WebSocket to <code>/mobile/spores-ws</code> &rarr; nginx proxies to mcc-taskmaster on host:9102</li>
+  <li><strong>Activity:</strong> WebSocket to <code>/mobile/activity-ws</code> &rarr; nginx proxies to mcc-activity on host:9101</li>
+  <li><strong>Tasks:</strong> HTTP fetch to <code>/mobile/admin/api/tasks?session=...</code> &rarr; nginx proxies to admin-api:3001</li>
+</ul>
+</div>
+
+<h2>Key Differences Summary</h2>
+
+<table>
+<tr><th></th><th><span class="tag tag-web">Web</span></th><th><span class="tag tag-mobile">Mobile</span></th></tr>
+<tr><td>Auth mechanism</td><td>OAuth2 cookie</td><td>Session token (query param)</td></tr>
+<tr><td>Cookie support</td><td>Full</td><td>None (iOS WebSocket limitation)</td></tr>
+<tr><td>Subdomain access</td><td>Yes (cookie scoped to domain)</td><td>No (no oauth2-proxy cookie)</td></tr>
+<tr><td>Route prefix</td><td><code>/</code></td><td><code>/mobile/</code></td></tr>
+<tr><td>Spores data</td><td>WebSocket to <code>/spores-ws</code></td><td>WebSocket to <code>/mobile/spores-ws</code></td></tr>
+<tr><td>Activity data</td><td>WebSocket to <code>activity.*</code></td><td>WebSocket to <code>/mobile/activity-ws</code></td></tr>
+<tr><td>Tasks data</td><td>Fetch <code>/admin/api/tasks</code></td><td>Fetch <code>/mobile/admin/api/tasks</code></td></tr>
+</table>
+
+<!-- published: PENDING -->
+</body>
+</html>
